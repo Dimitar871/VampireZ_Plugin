@@ -1,0 +1,64 @@
+# VampireZ Configuration
+
+game:
+  min-players: 10
+  game-duration-seconds: 1500
+  vampire-ratio: 0.3
+  vampire-respawn-delay-ticks: 80
+  lobby-countdown-seconds: 30
+  start-countdown-seconds: 15
+
+economy:
+  passive-income-amount: 2
+  passive-income-interval-ticks: 200
+  kill-reward: 15
+  assist-reward: 5
+  assist-time-window-ms: 10000
+
+perks:
+  max-perks-per-player: 6
+  silver-cost: 50
+  gold-cost: 150
+  prismatic-cost: 400
+  options-per-purchase: 3
+
+arena:
+  world-name: "vampirez_arena"
+  template-folder: "arena-template"
+
+day-night:
+  enabled: true
+  day-duration-ticks: 7200
+  night-duration-ticks: 4800
+
+spawns:
+  lobby:
+    world: ""
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    yaw: 0.0
+    pitch: 0.0
+  human:
+    world: ""
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    yaw: 0.0
+    pitch: 0.0
+  vampire:
+    world: ""
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    yaw: 0.0
+    pitch: 0.0
+
+messages:
+  prefix: "&8[&4VampireZ&8] "
+  game-start: "&cThe hunt begins!"
+  vampires-win: "&4The Vampires have won! All humans have been slain!"
+  humans-win: "&bThe Humans have survived! Dawn breaks and the vampires retreat!"
+  human-death: "&c{player} has fallen! They rise again as a Vampire!"
+  night-fall: "&4&lNight has fallen! Vampires grow stronger..."
+  day-break: "&e&lThe sun rises! Vampires are weakened..."
