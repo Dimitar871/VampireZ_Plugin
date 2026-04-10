@@ -81,9 +81,11 @@ public class DayNightManager {
         String msg = ChatColor.translateAlternateColorCodes('&',
                 plugin.getConfig().getString("messages.night-fall", "&4&lNight has fallen! Vampires grow stronger..."));
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            player.sendMessage(msg);
-            player.playSound(player.getLocation(), Sound.ENTITY_WOLF_GROWL, 1.0f, 0.5f);
+        if (gameManager != null) {
+            for (Player player : gameManager.getJoinedOnlinePlayers()) {
+                player.sendMessage(msg);
+                player.playSound(player.getLocation(), Sound.ENTITY_WOLF_GROWL, 1.0f, 0.5f);
+            }
         }
 
         applyNightEffects();
@@ -93,9 +95,11 @@ public class DayNightManager {
         String msg = ChatColor.translateAlternateColorCodes('&',
                 plugin.getConfig().getString("messages.day-break", "&e&lThe sun rises! Vampires are weakened..."));
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            player.sendMessage(msg);
-            player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_AMBIENT, 1.0f, 1.0f);
+        if (gameManager != null) {
+            for (Player player : gameManager.getJoinedOnlinePlayers()) {
+                player.sendMessage(msg);
+                player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_AMBIENT, 1.0f, 1.0f);
+            }
         }
 
         applyDayEffects();
@@ -142,16 +146,21 @@ public class DayNightManager {
     }
 
     private void removeAllEffects() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            player.removePotionEffect(PotionEffectType.SPEED);
-            player.removePotionEffect(PotionEffectType.STRENGTH);
-            player.removePotionEffect(PotionEffectType.SLOWNESS);
+        if (gameManager == null) return;
+        for (UUID uuid : gameManager.getVampireTeam()) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null && player.isOnline()) {
+                player.removePotionEffect(PotionEffectType.SPEED);
+                player.removePotionEffect(PotionEffectType.STRENGTH);
+                player.removePotionEffect(PotionEffectType.SLOWNESS);
+            }
         }
     }
 
     private void setWorldTime(long time) {
-        for (World world : Bukkit.getWorlds()) {
-            world.setTime(time);
+        // Only change time in the arena world, not survival worlds
+        if (gameManager != null && gameManager.getHumanSpawn() != null) {
+            gameManager.getHumanSpawn().getWorld().setTime(time);
         }
     }
 

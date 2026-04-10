@@ -237,23 +237,28 @@ public class GameListener implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        event.setCancelled(true);
+        if (event.getPlayer() != null && gameManager.isJoined(event.getPlayer().getUniqueId())) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        event.setCancelled(true);
+        if (gameManager.isJoined(event.getPlayer().getUniqueId())) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler
     public void onItemDrop(PlayerDropItemEvent event) {
-        if (gameManager.getState() == GameState.ACTIVE || gameManager.getState() == GameState.STARTING) {
+        if (gameManager.isJoined(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onLobbyInteract(PlayerInteractEvent event) {
+        if (!gameManager.isJoined(event.getPlayer().getUniqueId())) return;
         if (gameManager.getState() != GameState.LOBBY && gameManager.getState() != GameState.ENDING) return;
         if (event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) return;
         if (event.getClickedBlock() == null) return;
@@ -273,11 +278,11 @@ public class GameListener implements Listener {
 
     @EventHandler
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
+        if (!(event.getEntity() instanceof Player player)) return;
+        if (!gameManager.isJoined(player.getUniqueId())) return;
         if (gameManager.getState() == GameState.LOBBY || gameManager.getState() == GameState.STARTING) {
             event.setCancelled(true);
-            if (event.getEntity() instanceof Player player) {
-                player.setFoodLevel(20);
-            }
+            player.setFoodLevel(20);
         }
     }
 
@@ -316,7 +321,10 @@ public class GameListener implements Listener {
         // Allow plugin-spawned mobs (from perks like Undead Horde, Wolf Pack, etc.)
         if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.CUSTOM) return;
 
-        // Block all natural mob spawning
+        // Only block natural mob spawning in the arena world (don't affect survival worlds)
+        org.bukkit.Location humanSpawn = gameManager.getHumanSpawn();
+        if (humanSpawn == null || !event.getEntity().getWorld().equals(humanSpawn.getWorld())) return;
+
         if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.NATURAL
                 || event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.SPAWNER
                 || event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.REINFORCEMENTS

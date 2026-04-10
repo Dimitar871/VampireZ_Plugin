@@ -3,6 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
+import com.vampirez.VampireZPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -36,7 +37,9 @@ public class InfectiousBitePerk extends Perk {
         UUID uuid = killer.getUniqueId();
         int healed = 0;
 
-        for (Player nearby : Bukkit.getOnlinePlayers()) {
+        VampireZPlugin ibPlugin = (VampireZPlugin) getPlugin();
+        if (ibPlugin.getGameManager() == null) return;
+        for (Player nearby : ibPlugin.getGameManager().getJoinedOnlinePlayers()) {
             if (nearby.getUniqueId().equals(uuid)) continue;
             if (!isSameTeam(killer, nearby)) continue;
             if (nearby.getLocation().distance(killer.getLocation()) > RADIUS) continue;

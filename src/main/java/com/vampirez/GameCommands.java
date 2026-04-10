@@ -1,6 +1,12 @@
 package com.vampirez;
 
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -34,6 +40,8 @@ public class GameCommands implements CommandExecutor {
 
         switch (args[0].toLowerCase()) {
             case "help" -> sendHelp(player);
+            case "join" -> gameManager.joinGame(player);
+            case "leave" -> gameManager.leaveGame(player);
             case "start" -> handleStart(player, false);
             case "forcestart" -> handleStart(player, true);
             case "stop" -> handleStop(player);
@@ -45,6 +53,7 @@ public class GameCommands implements CommandExecutor {
             case "sethumanspawn" -> handleSetSpawn(player, "human");
             case "setvampspawn" -> handleSetSpawn(player, "vampire");
             case "test" -> handleTest(player);
+            case "announce" -> handleAnnounce(player);
             case "arena" -> handleArena(player);
             case "reload" -> handleReload(player);
             default -> {
@@ -56,6 +65,8 @@ public class GameCommands implements CommandExecutor {
 
     private void sendHelp(Player player) {
         player.sendMessage(ChatColor.DARK_RED + "=== VampireZ Commands ===");
+        player.sendMessage(ChatColor.GOLD + "/vz join" + ChatColor.GRAY + " - Join the VampireZ game");
+        player.sendMessage(ChatColor.GOLD + "/vz leave" + ChatColor.GRAY + " - Leave and restore inventory");
         player.sendMessage(ChatColor.GOLD + "/vz shop" + ChatColor.GRAY + " - Open the perk shop");
         player.sendMessage(ChatColor.GOLD + "/vz perks" + ChatColor.GRAY + " - List your active perks");
         player.sendMessage(ChatColor.GOLD + "/vz gold" + ChatColor.GRAY + " - Show your gold");
@@ -67,6 +78,7 @@ public class GameCommands implements CommandExecutor {
             player.sendMessage(ChatColor.RED + "/vz setlobby" + ChatColor.GRAY + " - Set lobby spawn");
             player.sendMessage(ChatColor.RED + "/vz sethumanspawn" + ChatColor.GRAY + " - Set human spawn");
             player.sendMessage(ChatColor.RED + "/vz setvampspawn" + ChatColor.GRAY + " - Set vampire spawn");
+            player.sendMessage(ChatColor.RED + "/vz announce" + ChatColor.GRAY + " - Announce event to server");
             player.sendMessage(ChatColor.RED + "/vz test" + ChatColor.GRAY + " - Open perk test menu");
             player.sendMessage(ChatColor.RED + "/vz reload" + ChatColor.GRAY + " - Reload config");
         }
@@ -179,6 +191,54 @@ public class GameCommands implements CommandExecutor {
                 player.sendMessage(ChatColor.GREEN + "Vampire spawn set!");
             }
         }
+    }
+
+    private void handleAnnounce(Player player) {
+        if (!player.hasPermission("vampirez.admin")) {
+            player.sendMessage(ChatColor.RED + "No permission!");
+            return;
+        }
+        if (gameManager.getState() != GameState.LOBBY) {
+            player.sendMessage(ChatColor.RED + "Can only announce during lobby phase!");
+            return;
+        }
+
+        // Build clickable chat message
+        TextComponent separator = new TextComponent("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        separator.setColor(net.md_5.bungee.api.ChatColor.DARK_RED);
+
+        TextComponent header = new TextComponent("  VAMPIREZ EVENT STARTING!");
+        header.setColor(net.md_5.bungee.api.ChatColor.DARK_RED);
+        header.setBold(true);
+
+        TextComponent desc = new TextComponent("  Humans vs Vampires - Survive 25 minutes!");
+        desc.setColor(net.md_5.bungee.api.ChatColor.GOLD);
+
+        TextComponent joinButton = new TextComponent("  >>> CLICK HERE TO JOIN <<<");
+        joinButton.setColor(net.md_5.bungee.api.ChatColor.GREEN);
+        joinButton.setBold(true);
+        joinButton.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vampirez join"));
+        joinButton.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                new Text(net.md_5.bungee.api.ChatColor.YELLOW + "Click to join VampireZ!")));
+
+        TextComponent orType = new TextComponent("  Or type: /vz join");
+        orType.setColor(net.md_5.bungee.api.ChatColor.GRAY);
+        orType.setItalic(true);
+
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            p.spigot().sendMessage(separator);
+            p.sendMessage("");
+            p.spigot().sendMessage(header);
+            p.spigot().sendMessage(desc);
+            p.sendMessage("");
+            p.spigot().sendMessage(joinButton);
+            p.spigot().sendMessage(orType);
+            p.sendMessage("");
+            p.spigot().sendMessage(separator);
+            p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 0.5f, 1.0f);
+        }
+
+        player.sendMessage(ChatColor.GREEN + "Event announced to all players!");
     }
 
     private void handleArena(Player player) {

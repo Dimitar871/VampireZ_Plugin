@@ -59,9 +59,12 @@ public class FightOrBeForgottenPerk extends Perk {
             victim.playSound(victim.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.8f, 1.2f);
             victim.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "FIGHT OR BE FORGOTTEN! 30 seconds to live!");
 
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if (!p.equals(victim)) {
-                    p.sendMessage(ChatColor.RED + victim.getName() + " enters their last stand!");
+            VampireZPlugin fobfPlugin = (VampireZPlugin) getPlugin();
+            if (fobfPlugin.getGameManager() != null) {
+                for (Player p : fobfPlugin.getGameManager().getJoinedOnlinePlayers()) {
+                    if (!p.equals(victim)) {
+                        p.sendMessage(ChatColor.RED + victim.getName() + " enters their last stand!");
+                    }
                 }
             }
 

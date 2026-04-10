@@ -39,11 +39,8 @@ public class EconomyManager {
     public void startPassiveIncome(GameManager gameManager) {
         incomeTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (gameManager.getState() != GameState.ACTIVE) return;
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                UUID uuid = player.getUniqueId();
-                if (gameManager.isInGame(uuid)) {
-                    addGold(uuid, passiveIncomeAmount);
-                }
+            for (Player player : gameManager.getJoinedOnlinePlayers()) {
+                addGold(player.getUniqueId(), passiveIncomeAmount);
             }
         }, passiveIncomeIntervalTicks, passiveIncomeIntervalTicks);
     }

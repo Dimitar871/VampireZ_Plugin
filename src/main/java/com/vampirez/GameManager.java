@@ -29,8 +29,12 @@ public class GameManager {
     private PerkSelectionGUI perkSelectionGUI;
     private StatAnvilManager statAnvilManager;
     private ArenaManager arenaManager;
+    private PlayerStateManager playerStateManager;
 
     private GameState state = GameState.LOBBY;
+    private final Set<UUID> joinedPlayers = new HashSet<>();
+    /** Stores how many perks to auto-assign (with tiers) for players who disconnected mid-game. */
+    private final Map<UUID, List<PerkTier>> pendingAutoPerks = new HashMap<>();
     private final Set<UUID> humanTeam = new HashSet<>();
     private final Set<UUID> vampireTeam = new HashSet<>();
     private int remainingSeconds;
@@ -135,10 +139,115 @@ public class GameManager {
         return arenaManager;
     }
 
+    public void setPlayerStateManager(PlayerStateManager psm) {
+        this.playerStateManager = psm;
+    }
+
+    public PlayerStateManager getPlayerStateManager() {
+        return playerStateManager;
+    }
+
+    // ===== JOIN / LEAVE =====
+
+    /**
+     * Player opts in to the VampireZ game. Saves their survival state and teleports to lobby.
+     */
+    public boolean joinGame(Player player) {
+        UUID uuid = player.getUniqueId();
+        if (joinedPlayers.contains(uuid)) {
+            player.sendMessage(ChatColor.RED + "You are already in the VampireZ lobby!");
+            return false;
+        }
+        if (state != GameState.LOBBY) {
+            player.sendMessage(ChatColor.RED + "A game is already in progress! Wait for it to end.");
+            return false;
+        }
+
+        // Save survival state to disk, then clear player
+        playerStateManager.saveAndClear(player);
+        joinedPlayers.add(uuid);
+
+        // Teleport to lobby
+        if (lobbySpawn != null) {
+            player.teleport(lobbySpawn);
+        }
+
+        player.sendMessage(ChatColor.GREEN + "You joined VampireZ! " + ChatColor.GRAY + "Waiting for the game to start...");
+        scoreboardManager.showLobbyScoreboard(player);
+        scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers);
+
+        // Announce
+        for (UUID jUuid : joinedPlayers) {
+            Player p = Bukkit.getPlayer(jUuid);
+            if (p != null && !p.equals(player)) {
+                p.sendMessage(ChatColor.YELLOW + player.getName() + " joined! " +
+                        ChatColor.GRAY + "(" + joinedPlayers.size() + "/" + minPlayers + ")");
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Player opts out of VampireZ. Restores their survival state.
+     */
+    public void leaveGame(Player player) {
+        UUID uuid = player.getUniqueId();
+        if (!joinedPlayers.contains(uuid)) {
+            player.sendMessage(ChatColor.RED + "You are not in a VampireZ game!");
+            return;
+        }
+
+        boolean wasInActiveGame = (state == GameState.ACTIVE || state == GameState.STARTING) && isInGame(uuid);
+
+        // Remove from teams
+        boolean wasHuman = humanTeam.remove(uuid);
+        vampireTeam.remove(uuid);
+        perkManager.removeAllPerks(uuid);
+        economyManager.resetPlayer(uuid);
+        scoreboardManager.removePlayer(uuid);
+        joinedPlayers.remove(uuid);
+
+        // Restore survival state (wipes game items first, then restores saved inventory)
+        playerStateManager.restore(player);
+
+        player.sendMessage(ChatColor.YELLOW + "You left VampireZ. Your inventory has been restored.");
+
+        if (state == GameState.LOBBY) {
+            scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers);
+        }
+
+        // Check win condition
+        if (wasInActiveGame && wasHuman && humanTeam.isEmpty() && !vampireTeam.isEmpty()) {
+            endGame(false);
+        }
+    }
+
+    public boolean isJoined(UUID uuid) {
+        return joinedPlayers.contains(uuid);
+    }
+
+    public Set<UUID> getJoinedPlayers() {
+        return Collections.unmodifiableSet(joinedPlayers);
+    }
+
+    /**
+     * Returns online players that are in the VampireZ game (joined).
+     */
+    public List<Player> getJoinedOnlinePlayers() {
+        List<Player> players = new ArrayList<>();
+        for (UUID uuid : joinedPlayers) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null && p.isOnline()) {
+                players.add(p);
+            }
+        }
+        return players;
+    }
+
     // ===== GAME START =====
 
     public boolean canStart() {
-        return Bukkit.getOnlinePlayers().size() >= minPlayers && hasSpawnsSet();
+        return joinedPlayers.size() >= minPlayers && hasSpawnsSet();
     }
 
     public boolean hasSpawnsSet() {
@@ -152,11 +261,10 @@ public class GameManager {
 
         state = GameState.STARTING;
 
-        // Auto-assign teams
-        List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
+        // Auto-assign teams (only from joined players)
+        List<Player> players = getJoinedOnlinePlayers();
         Collections.shuffle(players);
         int vampCount = Math.max(1, (int) Math.round(players.size() * vampireRatio));
-        int humanCount = players.size() - vampCount;
 
         humanTeam.clear();
         vampireTeam.clear();
@@ -203,8 +311,8 @@ public class GameManager {
             }
         }
 
-        // Setup scoreboards for all players
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        // Setup scoreboards for joined players
+        for (Player player : getJoinedOnlinePlayers()) {
             scoreboardManager.createGameScoreboard(player, this, economyManager, perkManager, dayNightManager);
         }
 
@@ -242,15 +350,15 @@ public class GameManager {
                 }
             }
 
-            // Milestone announcements to all players
+            // Milestone announcements to joined players
             if (vampCountdown[0] == 30 || vampCountdown[0] == 15 || vampCountdown[0] == 10) {
-                for (Player player : Bukkit.getOnlinePlayers()) {
+                for (Player player : getJoinedOnlinePlayers()) {
                     player.sendMessage(ChatColor.RED + "Vampires release in " + ChatColor.BOLD + vampCountdown[0] + ChatColor.RESET + ChatColor.RED + " seconds!");
                     player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
                 }
             }
             if (vampCountdown[0] <= 5 && vampCountdown[0] > 0) {
-                for (Player player : Bukkit.getOnlinePlayers()) {
+                for (Player player : getJoinedOnlinePlayers()) {
                     player.sendMessage(ChatColor.DARK_RED + "" + ChatColor.BOLD + vampCountdown[0] + "...");
                     player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f);
                 }
@@ -282,7 +390,7 @@ public class GameManager {
         String startMsg = ChatColor.translateAlternateColorCodes('&',
                 plugin.getConfig().getString("messages.game-start", "&cThe hunt begins!"));
         String prefix = ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix", ""));
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        for (Player player : getJoinedOnlinePlayers()) {
             player.sendMessage(prefix + startMsg);
             if (vampiresReleased) {
                 // Normal start (no delayed spawn active)
@@ -313,7 +421,7 @@ public class GameManager {
                         giveBloodCompass(vamp);
                     }
                 }
-                for (Player p : Bukkit.getOnlinePlayers()) {
+                for (Player p : getJoinedOnlinePlayers()) {
                     p.sendMessage(ChatColor.DARK_RED + "" + ChatColor.BOLD + "Blood Compass " +
                             ChatColor.RESET + ChatColor.RED + "activated! Vampires can now sense human locations.");
                     p.playSound(p.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.5f, 1.2f);
@@ -330,14 +438,14 @@ public class GameManager {
                 int min = remainingSeconds / 60;
                 int sec = remainingSeconds % 60;
                 String timeMsg = min > 0 ? min + " minute" + (min > 1 ? "s" : "") : sec + " seconds";
-                for (Player player : Bukkit.getOnlinePlayers()) {
+                for (Player player : getJoinedOnlinePlayers()) {
                     player.sendMessage(ChatColor.YELLOW + timeMsg + " remaining!");
                     player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f);
                 }
             }
 
             if (remainingSeconds <= 5 && remainingSeconds > 0) {
-                for (Player player : Bukkit.getOnlinePlayers()) {
+                for (Player player : getJoinedOnlinePlayers()) {
                     player.sendMessage(ChatColor.RED + "" + remainingSeconds + "...");
                     player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
                 }
@@ -421,13 +529,16 @@ public class GameManager {
                 plugin.getConfig().getString("messages.human-death", "&c{player} has fallen! They rise again as a Vampire!"))
                 .replace("{player}", player.getName());
         String prefix = ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix", ""));
-        for (Player p : Bukkit.getOnlinePlayers()) {
+        for (Player p : getJoinedOnlinePlayers()) {
             p.sendMessage(prefix + deathMsg);
         }
 
         // Switch teams
         humanTeam.remove(uuid);
         vampireTeam.add(uuid);
+
+        // Reset gold on conversion (always, whether death or disconnect)
+        economyManager.resetPlayer(uuid);
 
         // Remove human-specific perks, get count for replacement
         List<Perk> removedPerks = perkManager.removeTeamSpecificPerks(uuid, PerkTeam.HUMAN);
@@ -514,7 +625,7 @@ public class GameManager {
                     plugin.getConfig().getString("messages.vampires-win", "&4The Vampires have won!"));
         }
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        for (Player player : getJoinedOnlinePlayers()) {
             player.sendMessage(prefix + winMsg);
             player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
 
@@ -555,22 +666,26 @@ public class GameManager {
         if (statAnvilManager != null) statAnvilManager.resetAll();
         vampiresReleased = true;
         bloodCompassGiven = false;
+        pendingAutoPerks.clear();
 
         humanTeam.clear();
         vampireTeam.clear();
 
-        // Teleport all players to lobby and reset them
+        // Restore all joined players to their survival state
         scoreboardManager.setupLobbyScoreboard();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            resetPlayerFully(player);
-
-            if (lobbySpawn != null) {
-                player.teleport(lobbySpawn);
+        for (UUID uuid : new HashSet<>(joinedPlayers)) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null && player.isOnline()) {
+                // resetPlayerFully wipes game state (perks, effects, modifiers)
+                resetPlayerFully(player);
+                // Restore their saved survival inventory and teleport back
+                if (playerStateManager != null) {
+                    playerStateManager.restore(player);
+                }
             }
-
-            scoreboardManager.showLobbyScoreboard(player);
         }
-        scoreboardManager.updateLobbyScoreboard(Bukkit.getOnlinePlayers().size(), minPlayers);
+        joinedPlayers.clear();
+        scoreboardManager.updateLobbyScoreboard(0, minPlayers);
 
         // Reset the arena world (async copy from template, then reload)
         if (arenaManager != null && arenaManager.hasTemplate()) {
@@ -638,46 +753,124 @@ public class GameManager {
     // ===== PLAYER JOIN/QUIT =====
 
     public void handlePlayerJoin(Player player) {
-        if (state == GameState.LOBBY) {
-            // Make sure they're in a clean state (in case they quit mid-game previously)
-            player.setGameMode(GameMode.SURVIVAL);
-            scoreboardManager.updateLobbyScoreboard(Bukkit.getOnlinePlayers().size(), minPlayers);
-            scoreboardManager.showLobbyScoreboard(player);
-        } else if (state == GameState.ACTIVE || state == GameState.STARTING) {
-            if (isInGame(player.getUniqueId())) {
-                // Player was in the game and reconnected
+        UUID uuid = player.getUniqueId();
+
+        // Case 1: Reconnecting to an active game (they quit mid-game)
+        if (joinedPlayers.contains(uuid) && (state == GameState.ACTIVE || state == GameState.STARTING)) {
+            if (vampireTeam.contains(uuid)) {
                 player.setGameMode(GameMode.SURVIVAL);
-            } else {
-                // Late joiners become spectators
-                player.setGameMode(GameMode.SPECTATOR);
-                player.sendMessage(ChatColor.GRAY + "A game is currently in progress. You are spectating.");
+                player.getInventory().clear();
+                player.getInventory().setArmorContents(null);
+
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    if (!player.isOnline() || state != GameState.ACTIVE) return;
+                    if (vampireSpawn != null) player.teleport(vampireSpawn);
+                    gearManager.giveVampireGear(player);
+
+                    // Auto-assign pending perks from disconnect
+                    List<PerkTier> pending = pendingAutoPerks.remove(uuid);
+                    if (pending != null) {
+                        for (PerkTier tier : pending) {
+                            List<Perk> options = perkManager.getRandomPerks(tier, PerkTeam.VAMPIRE, 1, uuid);
+                            if (!options.isEmpty()) {
+                                perkManager.addPerkToPlayer(uuid, options.get(0));
+                            }
+                        }
+                        int count = perkManager.getPlayerPerkCount(uuid);
+                        player.sendMessage(ChatColor.GREEN + "" + count + " perk(s) auto-assigned.");
+                    }
+
+                    perkManager.reapplyPerks(uuid);
+                    dayNightManager.applyEffectsToPlayer(player);
+                    if (statAnvilManager != null) statAnvilManager.reapplyBuffs(player);
+                    scoreboardManager.createGameScoreboard(player, this, economyManager, perkManager, dayNightManager);
+                    if (bloodCompassGiven) giveBloodCompass(player);
+                    player.sendMessage(ChatColor.DARK_RED + "You reconnected as a Vampire! Hunt the humans!");
+                }, 10L);
             }
-        } else if (state == GameState.ENDING) {
-            // Game is ending, just put them in survival and wait for lobby reset
-            player.setGameMode(GameMode.SURVIVAL);
-            player.sendMessage(ChatColor.GRAY + "The game just ended. Returning to lobby shortly...");
+            return;
         }
+
+        // Case 2: Player has a saved state from a previous session (game ended while offline, or crash)
+        if (playerStateManager != null && playerStateManager.hasSavedState(uuid) && !joinedPlayers.contains(uuid)) {
+            playerStateManager.restore(player);
+            player.sendMessage(ChatColor.YELLOW + "Your inventory was restored from a previous VampireZ session.");
+            return;
+        }
+
+        // Case 3: Normal join — not in VampireZ, do nothing
     }
 
     public void handlePlayerQuit(Player player) {
         UUID uuid = player.getUniqueId();
 
+        if (!joinedPlayers.contains(uuid)) return; // Not in VampireZ, ignore
+
         if (state == GameState.LOBBY) {
-            scoreboardManager.updateLobbyScoreboard(Bukkit.getOnlinePlayers().size() - 1, minPlayers);
+            joinedPlayers.remove(uuid);
+            scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers);
             return;
         }
 
-        // Remove from teams
-        boolean wasHuman = humanTeam.remove(uuid);
-        vampireTeam.remove(uuid);
-        perkManager.removeAllPerks(uuid);
-        economyManager.resetPlayer(uuid);
-        scoreboardManager.removePlayer(uuid);
+        if (state == GameState.ACTIVE || state == GameState.STARTING) {
+            // --- Build the list of perks to auto-assign on reconnect ---
+            List<PerkTier> perksToGive = new ArrayList<>();
 
-        // Check win condition
-        if (state == GameState.ACTIVE && wasHuman && humanTeam.isEmpty()) {
-            endGame(false); // Vampires win
+            // 1. Starting perk (Silver, always given at game start)
+            perksToGive.add(PerkTier.SILVER);
+
+            // 2. Timed free perks that have already been given
+            int elapsed = gameDurationSeconds - remainingSeconds;
+            if (elapsed >= 300) perksToGive.add(randomTier());  // 5 min mark
+            if (elapsed >= 600) perksToGive.add(randomTier());  // 10 min mark
+            if (elapsed >= 900) perksToGive.add(randomTier());  // 15 min mark
+
+            // 3. Replacements for human-only perks (if they were human)
+            if (humanTeam.contains(uuid)) {
+                // Count human-only perks before removing
+                long humanOnlyCount = perkManager.getPlayerPerks(uuid).stream()
+                        .filter(p -> p.getTeam() == PerkTeam.HUMAN)
+                        .count();
+                for (int i = 0; i < humanOnlyCount; i++) {
+                    perksToGive.add(randomTier());
+                }
+
+                // Convert to vampire
+                humanTeam.remove(uuid);
+                vampireTeam.add(uuid);
+
+                String prefix = ChatColor.translateAlternateColorCodes('&',
+                        plugin.getConfig().getString("messages.prefix", ""));
+                for (Player p : getJoinedOnlinePlayers()) {
+                    p.sendMessage(prefix + ChatColor.RED + player.getName() + " disconnected and has been converted to a Vampire!");
+                }
+
+                // Check win condition
+                if (humanTeam.isEmpty() && !vampireTeam.isEmpty()) {
+                    endGame(false);
+                    return;
+                }
+            }
+
+            // Store pending perks for reconnect auto-assign
+            pendingAutoPerks.put(uuid, perksToGive);
+
+            // Clear perks and economy
+            perkManager.removeAllPerks(uuid);
+            economyManager.resetPlayer(uuid);
+            scoreboardManager.removePlayer(uuid);
+
+            // KEEP in joinedPlayers and vampireTeam — they can reconnect
+            return;
         }
+
+        // ENDING state — just clean up
+        joinedPlayers.remove(uuid);
+    }
+
+    private PerkTier randomTier() {
+        PerkTier[] tiers = PerkTier.values();
+        return tiers[RANDOM.nextInt(tiers.length)];
     }
 
     // ===== TIMED PERKS =====
@@ -686,7 +879,7 @@ public class GameManager {
 
     private void triggerTimedPerk() {
         PerkTier[] tiers = PerkTier.values();
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        for (Player player : getJoinedOnlinePlayers()) {
             if (!isInGame(player.getUniqueId())) continue;
             PerkTeam team = isVampire(player.getUniqueId()) ? PerkTeam.VAMPIRE : PerkTeam.HUMAN;
             PerkTier randomTier = tiers[RANDOM.nextInt(tiers.length)];

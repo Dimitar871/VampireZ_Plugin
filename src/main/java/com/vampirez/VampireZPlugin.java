@@ -48,10 +48,9 @@ public class VampireZPlugin extends JavaPlugin {
         gameManager.setArenaManager(arenaManager);
         dayNightManager.setGameManager(gameManager);
 
-        // 3b. Disable random ticks on all worlds (prevents leaf decay)
-        for (org.bukkit.World world : getServer().getWorlds()) {
-            world.setGameRule(org.bukkit.GameRule.RANDOM_TICK_SPEED, 0);
-        }
+        // 3b. Initialize player state manager (inventory save/restore for join/leave)
+        PlayerStateManager playerStateManager = new PlayerStateManager(this);
+        gameManager.setPlayerStateManager(playerStateManager);
 
         // 4. Initialize GUIs and StatAnvil
         statAnvilManager = new StatAnvilManager(economyManager);
@@ -79,16 +78,16 @@ public class VampireZPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(perkSelectionGUI, this);
         getServer().getPluginManager().registerEvents(perkTestGUI, this);
 
-        // 7. Scoreboard join/quit listener
+        // 7. Scoreboard join/quit listener (uses joined player count, not total online)
         getServer().getPluginManager().registerEvents(new Listener() {
             @EventHandler
             public void onPlayerJoin(PlayerJoinEvent event) {
-                scoreboardManager.updateLobbyScoreboard(Bukkit.getOnlinePlayers().size(), gameManager.getMinPlayers());
+                scoreboardManager.updateLobbyScoreboard(gameManager.getJoinedPlayers().size(), gameManager.getMinPlayers());
             }
             @EventHandler
             public void onPlayerQuit(PlayerQuitEvent event) {
                 Bukkit.getScheduler().runTaskLater(VampireZPlugin.this, () ->
-                    scoreboardManager.updateLobbyScoreboard(Bukkit.getOnlinePlayers().size(), gameManager.getMinPlayers()), 1L);
+                    scoreboardManager.updateLobbyScoreboard(gameManager.getJoinedPlayers().size(), gameManager.getMinPlayers()), 1L);
             }
         }, this);
     }

@@ -3,6 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
+import com.vampirez.VampireZPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -117,7 +118,9 @@ public class BloodBeaconPerk extends Perk {
 
         // Apply Regen I to nearby teammates
         Location beaconLoc = data.location.clone().add(0.5, 0.5, 0.5);
-        for (Player nearby : Bukkit.getOnlinePlayers()) {
+        VampireZPlugin bbPlugin = (VampireZPlugin) getPlugin();
+        if (bbPlugin.getGameManager() == null) return;
+        for (Player nearby : bbPlugin.getGameManager().getJoinedOnlinePlayers()) {
             if (!isSameTeam(player, nearby)) continue;
             if (nearby.getLocation().distance(beaconLoc) <= RADIUS) {
                 // Use 100-tick duration so Regen I's 50-tick heal timer can fire.

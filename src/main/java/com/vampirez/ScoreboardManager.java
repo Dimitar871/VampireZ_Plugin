@@ -164,7 +164,7 @@ public class ScoreboardManager {
     }
 
     public void updateAllGameScoreboards(GameManager gameManager, EconomyManager economyManager, PerkManager perkManager, DayNightManager dayNightManager) {
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        for (Player player : gameManager.getJoinedOnlinePlayers()) {
             if (boards.containsKey(player.getUniqueId())) {
                 updateGameScoreboard(player, gameManager, economyManager, perkManager, dayNightManager);
             }

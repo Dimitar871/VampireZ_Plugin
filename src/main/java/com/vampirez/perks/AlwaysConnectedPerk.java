@@ -85,8 +85,8 @@ public class AlwaysConnectedPerk extends Perk {
 
         Set<UUID> humans = plugin.getGameManager().getHumanTeam();
 
-        // Play metallic sound for ALL players
-        for (Player p : Bukkit.getOnlinePlayers()) {
+        // Play metallic sound for joined players
+        for (Player p : plugin.getGameManager().getJoinedOnlinePlayers()) {
             p.playSound(p.getLocation(), Sound.BLOCK_BELL_USE, 1.5f, 0.6f);
             p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.3f, 2.0f);
         }

@@ -3,6 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
+import com.vampirez.VampireZPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -111,7 +112,9 @@ public class TrailPerk extends Perk {
         // Apply effects to nearby players walking on the trail
         if (trail.isEmpty()) return;
 
-        for (Player other : Bukkit.getOnlinePlayers()) {
+        VampireZPlugin plugin = (VampireZPlugin) getPlugin();
+        if (plugin.getGameManager() == null) return;
+        for (Player other : plugin.getGameManager().getJoinedOnlinePlayers()) {
             if (other.getUniqueId().equals(uuid)) continue;
             if (!other.getWorld().equals(player.getWorld())) continue;
 
