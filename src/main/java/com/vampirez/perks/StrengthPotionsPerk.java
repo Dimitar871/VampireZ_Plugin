@@ -24,18 +24,18 @@ public class StrengthPotionsPerk extends Perk {
 
     public StrengthPotionsPerk() {
         super("strength_potions", "Strength Potions", PerkTier.GOLD, PerkTeam.HUMAN,
-                Material.POTION,
-                "Start with 3 Strength potions",
+                Material.SPLASH_POTION,
+                "Start with 3 Splash Strength potions",
                 "Regenerate 1 every 2 minutes");
     }
 
     private ItemStack createPotion() {
-        ItemStack potion = new ItemStack(Material.POTION);
+        ItemStack potion = new ItemStack(Material.SPLASH_POTION);
         PotionMeta meta = (PotionMeta) potion.getItemMeta();
         if (meta != null) {
             meta.setBasePotionData(new PotionData(PotionType.WATER));
             meta.addCustomEffect(new PotionEffect(PotionEffectType.STRENGTH, 600, 0), true); // 30 seconds
-            meta.setDisplayName(ChatColor.RED + "Potion of Strength");
+            meta.setDisplayName(ChatColor.RED + "Splash Potion of Strength");
             meta.setColor(org.bukkit.Color.fromRGB(147, 36, 35));
             potion.setItemMeta(meta);
         }

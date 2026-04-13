@@ -167,10 +167,11 @@ public class GameManager {
         playerStateManager.saveAndClear(player);
         joinedPlayers.add(uuid);
 
-        // Teleport to lobby
+        // Teleport to lobby in adventure mode (arena is protected)
         if (lobbySpawn != null) {
             player.teleport(lobbySpawn);
         }
+        player.setGameMode(org.bukkit.GameMode.ADVENTURE);
 
         player.sendMessage(ChatColor.GREEN + "You joined VampireZ! " + ChatColor.GRAY + "Waiting for the game to start...");
         scoreboardManager.showLobbyScoreboard(player);
@@ -596,6 +597,9 @@ public class GameManager {
             perkManager.reapplyPerks(uuid);
             dayNightManager.applyEffectsToPlayer(player);
             if (statAnvilManager != null) statAnvilManager.reapplyBuffs(player);
+            // Speed II for 5 seconds on respawn for a faster start
+            player.addPotionEffect(new org.bukkit.potion.PotionEffect(
+                    org.bukkit.potion.PotionEffectType.SPEED, 100, 1, false, false));
         }, vampireRespawnDelayTicks);
     }
 
@@ -613,6 +617,10 @@ public class GameManager {
         if (scoreboardTask != null) { scoreboardTask.cancel(); scoreboardTask = null; }
         economyManager.stopPassiveIncome();
         dayNightManager.stopCycle();
+
+        // Clear all perks immediately so perk ticks (Undead Horde, etc.) stop
+        perkManager.resetAll();
+        com.vampirez.perks.TrapperPerk.clearAllWebs();
 
         // Announce winner
         String prefix = ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix", ""));
@@ -671,28 +679,40 @@ public class GameManager {
         humanTeam.clear();
         vampireTeam.clear();
 
-        // Restore all joined players to their survival state
-        scoreboardManager.setupLobbyScoreboard();
+        // Wipe all players' game state and park them in the main world during arena reset
         for (UUID uuid : new HashSet<>(joinedPlayers)) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline()) {
-                // resetPlayerFully wipes game state (perks, effects, modifiers)
                 resetPlayerFully(player);
-                // Restore their saved survival inventory and teleport back
-                if (playerStateManager != null) {
-                    playerStateManager.restore(player);
-                }
+                player.getInventory().clear();
+                player.getInventory().setArmorContents(null);
+                player.getInventory().setItemInOffHand(null);
+                player.setGameMode(org.bukkit.GameMode.ADVENTURE);
+                player.setHealth(player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getBaseValue());
+                player.setFoodLevel(20);
+                player.setSaturation(20f);
+                // Temporarily send to main world while arena resets
+                player.teleport(Bukkit.getWorlds().get(0).getSpawnLocation());
             }
         }
-        joinedPlayers.clear();
-        scoreboardManager.updateLobbyScoreboard(0, minPlayers);
 
-        // Reset the arena world (async copy from template, then reload)
+        // Reset the arena world, then teleport players to lobby in the fresh arena
         if (arenaManager != null && arenaManager.hasTemplate()) {
             arenaManager.resetArena(() -> {
-                // Reload spawns so they point to the new world instance
                 loadSpawns();
                 plugin.getLogger().info("Arena world has been reset and reloaded.");
+
+                scoreboardManager.setupLobbyScoreboard();
+                for (UUID uuid : new HashSet<>(joinedPlayers)) {
+                    Player player = Bukkit.getPlayer(uuid);
+                    if (player != null && player.isOnline()) {
+                        if (lobbySpawn != null) {
+                            player.teleport(lobbySpawn);
+                        }
+                        scoreboardManager.showLobbyScoreboard(player);
+                    }
+                }
+                scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers);
             });
         }
     }

@@ -22,13 +22,13 @@ public class HealingPotionsPerk extends Perk {
 
     public HealingPotionsPerk() {
         super("healing_potions", "Healing Potions", PerkTier.SILVER, PerkTeam.HUMAN,
-                Material.POTION,
-                "Start with 3 Instant Health potions",
+                Material.SPLASH_POTION,
+                "Start with 3 Splash Healing potions",
                 "Regenerate 1 every 2 minutes");
     }
 
     private ItemStack createPotion() {
-        ItemStack potion = new ItemStack(Material.POTION);
+        ItemStack potion = new ItemStack(Material.SPLASH_POTION);
         PotionMeta meta = (PotionMeta) potion.getItemMeta();
         if (meta != null) {
             meta.setBasePotionData(new PotionData(PotionType.HEALING, false, false));

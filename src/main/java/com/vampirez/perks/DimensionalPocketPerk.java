@@ -97,7 +97,7 @@ public class DimensionalPocketPerk extends Perk {
         } else if (storedTime != null && (now - storedTime) <= STORE_DURATION_MS) {
             // Swap HP
             double currentHP = player.getHealth();
-            double maxHealth = player.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+            double maxHealth = player.getAttribute(Attribute.MAX_HEALTH).getValue();
             double swapHP = Math.min(stored, maxHealth);
 
             player.setHealth(Math.max(swapHP, 1.0)); // Don't kill the player

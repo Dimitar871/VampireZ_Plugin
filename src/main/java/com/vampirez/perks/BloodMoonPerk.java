@@ -128,9 +128,9 @@ public class BloodMoonPerk extends Perk {
         if (!(victim instanceof Player)) return;
         if (!activePlayers.contains(attacker.getUniqueId())) return;
 
-        // 20% lifesteal
+        // 20% lifesteal (use getValue() to include modifiers from other perks)
         double healAmount = event.getDamage() * LIFESTEAL_PERCENT;
-        double maxHealth = attacker.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+        double maxHealth = attacker.getAttribute(Attribute.MAX_HEALTH).getValue();
         double currentHealth = attacker.getHealth();
         double actualHeal = Math.min(healAmount, maxHealth - currentHealth);
         attacker.setHealth(Math.min(currentHealth + healAmount, maxHealth));

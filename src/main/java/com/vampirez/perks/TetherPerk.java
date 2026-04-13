@@ -26,7 +26,7 @@ public class TetherPerk extends Perk {
         super("tether", "Tether", PerkTier.GOLD, PerkTeam.VAMPIRE,
                 Material.CHAIN,
                 "Right-click: pull nearest enemy",
-                "within 12 blocks toward you (15s cd)");
+                "within 30 blocks toward you (15s cd)");
     }
 
     @Override
@@ -70,8 +70,8 @@ public class TetherPerk extends Perk {
 
         // Find nearest enemy
         Player nearest = null;
-        double nearestDist = 12.0;
-        for (Entity entity : player.getNearbyEntities(12, 12, 12)) {
+        double nearestDist = 30.0;
+        for (Entity entity : player.getNearbyEntities(30, 30, 30)) {
             if (!(entity instanceof Player target)) continue;
             if (isSameTeam(player, target)) continue;
             double dist = player.getLocation().distance(target.getLocation());
@@ -97,7 +97,7 @@ public class TetherPerk extends Perk {
 
         // Pull enemy toward caster
         Vector direction = player.getLocation().toVector().subtract(nearest.getLocation().toVector()).normalize();
-        nearest.setVelocity(direction.multiply(1.2).setY(0.4));
+        nearest.setVelocity(direction.multiply(4.8).setY(0.6));
 
         nearest.getWorld().spawnParticle(Particle.CRIT, nearest.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3, 0.1);
         player.playSound(player.getLocation(), Sound.BLOCK_CHAIN_BREAK, 1.0f, 0.8f);

@@ -48,7 +48,7 @@ public class AnkhOfRebirthPerk extends Perk {
         Location deathLoc = deathLocations.remove(uuid);
         if (deathLoc != null) {
             player.teleport(deathLoc);
-            double maxHealth = player.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+            double maxHealth = player.getAttribute(Attribute.MAX_HEALTH).getValue();
             player.setHealth(maxHealth * 0.6);
 
             player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, deathLoc.clone().add(0, 1, 0), 40, 0.5, 1, 0.5, 0.1);

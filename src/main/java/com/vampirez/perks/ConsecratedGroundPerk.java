@@ -117,7 +117,7 @@ public class ConsecratedGroundPerk extends Perk {
         for (Entity entity : zoneLoc.getWorld().getNearbyEntities(zoneLoc, ZONE_RADIUS, ZONE_RADIUS, ZONE_RADIUS)) {
             if (!(entity instanceof Player target)) continue;
             if (target.getUniqueId().equals(uuid) || isSameTeam(player, target)) {
-                double maxHealth = target.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+                double maxHealth = target.getAttribute(Attribute.MAX_HEALTH).getValue();
                 if (target.getHealth() < maxHealth) {
                     target.setHealth(Math.min(target.getHealth() + 1.0, maxHealth));
                     addStat(uuid, "healing_done", 1.0);

@@ -54,7 +54,7 @@ public class RegenerativePerk extends Perk {
             }
 
             if (count[0] < pulses && player != null) {
-                double maxHealth = player.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+                double maxHealth = player.getAttribute(Attribute.MAX_HEALTH).getValue();
                 if (player.getHealth() < maxHealth) {
                     player.setHealth(Math.min(player.getHealth() + healPerPulse, maxHealth));
                     player.getWorld().spawnParticle(Particle.HEART, player.getLocation().add(0, 2, 0), 2, 0.3, 0.2, 0.3, 0);

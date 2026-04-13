@@ -1,0 +1,23 @@
+# Claude Code session/memory data
+.claude/
+CLAUDE.md
+
+# Maven build output
+target/
+dependency-reduced-pom.xml
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Misc
+newPerks.txt
+nul

@@ -44,7 +44,7 @@ public class InfectiousBitePerk extends Perk {
             if (!isSameTeam(killer, nearby)) continue;
             if (nearby.getLocation().distance(killer.getLocation()) > RADIUS) continue;
 
-            double maxHealth = nearby.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+            double maxHealth = nearby.getAttribute(Attribute.MAX_HEALTH).getValue();
             nearby.setHealth(Math.min(nearby.getHealth() + HEAL_AMOUNT, maxHealth));
             nearby.getWorld().spawnParticle(Particle.HEART, nearby.getLocation().add(0, 2, 0), 5, 0.3, 0.3, 0.3, 0);
             nearby.playSound(nearby.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.5f);

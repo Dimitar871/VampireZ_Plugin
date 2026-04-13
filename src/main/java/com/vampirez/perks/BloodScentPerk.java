@@ -33,7 +33,7 @@ public class BloodScentPerk extends Perk {
             if (!(entity instanceof Player target)) continue;
             if (isSameTeam(player, target)) continue;
 
-            double maxHealth = target.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+            double maxHealth = target.getAttribute(Attribute.MAX_HEALTH).getValue();
             if (target.getHealth() < maxHealth * 0.5) {
                 target.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 30, 0, false, false));
                 // Red particles around glowing targets

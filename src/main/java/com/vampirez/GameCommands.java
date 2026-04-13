@@ -246,14 +246,20 @@ public class GameCommands implements CommandExecutor {
             player.sendMessage(ChatColor.RED + "No permission!");
             return;
         }
-        ArenaManager arenaManager = gameManager.getArenaManager();
-        if (arenaManager == null || arenaManager.getArenaWorld() == null) {
-            player.sendMessage(ChatColor.RED + "Arena world is not loaded!");
-            return;
+        if (gameManager.getLobbySpawn() != null) {
+            player.teleport(gameManager.getLobbySpawn());
+        } else {
+            // First time setup — lobby not set yet, teleport to arena world spawn
+            ArenaManager arenaManager = gameManager.getArenaManager();
+            if (arenaManager == null || arenaManager.getArenaWorld() == null) {
+                player.sendMessage(ChatColor.RED + "Arena world is not loaded!");
+                return;
+            }
+            player.teleport(arenaManager.getArenaWorld().getSpawnLocation());
         }
-        org.bukkit.World arenaWorld = arenaManager.getArenaWorld();
-        player.teleport(arenaWorld.getSpawnLocation());
-        player.sendMessage(ChatColor.GREEN + "Teleported to arena world: " + arenaWorld.getName());
+        player.setGameMode(org.bukkit.GameMode.ADVENTURE);
+        player.sendMessage(ChatColor.GREEN + "Teleported to the arena.");
+        player.sendMessage(ChatColor.GRAY + "Use /vz setlobby, /vz sethumanspawn, /vz setvampspawn to configure.");
     }
 
     private void handleTest(Player player) {

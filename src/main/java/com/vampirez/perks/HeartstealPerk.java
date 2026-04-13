@@ -25,6 +25,9 @@ public class HeartstealPerk extends Perk {
     private static final long COOLDOWN_MS = 60000;
     private static final double PROXIMITY_RANGE = 10.0;
 
+    // Tracks total HP gained per player so remove() can subtract the correct amount
+    private final Map<UUID, Double> totalHpGained = new HashMap<>();
+
     public HeartstealPerk() {
         super("heartsteal", "Heartsteal", PerkTier.GOLD, PerkTeam.BOTH,
                 Material.GOLDEN_APPLE,
@@ -41,8 +44,16 @@ public class HeartstealPerk extends Perk {
         UUID uuid = player.getUniqueId();
         nearbyTracking.remove(uuid);
         targetCooldowns.remove(uuid);
-        // Reset max health back to default
-        player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(20.0);
+        // Subtract only the HP gained from this perk, not a hard reset to 20
+        double gained = totalHpGained.getOrDefault(uuid, 0.0);
+        if (gained > 0) {
+            double current = player.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+            player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(Math.max(current - gained, 2.0));
+            if (player.getHealth() > player.getAttribute(Attribute.MAX_HEALTH).getValue()) {
+                player.setHealth(player.getAttribute(Attribute.MAX_HEALTH).getValue());
+            }
+        }
+        totalHpGained.remove(uuid);
     }
 
     @Override
@@ -96,6 +107,7 @@ public class HeartstealPerk extends Perk {
         double newMax = currentMax + 1.0;
         attacker.getAttribute(Attribute.MAX_HEALTH).setBaseValue(newMax);
         attacker.setHealth(Math.min(attacker.getHealth() + 1.0, newMax));
+        totalHpGained.merge(attackerUUID, 1.0, Double::sum);
 
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_WITCH_DRINK, 0.5f, 1.5f);
         // Particles and feedback

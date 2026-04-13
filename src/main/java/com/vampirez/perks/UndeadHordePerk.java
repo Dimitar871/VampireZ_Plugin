@@ -57,6 +57,8 @@ public class UndeadHordePerk extends Perk {
             zombie.setBaby(false);
             zombie.getEquipment().setItemInMainHand(new ItemStack(Material.WOODEN_SWORD));
             zombie.getEquipment().setItemInMainHandDropChance(0);
+            zombie.getEquipment().setHelmet(new ItemStack(Material.LEATHER_HELMET));
+            zombie.getEquipment().setHelmetDropChance(0);
             zombie.setMetadata("vampirez_team", new FixedMetadataValue(getPlugin(), "VAMPIRE"));
 
             Bukkit.getScheduler().runTaskLater(getPlugin(), () -> {

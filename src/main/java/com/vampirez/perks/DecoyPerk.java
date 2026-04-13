@@ -55,7 +55,7 @@ public class DecoyPerk extends Perk {
 
         // Check HP after damage
         double healthAfter = victim.getHealth() - event.getFinalDamage();
-        double maxHealth = victim.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+        double maxHealth = victim.getAttribute(Attribute.MAX_HEALTH).getValue();
 
         if (healthAfter > maxHealth * 0.2) return;
         if (healthAfter <= 0) return;

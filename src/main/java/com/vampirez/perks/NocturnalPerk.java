@@ -45,8 +45,8 @@ public class NocturnalPerk extends Perk {
             // Remove day penalty (-2 HP = -1 heart)
             player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(current + 2.0);
         }
-        if (player.getHealth() > player.getAttribute(Attribute.MAX_HEALTH).getBaseValue()) {
-            player.setHealth(player.getAttribute(Attribute.MAX_HEALTH).getBaseValue());
+        if (player.getHealth() > player.getAttribute(Attribute.MAX_HEALTH).getValue()) {
+            player.setHealth(player.getAttribute(Attribute.MAX_HEALTH).getValue());
         }
     }
 
@@ -81,8 +81,9 @@ public class NocturnalPerk extends Perk {
 
         current = Math.max(current, 2.0); // Minimum 1 heart
         player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(current);
-        if (player.getHealth() > current) {
-            player.setHealth(current);
+        double actualMax = player.getAttribute(Attribute.MAX_HEALTH).getValue();
+        if (player.getHealth() > actualMax) {
+            player.setHealth(actualMax);
         }
 
         isNightState.put(uuid, isNight);

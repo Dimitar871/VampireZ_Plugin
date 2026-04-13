@@ -24,18 +24,18 @@ public class SpeedPotionsPerk extends Perk {
 
     public SpeedPotionsPerk() {
         super("speed_potions", "Speed Potions", PerkTier.SILVER, PerkTeam.HUMAN,
-                Material.POTION,
-                "Start with 3 Speed potions",
+                Material.SPLASH_POTION,
+                "Start with 3 Splash Speed potions",
                 "Regenerate 1 every 2 minutes");
     }
 
     private ItemStack createPotion() {
-        ItemStack potion = new ItemStack(Material.POTION);
+        ItemStack potion = new ItemStack(Material.SPLASH_POTION);
         PotionMeta meta = (PotionMeta) potion.getItemMeta();
         if (meta != null) {
             meta.setBasePotionData(new PotionData(PotionType.WATER));
             meta.addCustomEffect(new PotionEffect(PotionEffectType.SPEED, 600, 0), true); // 30 seconds
-            meta.setDisplayName(ChatColor.AQUA + "Potion of Speed");
+            meta.setDisplayName(ChatColor.AQUA + "Splash Potion of Speed");
             meta.setColor(org.bukkit.Color.fromRGB(124, 175, 198));
             potion.setItemMeta(meta);
         }

@@ -142,7 +142,7 @@ public class ReapersMarkPerk extends Perk {
 
         Long timestamp = markTimestamps.get(killerUUID);
         if (timestamp != null && (System.currentTimeMillis() - timestamp) <= MARK_DURATION_MS) {
-            double maxHealth = killer.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+            double maxHealth = killer.getAttribute(Attribute.MAX_HEALTH).getValue();
             killer.setHealth(maxHealth);
             killer.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, killer.getLocation().add(0, 1, 0), 30, 0.5, 1, 0.5, 0.1);
             killer.playSound(killer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);

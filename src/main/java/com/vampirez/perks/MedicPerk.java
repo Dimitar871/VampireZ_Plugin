@@ -62,7 +62,7 @@ public class MedicPerk extends Perk {
         // If teammate, cancel damage and heal
         if (isSameTeam(attacker, target)) {
             event.setCancelled(true);
-            double maxHealth = target.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+            double maxHealth = target.getAttribute(Attribute.MAX_HEALTH).getValue();
             double healAmount = 6.0; // 3 hearts
             target.setHealth(Math.min(target.getHealth() + healAmount, maxHealth));
             target.getWorld().spawnParticle(Particle.HEART, target.getLocation().add(0, 2, 0), 6, 0.3, 0.3, 0.3, 0);

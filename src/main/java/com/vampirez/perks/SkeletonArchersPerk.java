@@ -56,6 +56,8 @@ public class SkeletonArchersPerk extends Perk {
             skeleton.setCustomNameVisible(true);
             skeleton.getEquipment().setItemInMainHand(new ItemStack(Material.BOW));
             skeleton.getEquipment().setItemInMainHandDropChance(0);
+            skeleton.getEquipment().setHelmet(new ItemStack(Material.LEATHER_HELMET));
+            skeleton.getEquipment().setHelmetDropChance(0);
             skeleton.setMetadata("vampirez_team", new FixedMetadataValue(getPlugin(), "VAMPIRE"));
 
             Bukkit.getScheduler().runTaskLater(getPlugin(), () -> {

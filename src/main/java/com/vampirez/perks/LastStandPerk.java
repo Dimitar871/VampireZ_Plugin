@@ -35,7 +35,7 @@ public class LastStandPerk extends Perk {
     public void remove(Player player) {}
 
     private boolean isLowHealth(Player player) {
-        double maxHealth = player.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+        double maxHealth = player.getAttribute(Attribute.MAX_HEALTH).getValue();
         return player.getHealth() <= maxHealth * HP_THRESHOLD;
     }
 

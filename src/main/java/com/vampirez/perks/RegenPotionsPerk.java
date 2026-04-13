@@ -24,18 +24,18 @@ public class RegenPotionsPerk extends Perk {
 
     public RegenPotionsPerk() {
         super("regen_potions", "Regeneration Potions", PerkTier.PRISMATIC, PerkTeam.HUMAN,
-                Material.POTION,
-                "Start with 3 Regeneration potions",
+                Material.SPLASH_POTION,
+                "Start with 3 Splash Regeneration potions",
                 "Regenerate 1 every 2 minutes");
     }
 
     private ItemStack createPotion() {
-        ItemStack potion = new ItemStack(Material.POTION);
+        ItemStack potion = new ItemStack(Material.SPLASH_POTION);
         PotionMeta meta = (PotionMeta) potion.getItemMeta();
         if (meta != null) {
             meta.setBasePotionData(new PotionData(PotionType.WATER));
             meta.addCustomEffect(new PotionEffect(PotionEffectType.REGENERATION, 600, 0), true); // 30 seconds
-            meta.setDisplayName(ChatColor.LIGHT_PURPLE + "Potion of Regeneration");
+            meta.setDisplayName(ChatColor.LIGHT_PURPLE + "Splash Potion of Regeneration");
             meta.setColor(org.bukkit.Color.fromRGB(205, 92, 171));
             potion.setItemMeta(meta);
         }

@@ -45,7 +45,7 @@ public class MartyrPerk extends Perk {
             if (!(entity instanceof Player ally)) continue;
             if (!isSameTeam(player, ally)) continue;
 
-            double maxHealth = ally.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+            double maxHealth = ally.getAttribute(Attribute.MAX_HEALTH).getValue();
             ally.setHealth(Math.min(ally.getHealth() + 8.0, maxHealth));
             ally.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 100, 1, false, true));
             ally.sendMessage(ChatColor.GOLD + "Martyr! " + player.getName() + "'s sacrifice heals you!");

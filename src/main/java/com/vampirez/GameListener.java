@@ -12,14 +12,17 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -235,15 +238,33 @@ public class GameListener implements Listener {
 
     // ===== ARENA PROTECTION =====
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockBreak(BlockBreakEvent event) {
-        if (event.getPlayer() != null && gameManager.isJoined(event.getPlayer().getUniqueId())) {
-            event.setCancelled(true);
+        if (event.getPlayer() != null) {
+            // Protect arena world from ALL players, always
+            if (isArenaWorld(event.getPlayer().getWorld())) {
+                event.setCancelled(true);
+                return;
+            }
+            if (gameManager.isJoined(event.getPlayer().getUniqueId())) {
+                event.setCancelled(true);
+            }
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockPlace(BlockPlaceEvent event) {
+        if (isArenaWorld(event.getPlayer().getWorld())) {
+            // Allow Trapper perk cobweb placement
+            if (event.getBlock().getType() == Material.COBWEB
+                    && com.vampirez.perks.TrapperPerk.isTrapWeb(event.getItemInHand())
+                    && gameManager.getState() == GameState.ACTIVE) {
+                com.vampirez.perks.TrapperPerk.trackPlacedWeb(event.getBlock(), plugin);
+                return;
+            }
+            event.setCancelled(true);
+            return;
+        }
         if (gameManager.isJoined(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
         }
@@ -252,6 +273,26 @@ public class GameListener implements Listener {
     @EventHandler
     public void onItemDrop(PlayerDropItemEvent event) {
         if (gameManager.isJoined(event.getPlayer().getUniqueId())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onItemPickup(EntityPickupItemEvent event) {
+        if (!(event.getEntity() instanceof Player player)) return;
+        if (gameManager.isJoined(player.getUniqueId())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        if (!gameManager.isJoined(player.getUniqueId())) return;
+        // Block interaction with real-world containers (chests, barrels, etc.)
+        // Plugin GUIs use null holder, real containers have a block holder
+        if (event.getInventory().getHolder() != null
+                && !(event.getInventory().getHolder() instanceof Player)) {
             event.setCancelled(true);
         }
     }
@@ -321,9 +362,8 @@ public class GameListener implements Listener {
         // Allow plugin-spawned mobs (from perks like Undead Horde, Wolf Pack, etc.)
         if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.CUSTOM) return;
 
-        // Only block natural mob spawning in the arena world (don't affect survival worlds)
-        org.bukkit.Location humanSpawn = gameManager.getHumanSpawn();
-        if (humanSpawn == null || !event.getEntity().getWorld().equals(humanSpawn.getWorld())) return;
+        // Block natural mob spawning in the arena world (check ArenaManager first, fallback to humanSpawn)
+        if (!isArenaWorld(event.getEntity().getWorld())) return;
 
         if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.NATURAL
                 || event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.SPAWNER
@@ -338,7 +378,34 @@ public class GameListener implements Listener {
         }
     }
 
+    // ===== MOB GRIEFING PROTECTION =====
+
+    @EventHandler
+    public void onEntityExplode(EntityExplodeEvent event) {
+        if (isArenaWorld(event.getEntity().getWorld())) {
+            event.blockList().clear(); // Allow damage but no block destruction
+        }
+    }
+
+    @EventHandler
+    public void onEntityChangeBlock(EntityChangeBlockEvent event) {
+        if (event.getEntity() instanceof Player) return;
+        if (isArenaWorld(event.getEntity().getWorld())) {
+            event.setCancelled(true); // Block endermen, withers, etc. from changing blocks
+        }
+    }
+
     // ===== HELPER =====
+
+    private boolean isArenaWorld(org.bukkit.World world) {
+        ArenaManager arenaManager = gameManager.getArenaManager();
+        if (arenaManager != null && arenaManager.getArenaWorld() != null) {
+            return world.equals(arenaManager.getArenaWorld());
+        }
+        // Fallback: check against humanSpawn world
+        org.bukkit.Location humanSpawn = gameManager.getHumanSpawn();
+        return humanSpawn != null && world.equals(humanSpawn.getWorld());
+    }
 
     private Player resolveAttacker(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player) {

@@ -92,6 +92,7 @@ public class ArenaManager {
             world.setKeepSpawnInMemory(false);
             world.setGameRule(org.bukkit.GameRule.RANDOM_TICK_SPEED, 0);
             world.setGameRule(org.bukkit.GameRule.DO_MOB_SPAWNING, false);
+            world.setGameRule(org.bukkit.GameRule.MOB_GRIEFING, false);
             world.setGameRule(org.bukkit.GameRule.DO_FIRE_TICK, false);
             world.setGameRule(org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, false);
             world.setGameRule(org.bukkit.GameRule.DO_WEATHER_CYCLE, false);

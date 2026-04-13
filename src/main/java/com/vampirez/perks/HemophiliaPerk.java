@@ -16,8 +16,8 @@ import java.util.*;
 
 public class HemophiliaPerk extends Perk {
 
-    // attackerUUID -> (targetUUID -> timestamp)
-    private final Map<UUID, Map<UUID, Long>> bleedsByAttacker = new HashMap<>();
+    // attackerUUID -> (targetUUID -> timestamp) — static so Plague Doctor can clear bleeds
+    private static final Map<UUID, Map<UUID, Long>> activeBleedsByAttacker = new HashMap<>();
     private static final long BLEED_DURATION_MS = 4000;
 
     public HemophiliaPerk() {
@@ -32,13 +32,13 @@ public class HemophiliaPerk extends Perk {
 
     @Override
     public void remove(Player player) {
-        bleedsByAttacker.remove(player.getUniqueId());
+        activeBleedsByAttacker.remove(player.getUniqueId());
     }
 
     @Override
     public void onTick(Player player) {
         UUID attackerUUID = player.getUniqueId();
-        Map<UUID, Long> targets = bleedsByAttacker.get(attackerUUID);
+        Map<UUID, Long> targets = activeBleedsByAttacker.get(attackerUUID);
         if (targets == null || targets.isEmpty()) return;
 
         long now = System.currentTimeMillis();
@@ -70,7 +70,7 @@ public class HemophiliaPerk extends Perk {
         if (!(victim instanceof Player target)) return;
 
         UUID attackerUUID = attacker.getUniqueId();
-        bleedsByAttacker.computeIfAbsent(attackerUUID, k -> new HashMap<>())
+        activeBleedsByAttacker.computeIfAbsent(attackerUUID, k -> new HashMap<>())
                 .put(target.getUniqueId(), System.currentTimeMillis());
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_GENERIC_DRINK, 0.5f, 0.6f);
         // Blood spray on hit
@@ -79,6 +79,20 @@ public class HemophiliaPerk extends Perk {
         target.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, target.getLocation().add(0, 1.2, 0), 5, 0.2, 0.3, 0.2, 0.02);
         incrementStat(attackerUUID, "bleeds_applied");
         target.sendMessage(ChatColor.DARK_RED + "You are bleeding!");
+    }
+
+    /**
+     * Remove all active bleeds on a target (used by Plague Doctor).
+     * @return true if any bleeds were cleared
+     */
+    public static boolean clearBleedsOn(UUID targetUUID) {
+        boolean cleared = false;
+        for (Map<UUID, Long> targets : activeBleedsByAttacker.values()) {
+            if (targets.remove(targetUUID) != null) {
+                cleared = true;
+            }
+        }
+        return cleared;
     }
 
     @Override

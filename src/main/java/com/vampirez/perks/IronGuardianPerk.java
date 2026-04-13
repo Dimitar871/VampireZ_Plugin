@@ -38,11 +38,12 @@ public class IronGuardianPerk extends Perk {
     public void onKill(Player killer, Player victim) {
         incrementStat(killer.getUniqueId(), "summons");
 
-        IronGolem golem = (IronGolem) killer.getWorld().spawnEntity(
-                killer.getLocation().add(2, 0, 0), EntityType.IRON_GOLEM);
-        golem.setCustomName(ChatColor.GREEN + killer.getName() + "'s Golem");
-        golem.setCustomNameVisible(true);
-        golem.setMetadata("vampirez_team", new FixedMetadataValue(getPlugin(), "HUMAN"));
+        IronGolem golem = killer.getWorld().spawn(
+                killer.getLocation().add(2, 0, 0), IronGolem.class, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, g -> {
+            g.setCustomName(ChatColor.GREEN + killer.getName() + "'s Golem");
+            g.setCustomNameVisible(true);
+            g.setMetadata("vampirez_team", new FixedMetadataValue(getPlugin(), "HUMAN"));
+        });
 
         // Periodically retarget nearest vampire (iron golems don't naturally attack players)
         VampireZPlugin vPlugin = (VampireZPlugin) getPlugin();

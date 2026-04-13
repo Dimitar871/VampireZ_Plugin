@@ -50,8 +50,8 @@ public class SiphonPerk extends Perk {
         // Extra 2 HP damage
         event.setDamage(event.getDamage() + 2.0);
 
-        // Heal self 2 HP
-        double maxHealth = attacker.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+        // Heal self 2 HP (use getValue() to include modifiers from other perks)
+        double maxHealth = attacker.getAttribute(Attribute.MAX_HEALTH).getValue();
         double currentHealth = attacker.getHealth();
         double actualHeal = Math.min(2.0, maxHealth - currentHealth);
         attacker.setHealth(Math.min(currentHealth + 2.0, maxHealth));
