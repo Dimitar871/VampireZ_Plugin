@@ -140,6 +140,28 @@ public class PerkListener implements Listener {
         }
     }
 
+    /**
+     * HIGHEST priority: runs AFTER GameListener (HIGH) sets base damage.
+     * Applies Nether Blade damage multiplier on top of the final base damage.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onDamagePost(EntityDamageByEntityEvent event) {
+        if (event.isCancelled()) return;
+        if (!(event.getEntity() instanceof Player)) return;
+
+        Player attacker = resolveAttacker(event);
+        if (attacker == null) return;
+
+        Double mult = com.vampirez.perks.NetherBladePerk.consumeDamageMultiplier(attacker.getUniqueId());
+        if (mult != null) {
+            event.setDamage(event.getDamage() * mult);
+            // Re-apply damage cap
+            if (event.getDamage() > 7.0) {
+                event.setDamage(7.0);
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.NORMAL)
     public void onDeath(PlayerDeathEvent event) {
         Player victim = event.getEntity();

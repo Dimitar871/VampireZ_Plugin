@@ -21,7 +21,10 @@ public class PowerShotPerk extends Perk {
     public void apply(Player player) {
         for (ItemStack item : player.getInventory().getContents()) {
             if (item != null && item.getType() == Material.BOW) {
-                item.addUnsafeEnchantment(Enchantment.POWER, 1);
+                // Only upgrade, never downgrade (Galeforce bow may already have higher Power)
+                if (item.getEnchantmentLevel(Enchantment.POWER) < 1) {
+                    item.addUnsafeEnchantment(Enchantment.POWER, 1);
+                }
                 return;
             }
         }

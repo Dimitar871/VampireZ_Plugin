@@ -242,6 +242,35 @@ public class PlayerStateManager {
         return new File(dataFolder, uuid + ".yml").exists();
     }
 
+    /**
+     * Deletes the saved state file for a player without restoring it.
+     * Used when the game ends while the player is online — their state was already
+     * restored via resetToLobby, so the file is stale and should not be restored on next login.
+     */
+    public void clearSavedState(UUID uuid) {
+        File file = new File(dataFolder, uuid + ".yml");
+        if (file.exists()) {
+            file.delete();
+            plugin.getLogger().info("Cleared saved state for " + uuid);
+        }
+    }
+
+    /**
+     * Deletes ALL saved state files on disk. Called on server shutdown
+     * to ensure no stale files remain after a restart.
+     */
+    public void clearAllSavedStates() {
+        File[] files = dataFolder.listFiles((dir, name) -> name.endsWith(".yml"));
+        if (files != null) {
+            for (File file : files) {
+                file.delete();
+            }
+            if (files.length > 0) {
+                plugin.getLogger().info("Cleared " + files.length + " saved player state(s).");
+            }
+        }
+    }
+
     // ===== Serialization helpers =====
 
     private List<ItemStack> itemArrayToList(ItemStack[] items) {

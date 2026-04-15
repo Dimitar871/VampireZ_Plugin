@@ -46,6 +46,18 @@ public class PerkManager {
         return true;
     }
 
+    /**
+     * Adds a perk bypassing the max perk limit. Used by Lucky Roll Prismatic.
+     */
+    public void forceAddPerkToPlayer(UUID uuid, Perk perk) {
+        List<Perk> perks = playerPerks.computeIfAbsent(uuid, k -> new ArrayList<>());
+        perks.add(perk);
+        Player player = Bukkit.getPlayer(uuid);
+        if (player != null && !player.isDead()) {
+            perk.apply(player);
+        }
+    }
+
     public void removePerk(UUID uuid, Perk perk) {
         List<Perk> perks = playerPerks.get(uuid);
         if (perks != null) {

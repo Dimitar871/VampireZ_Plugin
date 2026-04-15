@@ -13,6 +13,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
@@ -25,6 +26,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 
 import org.bukkit.Bukkit;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.UUID;
@@ -129,12 +131,26 @@ public class GameListener implements Listener {
         }
 
         // Team-based flat damage with partial armor, only when holding a weapon
-        Material weapon = attacker.getInventory().getItemInMainHand().getType();
+        ItemStack weaponItem = attacker.getInventory().getItemInMainHand();
+        Material weapon = weaponItem.getType();
         if (weapon.name().contains("SWORD") || weapon.name().contains("AXE")) {
             // Humans deal 5.0 HP (2.5 hearts), vampires deal 4.0 HP (2 hearts)
             // Scale by attack cooldown so attack speed perks are meaningful
             double cooldown = attacker.getAttackCooldown(); // 0.0 to 1.0
-            double baseDamage = (attackerHuman ? 5.0 : 4.0) * cooldown;
+            double baseDamage = (attackerHuman ? 5.0 : 4.0);
+
+            // Weapon material bonus (iron is baseline for humans)
+            if (weapon.name().contains("DIAMOND")) {
+                baseDamage += 0.5;
+            } else if (weapon.name().contains("NETHERITE")) {
+                baseDamage += 1.0;
+            }
+
+            // Sharpness bonus: +0.5 HP per level
+            int sharpness = weaponItem.getEnchantmentLevel(Enchantment.SHARPNESS);
+            baseDamage += sharpness * 0.5;
+
+            baseDamage *= cooldown;
 
             // Calculate armor reduction: use 30% of vanilla armor value
             double armorPoints = victim.getAttribute(Attribute.ARMOR) != null
@@ -143,8 +159,38 @@ public class GameListener implements Listener {
             double armorReduction = armorPoints / 25.0;
             if (armorReduction > 0.8) armorReduction = 0.8;
             // Only apply 30% of the armor reduction
-            double finalDamage = baseDamage * (1.0 - armorReduction * 0.3);
+            double afterArmor = baseDamage * (1.0 - armorReduction * 0.3);
+
+            // Protection enchantment reduction: sum Protection levels across all armor
+            int totalProtection = 0;
+            for (ItemStack piece : victim.getInventory().getArmorContents()) {
+                if (piece != null && piece.getType() != Material.AIR) {
+                    totalProtection += piece.getEnchantmentLevel(Enchantment.PROTECTION);
+                }
+            }
+            // Each Protection level reduces damage by 4% (vanilla formula)
+            // Cap at 80% reduction (Protection 20, effectively unreachable but safe)
+            double protReduction = Math.min(totalProtection * 0.04, 0.80);
+            double finalDamage = afterArmor * (1.0 - protReduction);
+
+            // Set our calculated damage as the final result
             event.setDamage(finalDamage);
+
+            // Zero out vanilla armor and enchantment modifiers to prevent double-application
+            // Our formula already accounts for armor and Protection
+            try {
+                if (event.isApplicable(EntityDamageEvent.DamageModifier.ARMOR)) {
+                    event.setDamage(EntityDamageEvent.DamageModifier.ARMOR, 0);
+                }
+                if (event.isApplicable(EntityDamageEvent.DamageModifier.MAGIC)) {
+                    event.setDamage(EntityDamageEvent.DamageModifier.MAGIC, 0);
+                }
+                if (event.isApplicable(EntityDamageEvent.DamageModifier.RESISTANCE)) {
+                    event.setDamage(EntityDamageEvent.DamageModifier.RESISTANCE, 0);
+                }
+            } catch (UnsupportedOperationException ignored) {
+                // Some modifiers may not be applicable depending on damage cause
+            }
         }
 
         // Track damage for assists
@@ -289,6 +335,15 @@ public class GameListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         if (!gameManager.isJoined(player.getUniqueId())) return;
+
+        // During active game, allow chests (for map loot) and anvils (for enchanted books)
+        if (gameManager.getState() == GameState.ACTIVE) {
+            InventoryType invType = event.getInventory().getType();
+            if (invType == InventoryType.CHEST || invType == InventoryType.ANVIL) {
+                return; // Allow interaction
+            }
+        }
+
         // Block interaction with real-world containers (chests, barrels, etc.)
         // Plugin GUIs use null holder, real containers have a block holder
         if (event.getInventory().getHolder() != null

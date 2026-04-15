@@ -97,8 +97,12 @@ public class VampireZPlugin extends JavaPlugin {
         getLogger().info("VampireZ Plugin Disabled!");
         if (perkListener != null) perkListener.stopTickTask();
         if (leapListener != null) leapListener.clearCooldowns();
-        if (gameManager != null && gameManager.getState() != GameState.LOBBY) {
-            gameManager.stopGame();
+        if (gameManager != null) {
+            if (gameManager.getState() != GameState.LOBBY) {
+                gameManager.stopGame();
+            }
+            // Restore all lobby players' saved states so nothing is stale on restart
+            gameManager.restoreLobbyPlayers();
         }
     }
 
@@ -178,6 +182,8 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new PorcupinePerk());
         pm.registerPerk(new WarDrumsPerk());
         pm.registerPerk(new FortuneTellerPerk());
+        // Lucky Roll - Silver
+        pm.registerPerk(new LuckyRollSilverPerk());
 
         // ===== GOLD PERKS =====
         // Both teams
@@ -247,6 +253,12 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new WarHorsePerk());
         // Expansion Gold - Human
         pm.registerPerk(new FightOrBeForgottenPerk());
+        // Lucky Roll - Gold
+        pm.registerPerk(new LuckyRollGoldPerk());
+        // Nether Blade - Gold
+        pm.registerPerk(new NetherBladePerk());
+        // Long Bow - Gold - Human
+        pm.registerPerk(new LongBowPerk());
 
         // ===== PRISMATIC PERKS =====
         // Both teams
@@ -298,5 +310,9 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new BloodMoonPerk());
         pm.registerPerk(new WraithWalkPerk());
         pm.registerPerk(new CurseOfDecayPerk());
+        // Lucky Roll - Prismatic
+        pm.registerPerk(new LuckyRollPrismaticPerk());
+        // Galeforce - Prismatic
+        pm.registerPerk(new GaleforcePerk());
     }
 }
