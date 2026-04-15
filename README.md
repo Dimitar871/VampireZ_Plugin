@@ -9,7 +9,7 @@ Built for **Spigot/Paper 1.20.1** with Java 17.
 ## Features
 
 - **Two teams** - Humans (iron gear, bows) vs Vampires (leather gear, leap ability)
-- **139 unique perks** across 3 tiers (Silver, Gold, Prismatic)
+- **145 unique perks** across 3 tiers (Silver, Gold, Prismatic)
 - **Gold economy** - earn gold passively, from kills, and assists to buy perks
 - **Day/Night cycle** - vampires get Speed at night, Slowness during the day
 - **Perk shop GUI** - browse tiers, pick from 3 random options
@@ -93,7 +93,7 @@ When the game ends or a player types `/vz leave`, their full inventory, location
 - If they reconnect while the game is still running, they rejoin as a vampire with auto-assigned perks
 - If the game ends before they reconnect, their original inventory is restored on next login
 
-## Perks (139 total)
+## Perks (145 total)
 
 **Team Key:** 🔵 Human only | 🔴 Vampire only | ⚪ Both teams
 
@@ -163,8 +163,9 @@ When the game ends or a player types `/vz leave`, their full inventory, location
 | 🔴 | Blood Scent | Enemies below 50% HP glow through walls |
 | 🔴 | Feral Charge | Sprinting attacks deal +30% damage (6s cd) |
 | 🔴 | Infectious Bite | On kill: heal nearby vampires for 4 hearts |
+| ⚪ | Lucky Roll (Silver) | Replaces itself with a random Gold perk |
 
-### Gold Tier (46 perks) - Cost: 150g
+### Gold Tier (49 perks) - Cost: 150g
 
 | Team | Perk | Description |
 |:----:|------|-------------|
@@ -224,8 +225,11 @@ When the game ends or a player types `/vz leave`, their full inventory, location
 | 🔴 | Shadow Ambush | 3s invisibility, next hit +50% damage (30s cd) |
 | 🔴 | Spider Climb | Wall climbing ability |
 | 🔴 | Plague Carrier | Spread poison to nearby enemies over time |
+| ⚪ | Lucky Roll (Gold) | Replaces itself with a random Prismatic perk |
+| ⚪ | Nether Blade | Upgradeable wooden sword with 5 tiers. Max tier unlocks a healing dash |
+| 🔵 | Long Bow | +1% arrow damage per block traveled (cap +50%). 75+ blocks = instant kill |
 
-### Prismatic Tier (43 perks) - Cost: 400g
+### Prismatic Tier (45 perks) - Cost: 400g
 
 | Team | Perk | Description |
 |:----:|------|-------------|
@@ -270,6 +274,8 @@ When the game ends or a player types `/vz leave`, their full inventory, location
 | 🔴 | Blood Moon | Allies get Speed I + 20% lifesteal for 8s (90s cd) |
 | 🔴 | Wraith Walk | 4s ghost form, on expiry AoE Blindness + Slow (35s cd) |
 | 🔴 | Curse of Decay | Attacks curse enemies: 50% reduced healing for 6s |
+| ⚪ | Lucky Roll (Prismatic) | Replaces itself with 2 random Prismatic perks |
+| ⚪ | Galeforce | Upgradeable bow with 4 tiers. Max tier unlocks a dash + regen ability |
 
 ## Configuration
 
