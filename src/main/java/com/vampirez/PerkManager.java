@@ -10,7 +10,7 @@ public class PerkManager {
 
     private final Map<String, Perk> perkRegistry = new LinkedHashMap<>();
     private final Map<UUID, List<Perk>> playerPerks = new HashMap<>();
-    private int maxPerks = 4;
+    private int maxPerks = 10;
 
     public void setMaxPerks(int max) {
         this.maxPerks = max;

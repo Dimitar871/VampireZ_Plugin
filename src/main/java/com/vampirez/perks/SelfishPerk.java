@@ -5,6 +5,7 @@ import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.VampireZPlugin;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -20,13 +21,16 @@ public class SelfishPerk extends Perk {
     private static final double CHECK_RADIUS = 25.0;
     private static final double BONUS_HEARTS = 6.0; // +6 max hearts = +12 HP
     private final Set<UUID> activeState = new HashSet<>();
+    // Track which teammates are currently in range to avoid spamming notifications
+    private final Map<UUID, Set<UUID>> nearbyTeammates = new HashMap<>();
 
     public SelfishPerk() {
         super("selfish", "Selfish", PerkTier.GOLD, PerkTeam.BOTH,
                 Material.GOLDEN_APPLE,
                 "No teammates within 25 blocks:",
                 "  +6 max hearts + Strength I.",
-                "Teammate enters range: bonus removed.");
+                "Nearby teammates are marked",
+                "and notified they're in your zone.");
     }
 
     @Override
@@ -40,6 +44,7 @@ public class SelfishPerk extends Perk {
         if (activeState.remove(uuid)) {
             removeBonus(player);
         }
+        nearbyTeammates.remove(uuid);
     }
 
     @Override
@@ -48,7 +53,34 @@ public class SelfishPerk extends Perk {
         VampireZPlugin plugin = (VampireZPlugin) getPlugin();
         if (plugin.getGameManager() == null) return;
 
-        boolean alone = isAlone(player, plugin);
+        // Find all teammates in range
+        List<Player> inRange = getTeammatesInRange(player, plugin);
+        Set<UUID> currentNearby = new HashSet<>();
+        for (Player t : inRange) currentNearby.add(t.getUniqueId());
+        Set<UUID> previousNearby = nearbyTeammates.getOrDefault(uuid, Collections.emptySet());
+
+        // Notify on new entries
+        for (Player teammate : inRange) {
+            if (!previousNearby.contains(teammate.getUniqueId())) {
+                // New teammate entered range — notify both
+                player.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "SELFISH: " +
+                        ChatColor.RESET + ChatColor.YELLOW + teammate.getName() +
+                        ChatColor.GRAY + " entered your zone! Bonus removed.");
+                player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.4f, 1.5f);
+
+                teammate.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "WARNING: " +
+                        ChatColor.RESET + ChatColor.GRAY + "You entered " +
+                        ChatColor.YELLOW + player.getName() + "'s " +
+                        ChatColor.GOLD + "Selfish" + ChatColor.GRAY + " zone! Stay 25+ blocks away.");
+                teammate.playSound(teammate.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.5f);
+            }
+            // Glowing effect on nearby teammates so selfish player can see them
+            teammate.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 25, 0, false, false, false), true);
+        }
+
+        nearbyTeammates.put(uuid, currentNearby);
+
+        boolean alone = inRange.isEmpty();
 
         if (alone && !activeState.contains(uuid)) {
             // Activate bonus
@@ -60,36 +92,35 @@ public class SelfishPerk extends Perk {
             // Deactivate bonus
             activeState.remove(uuid);
             removeBonus(player);
-            player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.3f, 1.5f);
         } else if (alone && activeState.contains(uuid)) {
             // Refresh Strength I
             player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 30, 0, true, true, true), true);
         }
     }
 
-    private boolean isAlone(Player player, VampireZPlugin plugin) {
+    private List<Player> getTeammatesInRange(Player player, VampireZPlugin plugin) {
         UUID uuid = player.getUniqueId();
         Set<UUID> team;
 
-        // Check which team the player is on
         if (plugin.getGameManager().getHumanTeam().contains(uuid)) {
             team = plugin.getGameManager().getHumanTeam();
         } else if (plugin.getGameManager().getVampireTeam().contains(uuid)) {
             team = plugin.getGameManager().getVampireTeam();
         } else {
-            return false;
+            return Collections.emptyList();
         }
 
+        List<Player> result = new ArrayList<>();
         for (UUID teammateUUID : team) {
             if (teammateUUID.equals(uuid)) continue;
             Player teammate = Bukkit.getPlayer(teammateUUID);
             if (teammate != null && teammate.isOnline() && teammate.getWorld().equals(player.getWorld())) {
                 if (teammate.getLocation().distance(player.getLocation()) <= CHECK_RADIUS) {
-                    return false;
+                    result.add(teammate);
                 }
             }
         }
-        return true;
+        return result;
     }
 
     private void applyBonus(Player player) {

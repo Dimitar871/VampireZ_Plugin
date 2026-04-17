@@ -75,7 +75,7 @@ public class GameManager {
         vampireRespawnDelayTicks = plugin.getConfig().getInt("game.vampire-respawn-delay-ticks", 80);
         startCountdownSeconds = plugin.getConfig().getInt("game.start-countdown-seconds", 15);
 
-        perkManager.setMaxPerks(plugin.getConfig().getInt("perks.max-perks-per-player", 4));
+        perkManager.setMaxPerks(plugin.getConfig().getInt("perks.max-perks-per-player", 10));
 
         loadSpawns();
     }
@@ -597,9 +597,11 @@ public class GameManager {
             perkManager.reapplyPerks(uuid);
             dayNightManager.applyEffectsToPlayer(player);
             if (statAnvilManager != null) statAnvilManager.reapplyBuffs(player);
-            // Speed II for 5 seconds on respawn for a faster start
-            player.addPotionEffect(new org.bukkit.potion.PotionEffect(
-                    org.bukkit.potion.PotionEffectType.SPEED, 100, 1, false, false));
+            // Speed II for 5 seconds on respawn, but don't override Homeguard's Speed V
+            if (!com.vampirez.perks.HomeguardPerk.hasActiveSpeed(uuid)) {
+                player.addPotionEffect(new org.bukkit.potion.PotionEffect(
+                        org.bukkit.potion.PotionEffectType.SPEED, 100, 1, false, false));
+            }
         }, vampireRespawnDelayTicks);
     }
 

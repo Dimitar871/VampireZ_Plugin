@@ -181,6 +181,9 @@ public class StatAnvilManager implements Listener {
                 double currentMax = player.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
                 player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(currentMax + 4.0); // +2 hearts
                 player.setHealth(Math.min(player.getHealth() + 4.0, currentMax + 4.0));
+                // Track total applied HP for reapplyBuffs
+                UUID uuid = player.getUniqueId();
+                appliedHealth.merge(uuid, 4.0, Double::sum);
             }
             case SPEED -> {
                 double currentSpeed = player.getAttribute(Attribute.MOVEMENT_SPEED).getBaseValue();
@@ -198,18 +201,50 @@ public class StatAnvilManager implements Listener {
 
     /**
      * Re-apply all attribute-based buffs (called on respawn/conversion).
+     * Uses tracked totals to apply exact amounts on top of current base,
+     * preventing double-stacking when called multiple times.
      */
     public void reapplyBuffs(Player player) {
         UUID uuid = player.getUniqueId();
         Map<StatBuff, Integer> buffs = playerBuffs.get(uuid);
         if (buffs == null) return;
 
-        for (Map.Entry<StatBuff, Integer> entry : buffs.entrySet()) {
-            for (int i = 0; i < entry.getValue(); i++) {
-                applyBuffToPlayer(player, entry.getKey());
+        // For HEARTS: add exactly (count * 4.0) on top of the current base
+        // First subtract any previously applied stat anvil HP, then add the correct amount
+        int heartsCount = buffs.getOrDefault(StatBuff.HEARTS, 0);
+        if (heartsCount > 0) {
+            double previouslyApplied = appliedHealth.getOrDefault(uuid, 0.0);
+            double currentBase = player.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+            double withoutAnvil = currentBase - previouslyApplied;
+            double newBonus = heartsCount * 4.0;
+            player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(withoutAnvil + newBonus);
+            player.setHealth(Math.min(player.getHealth(), withoutAnvil + newBonus));
+            appliedHealth.put(uuid, newBonus);
+        }
+
+        // For SPEED: apply multiplicative boost on vanilla base
+        int speedCount = buffs.getOrDefault(StatBuff.SPEED, 0);
+        if (speedCount > 0) {
+            double base = 0.1; // vanilla walk speed
+            for (int i = 0; i < speedCount; i++) {
+                base *= 1.10;
             }
+            player.getAttribute(Attribute.MOVEMENT_SPEED).setBaseValue(base);
+        }
+
+        // For ATTACK_SPEED: apply multiplicative boost on vanilla base
+        int asCount = buffs.getOrDefault(StatBuff.ATTACK_SPEED, 0);
+        if (asCount > 0) {
+            double base = 4.0; // vanilla attack speed
+            for (int i = 0; i < asCount; i++) {
+                base *= 1.15;
+            }
+            player.getAttribute(Attribute.ATTACK_SPEED).setBaseValue(base);
         }
     }
+
+    // Track how much HP was added by stat anvil so we can subtract it before reapplying
+    private final Map<UUID, Double> appliedHealth = new HashMap<>();
 
     public int getBuffCount(UUID uuid, StatBuff buff) {
         Map<StatBuff, Integer> buffs = playerBuffs.get(uuid);

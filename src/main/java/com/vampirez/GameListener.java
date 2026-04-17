@@ -155,6 +155,22 @@ public class GameListener implements Listener {
             // Calculate armor reduction: use 30% of vanilla armor value
             double armorPoints = victim.getAttribute(Attribute.ARMOR) != null
                     ? victim.getAttribute(Attribute.ARMOR).getValue() : 0;
+
+            // Account for hidden armor (Phantom Step / Bat Form keep protection)
+            ItemStack[] armorForProtection = victim.getInventory().getArmorContents();
+            for (Perk perk : perkManager.getPlayerPerks(victimUUID)) {
+                if (perk instanceof com.vampirez.perks.PhantomStepPerk psp && psp.isPhantomActive(victimUUID)) {
+                    armorPoints += psp.getStoredArmorValue(victimUUID);
+                    armorForProtection = psp.getStoredArmor(victimUUID);
+                    break;
+                }
+                if (perk instanceof com.vampirez.perks.BatFormPerk bfp && bfp.isBatFormActive(victimUUID)) {
+                    armorPoints += bfp.getStoredArmorValue(victimUUID);
+                    armorForProtection = bfp.getStoredArmor(victimUUID);
+                    break;
+                }
+            }
+
             // Vanilla formula: armor reduces damage by armorPoints / 25 (capped)
             double armorReduction = armorPoints / 25.0;
             if (armorReduction > 0.8) armorReduction = 0.8;
@@ -163,9 +179,11 @@ public class GameListener implements Listener {
 
             // Protection enchantment reduction: sum Protection levels across all armor
             int totalProtection = 0;
-            for (ItemStack piece : victim.getInventory().getArmorContents()) {
-                if (piece != null && piece.getType() != Material.AIR) {
-                    totalProtection += piece.getEnchantmentLevel(Enchantment.PROTECTION);
+            if (armorForProtection != null) {
+                for (ItemStack piece : armorForProtection) {
+                    if (piece != null && piece.getType() != Material.AIR) {
+                        totalProtection += piece.getEnchantmentLevel(Enchantment.PROTECTION);
+                    }
                 }
             }
             // Each Protection level reduces damage by 4% (vanilla formula)

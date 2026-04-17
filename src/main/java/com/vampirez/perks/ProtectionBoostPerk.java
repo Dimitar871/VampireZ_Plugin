@@ -19,15 +19,26 @@ public class ProtectionBoostPerk extends Perk {
 
     @Override
     public void apply(Player player) {
-        ItemStack[] armor = player.getInventory().getArmorContents();
-        for (ItemStack piece : armor) {
-            if (piece != null && piece.getType() != Material.AIR) {
-                piece.addUnsafeEnchantment(Enchantment.PROTECTION, 2);
-            }
-        }
-        player.getInventory().setArmorContents(armor);
+        enchantArmor(player);
     }
 
     @Override
     public void remove(Player player) {}
+
+    @Override
+    public void onTick(Player player) {
+        enchantArmor(player);
+    }
+
+    private void enchantArmor(Player player) {
+        ItemStack[] armor = player.getInventory().getArmorContents();
+        for (ItemStack piece : armor) {
+            if (piece != null && piece.getType() != Material.AIR) {
+                if (piece.getEnchantmentLevel(Enchantment.PROTECTION) < 2) {
+                    piece.addUnsafeEnchantment(Enchantment.PROTECTION, 2);
+                }
+            }
+        }
+        player.getInventory().setArmorContents(armor);
+    }
 }

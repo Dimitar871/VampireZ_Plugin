@@ -14,14 +14,14 @@ public class KnockbackPerk extends Perk {
         super("knockback", "Knockback", PerkTier.GOLD, PerkTeam.HUMAN,
                 Material.PISTON,
                 "Your sword gets",
-                "Knockback I");
+                "Knockback II");
     }
 
     @Override
     public void apply(Player player) {
         for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.IRON_SWORD) {
-                item.addUnsafeEnchantment(Enchantment.KNOCKBACK, 1);
+            if (item != null && item.getType().name().contains("SWORD")) {
+                item.addUnsafeEnchantment(Enchantment.KNOCKBACK, 2);
                 return;
             }
         }

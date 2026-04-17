@@ -19,6 +19,20 @@ public class ThornsEnchantPerk extends Perk {
 
     @Override
     public void apply(Player player) {
+        enchantArmor(player);
+    }
+
+    @Override
+    public void remove(Player player) {}
+
+    @Override
+    public void onTick(Player player) {
+        // Re-apply to any armor piece that's missing the enchantments
+        // (handles armor upgrades from other perks acquired after this one)
+        enchantArmor(player);
+    }
+
+    private void enchantArmor(Player player) {
         ItemStack[] armor = {
             player.getInventory().getHelmet(),
             player.getInventory().getChestplate(),
@@ -26,13 +40,14 @@ public class ThornsEnchantPerk extends Perk {
             player.getInventory().getBoots()
         };
         for (ItemStack piece : armor) {
-            if (piece != null) {
-                piece.addUnsafeEnchantment(Enchantment.THORNS, 2);
-                piece.addUnsafeEnchantment(Enchantment.UNBREAKING, 3);
+            if (piece != null && piece.getType() != org.bukkit.Material.AIR) {
+                if (piece.getEnchantmentLevel(Enchantment.THORNS) < 2) {
+                    piece.addUnsafeEnchantment(Enchantment.THORNS, 2);
+                }
+                if (piece.getEnchantmentLevel(Enchantment.UNBREAKING) < 3) {
+                    piece.addUnsafeEnchantment(Enchantment.UNBREAKING, 3);
+                }
             }
         }
     }
-
-    @Override
-    public void remove(Player player) {}
 }

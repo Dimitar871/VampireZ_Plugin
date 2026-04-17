@@ -23,13 +23,15 @@ public class BatFormPerk extends Perk {
 
     private final Map<UUID, Long> cooldowns = new HashMap<>();
     private final Map<UUID, ItemStack[]> storedArmor = new HashMap<>();
+    private final Set<UUID> batFormActive = new HashSet<>();
     private static final long COOLDOWN_MS = 25000;
 
     public BatFormPerk() {
         super("bat_form", "Bat Form", PerkTier.PRISMATIC, PerkTeam.VAMPIRE,
                 Material.PHANTOM_MEMBRANE,
                 "Right-click to become invisible",
-                "with Speed III for 5s (25s cooldown)");
+                "with Speed III for 5s (25s cooldown)",
+                "Armor hidden but protection kept");
     }
 
     @Override
@@ -48,6 +50,7 @@ public class BatFormPerk extends Perk {
     public void remove(Player player) {
         UUID uuid = player.getUniqueId();
         cooldowns.remove(uuid);
+        batFormActive.remove(uuid);
         // Restore armor if stored
         if (storedArmor.containsKey(uuid)) {
             player.getInventory().setArmorContents(storedArmor.remove(uuid));
@@ -58,6 +61,39 @@ public class BatFormPerk extends Perk {
                 player.getInventory().remove(item);
             }
         }
+    }
+
+    /** Returns true if the player is in bat form (armor hidden but protected). */
+    public boolean isBatFormActive(UUID uuid) {
+        return batFormActive.contains(uuid);
+    }
+
+    /** Get stored armor items for protection calculation. */
+    public ItemStack[] getStoredArmor(UUID uuid) {
+        return storedArmor.get(uuid);
+    }
+
+    /** Get stored armor points for damage calculation during bat form. */
+    public double getStoredArmorValue(UUID uuid) {
+        ItemStack[] armor = storedArmor.get(uuid);
+        if (armor == null) return 0;
+        double total = 0;
+        for (ItemStack piece : armor) {
+            if (piece == null) continue;
+            total += getArmorPoints(piece.getType());
+        }
+        return total;
+    }
+
+    private double getArmorPoints(Material mat) {
+        return switch (mat) {
+            case LEATHER_HELMET -> 1; case LEATHER_CHESTPLATE -> 3; case LEATHER_LEGGINGS -> 2; case LEATHER_BOOTS -> 1;
+            case CHAINMAIL_HELMET -> 2; case CHAINMAIL_CHESTPLATE -> 5; case CHAINMAIL_LEGGINGS -> 4; case CHAINMAIL_BOOTS -> 1;
+            case IRON_HELMET -> 2; case IRON_CHESTPLATE -> 6; case IRON_LEGGINGS -> 5; case IRON_BOOTS -> 2;
+            case DIAMOND_HELMET -> 3; case DIAMOND_CHESTPLATE -> 8; case DIAMOND_LEGGINGS -> 6; case DIAMOND_BOOTS -> 3;
+            case NETHERITE_HELMET -> 3; case NETHERITE_CHESTPLATE -> 8; case NETHERITE_LEGGINGS -> 6; case NETHERITE_BOOTS -> 3;
+            default -> 0;
+        };
     }
 
     @Override
@@ -77,9 +113,10 @@ public class BatFormPerk extends Perk {
         }
         cooldowns.put(uuid, now);
 
-        // Store and hide armor
+        // Store and hide armor visually (protection kept via damage formula)
         storedArmor.put(uuid, player.getInventory().getArmorContents().clone());
         player.getInventory().setArmorContents(new ItemStack[4]);
+        batFormActive.add(uuid);
 
         // Apply bat form effects
         player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 100, 0, false, false));
@@ -94,6 +131,7 @@ public class BatFormPerk extends Perk {
 
         // Schedule armor restore after 5s (100 ticks)
         Bukkit.getScheduler().runTaskLater(getPlugin(), () -> {
+            batFormActive.remove(uuid);
             if (storedArmor.containsKey(uuid)) {
                 Player p = Bukkit.getPlayer(uuid);
                 if (p != null && p.isOnline()) {

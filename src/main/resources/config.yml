@@ -16,7 +16,7 @@ economy:
   assist-time-window-ms: 10000
 
 perks:
-  max-perks-per-player: 6
+  max-perks-per-player: 10
   silver-cost: 50
   gold-cost: 150
   prismatic-cost: 400

@@ -23,7 +23,7 @@ public class HomeguardPerk extends Perk {
     public HomeguardPerk() {
         super("homeguard", "Homeguard", PerkTier.SILVER, PerkTeam.VAMPIRE,
                 Material.GOLDEN_BOOTS,
-                "Speed III for 5s on respawn",
+                "Speed V for 5s on respawn",
                 "Removed when taking damage");
     }
 
@@ -35,10 +35,20 @@ public class HomeguardPerk extends Perk {
         hasHomeguardSpeed.remove(player.getUniqueId());
     }
 
+    /** Check if a player currently has Homeguard speed active. */
+    public static boolean hasActiveSpeed(UUID uuid) {
+        // Static check via perk instance not possible, use onRespawn flag
+        return activeHomeguards.contains(uuid);
+    }
+
+    private static final Set<UUID> activeHomeguards = new HashSet<>();
+
     @Override
     public void onRespawn(Player player) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 100, 2, false, true));
+        // Speed V (amplifier 4) for 5s
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 100, 4, false, true));
         hasHomeguardSpeed.add(player.getUniqueId());
+        activeHomeguards.add(player.getUniqueId());
         // Golden speed trail burst on respawn
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 40, 0.6, 1.0, 0.6, 0,
                 new Particle.DustOptions(org.bukkit.Color.fromRGB(255, 215, 0), 1.8f));
@@ -49,6 +59,7 @@ public class HomeguardPerk extends Perk {
     @Override
     public void onDamageTaken(Player victim, Entity attacker, EntityDamageByEntityEvent event) {
         if (hasHomeguardSpeed.remove(victim.getUniqueId())) {
+            activeHomeguards.remove(victim.getUniqueId());
             victim.removePotionEffect(PotionEffectType.SPEED);
             victim.playSound(victim.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.6f, 1.8f);
         }

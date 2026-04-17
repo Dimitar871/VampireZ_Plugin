@@ -219,7 +219,7 @@ public class VampireZPlugin extends JavaPlugin {
         // Both teams (Gold)
         pm.registerPerk(new BerserkerPerk());
         pm.registerPerk(new SmokeBombPerk());
-        pm.registerPerk(new EnderPearlSupplyPerk());
+        // EnderPearlSupplyPerk removed
         pm.registerPerk(new IronRationsPerk());
         // Expansion Gold - Both
         pm.registerPerk(new LastStandPerk());
@@ -279,7 +279,7 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new HolyShieldPerk());
         pm.registerPerk(new TemporalShieldPerk());
         pm.registerPerk(new IronGuardianPerk());
-        pm.registerPerk(new DiamondEdgePerk());
+        // DiamondEdgePerk removed
         pm.registerPerk(new ThornsEnchantPerk());
         pm.registerPerk(new RegenPotionsPerk());
         // Vampire only
@@ -295,7 +295,7 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new WitherGuardPerk());
         // Expansion Prismatic - Both
         pm.registerPerk(new ChainLightningPerk());
-        pm.registerPerk(new DeathsGambitPerk());
+        // DeathsGambitPerk removed
         pm.registerPerk(new PlagueDoctorPerk());
         // Expansion Prismatic - Human
         pm.registerPerk(new RadiantAuraPerk());

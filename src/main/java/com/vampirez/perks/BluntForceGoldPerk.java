@@ -13,7 +13,7 @@ public class BluntForceGoldPerk extends Perk {
 
     public BluntForceGoldPerk() {
         super("blunt_force_gold", "Blunt Force II", PerkTier.GOLD, PerkTeam.VAMPIRE,
-                Material.GOLD_INGOT, "+20% melee damage");
+                Material.GOLD_INGOT, "+30% melee damage");
     }
 
     @Override
@@ -24,7 +24,7 @@ public class BluntForceGoldPerk extends Perk {
 
     @Override
     public void onDamageDealt(Player attacker, Entity victim, EntityDamageByEntityEvent event) {
-        event.setDamage(event.getDamage() * 1.2);
+        event.setDamage(event.getDamage() * 1.3);
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, 0.5f, 0.8f);
     }
 }
