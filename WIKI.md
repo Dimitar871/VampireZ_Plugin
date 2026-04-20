@@ -72,7 +72,7 @@ A sword or axe in the main hand is required for the custom formula to trigger �
 ### Step 1 — Base damage
 
 $$
-\text{base} \;=\; \begin{cases} 5.0 \text{ HP} & \text{attacker is Human} \\ 4.0 \text{ HP} & \text{attacker is Vampire} \end{cases}
+\text{base} = \begin{cases} 5.0 \text{ HP} & \text{attacker is Human} \\ 4.0 \text{ HP} & \text{attacker is Vampire} \end{cases}
 $$
 
 ### Step 2 — Weapon material bonus
@@ -80,7 +80,7 @@ $$
 Added to the base before any scaling.
 
 $$
-\text{material bonus} \;=\; \begin{cases}
+\text{material bonus} = \begin{cases}
 +0.0 & \text{Wood, Stone, Gold, Iron} \\
 +0.5 & \text{Diamond} \\
 +1.0 & \text{Netherite}
@@ -90,7 +90,7 @@ $$
 ### Step 3 — Sharpness enchantment
 
 $$
-\text{sharpness bonus} \;=\; 0.5 \;\times\; \text{sharpness level}
+\text{sharpness bonus} = 0.5 \times \text{sharpness level}
 $$
 
 ### Step 4 — Attack-cooldown scaling
@@ -98,7 +98,7 @@ $$
 The attack cooldown is a value from 0 (just-swung) to 1 (fully recharged).
 
 $$
-\text{raw damage} \;=\; \bigl(\,\text{base} \;+\; \text{material bonus} \;+\; \text{sharpness bonus}\,\bigr) \;\times\; \text{cooldown}
+\text{raw damage} = (\text{base} + \text{material bonus} + \text{sharpness bonus}) \times \text{cooldown}
 $$
 
 Spamming clicks sends cooldown toward 0, so raw damage shrinks with it — a fully recharged hit is worth ten spammed hits.
@@ -108,11 +108,11 @@ Spamming clicks sends cooldown toward 0, so raw damage shrinks with it — a ful
 Vanilla Minecraft reduces damage aggressively through armor. VampireZ keeps only **30 %** of that effect so iron armor stays meaningful without trivialising attacks.
 
 $$
-\text{armor reduction} \;=\; \min\!\left(\,\frac{\text{armor points}}{25}\,,\; 0.80\,\right)
+\text{armor reduction} = \min\left(\frac{\text{armor points}}{25},\ 0.80\right)
 $$
 
 $$
-\text{after armor} \;=\; \text{raw damage} \;\times\; \bigl(1 \;-\; \text{armor reduction} \times 0.30\bigr)
+\text{after armor} = \text{raw damage} \times (1 - \text{armor reduction} \times 0.30)
 $$
 
 > *Example:* Full Iron armor = 20 armor points. Vanilla would reduce damage by 80 %. Here we keep 30 % of that → **24 % reduction**.
@@ -122,11 +122,11 @@ $$
 Each level of Protection on any armor piece reduces damage by 4 %, capped at 80 %.
 
 $$
-\text{protection reduction} \;=\; \min\!\left(\,0.04 \;\times\; \sum \text{Protection levels}\,,\; 0.80\,\right)
+\text{protection reduction} = \min\left(0.04 \times \sum \text{Protection levels},\ 0.80\right)
 $$
 
 $$
-\text{final base} \;=\; \text{after armor} \;\times\; \bigl(1 \;-\; \text{protection reduction}\bigr)
+\text{final base} = \text{after armor} \times (1 - \text{protection reduction})
 $$
 
 > *Example:* Full Iron with Protection I on every piece = `4 × 4 % = 16 %` further reduction.
@@ -137,12 +137,12 @@ Perks layer on top of the base damage. The order matters because some are multip
 
 $$
 \begin{aligned}
-\text{d}_1 &\;=\; \text{final base} &\text{(attacker's own perks adjust first)} \\
-\text{d}_2 &\;=\; \text{d}_1 &\text{(then victim's defensive perks)} \\
-\text{d}_3 &\;=\; \text{d}_2 \;\times\; 1.10 &\text{if attacker has War Drums aura} \\
-\text{d}_4 &\;=\; \text{d}_3 \;+\; 2.0 &\text{if attacker has Bard damage aura} \\
-\text{d}_5 &\;=\; \text{d}_4 \;\times\; (1 + 0.05 \cdot \text{cleaver stacks}) &\text{up to } \times 1.25 \\
-\text{d}_6 &\;=\; \text{d}_5 \;\times\; \text{anvil multiplier} &\text{if any}
+\text{d}_1 &= \text{final base} &\text{(attacker's own perks adjust first)} \\
+\text{d}_2 &= \text{d}_1 &\text{(then victim's defensive perks)} \\
+\text{d}_3 &= \text{d}_2 \times 1.10 &\text{if attacker has War Drums aura} \\
+\text{d}_4 &= \text{d}_3 + 2.0 &\text{if attacker has Bard damage aura} \\
+\text{d}_5 &= \text{d}_4 \times (1 + 0.05 \cdot \text{cleaver stacks}) &\text{up to } \times 1.25 \\
+\text{d}_6 &= \text{d}_5 \times \text{anvil multiplier} &\text{if any}
 \end{aligned}
 $$
 
@@ -151,7 +151,7 @@ $$
 After every modifier, damage is clamped so no combo can one-shot:
 
 $$
-\text{damage} \;=\; \min\!\bigl(\,\text{d}_6 \,,\; 7.0 \text{ HP}\,\bigr)
+\text{damage} = \min(\text{d}_6,\ 7.0 \text{ HP})
 $$
 
 ### Step 9 — Special weapons
@@ -159,7 +159,7 @@ $$
 If the attacker's sword has a special post-processing buff (Nether Blade at max tier), that multiplier is applied *after* the cap, then the cap is re-enforced:
 
 $$
-\text{damage} \;=\; \min\!\bigl(\,\text{damage} \;\times\; \text{special mult} \,,\; 7.0 \text{ HP}\,\bigr)
+\text{damage} = \min(\text{damage} \times \text{special mult},\ 7.0 \text{ HP})
 $$
 
 ### Other combat rules
@@ -211,7 +211,7 @@ Every time a player takes damage, the attacker is remembered for a rolling **10-
 ### Starting ratio
 
 $$
-\text{vampire count} \;=\; \max\!\bigl(\,1,\; \text{round}(\text{players} \times 0.30)\,\bigr)
+\text{vampire count} = \max(1,\ \text{round}(\text{players} \times 0.30))
 $$
 
 10 players → 3 vampires, 7 humans. Picks are randomised each game.
