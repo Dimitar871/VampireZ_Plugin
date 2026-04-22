@@ -37,6 +37,9 @@ public class GameManager {
     private final Map<UUID, List<PerkTier>> pendingAutoPerks = new HashMap<>();
     private final Set<UUID> humanTeam = new HashSet<>();
     private final Set<UUID> vampireTeam = new HashSet<>();
+    /** Tracks the last time each player took or dealt PvP damage (combat tag). */
+    private final Map<UUID, Long> lastCombatMs = new HashMap<>();
+    private static final long COMBAT_TAG_MS = 7_000L;
     private int remainingSeconds;
     private BukkitTask timerTask;
     private BukkitTask scoreboardTask;
@@ -961,8 +964,32 @@ public class GameManager {
             if (!isInGame(player.getUniqueId())) continue;
             PerkTeam team = isVampire(player.getUniqueId()) ? PerkTeam.VAMPIRE : PerkTeam.HUMAN;
             PerkTier randomTier = tiers[RANDOM.nextInt(tiers.length)];
-            startPerkRollAnimation(player, randomTier, team);
+            scheduleTimedPerkRoll(player, randomTier, team);
         }
+    }
+
+    /** Defers the roll animation until the player has been out of combat for {@link #COMBAT_TAG_MS}. */
+    private void scheduleTimedPerkRoll(Player player, PerkTier finalTier, PerkTeam team) {
+        UUID uuid = player.getUniqueId();
+        if (!isInCombat(uuid)) {
+            startPerkRollAnimation(player, finalTier, team);
+            return;
+        }
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                new TextComponent(finalTier.getColor() + "★ Perk roll queued — resolves when combat ends ★"));
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!player.isOnline() || !isInGame(uuid) || state != GameState.ACTIVE) {
+                    cancel();
+                    return;
+                }
+                if (!isInCombat(uuid)) {
+                    cancel();
+                    startPerkRollAnimation(player, finalTier, team);
+                }
+            }
+        }.runTaskTimer(plugin, 20L, 20L);
     }
 
     private void startPerkRollAnimation(Player player, PerkTier finalTier, PerkTeam team) {
@@ -1072,6 +1099,12 @@ public class GameManager {
     public boolean isHuman(UUID uuid) { return humanTeam.contains(uuid); }
     public boolean isVampire(UUID uuid) { return vampireTeam.contains(uuid); }
     public boolean isVampiresReleased() { return vampiresReleased; }
+
+    public void tagCombat(UUID uuid) { lastCombatMs.put(uuid, System.currentTimeMillis()); }
+    public boolean isInCombat(UUID uuid) {
+        Long ts = lastCombatMs.get(uuid);
+        return ts != null && System.currentTimeMillis() - ts < COMBAT_TAG_MS;
+    }
 
     /**
      * Restores saved states for all players still in the lobby.

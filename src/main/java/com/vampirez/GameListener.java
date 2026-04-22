@@ -130,6 +130,10 @@ public class GameListener implements Listener {
             return;
         }
 
+        // Combat tag for deferring UI pop-ups (timed perk rolls)
+        gameManager.tagCombat(attackerUUID);
+        gameManager.tagCombat(victimUUID);
+
         // Team-based flat damage with partial armor, only when holding a weapon
         ItemStack weaponItem = attacker.getInventory().getItemInMainHand();
         Material weapon = weaponItem.getType();

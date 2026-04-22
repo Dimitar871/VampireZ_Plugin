@@ -48,6 +48,8 @@ The game lives in a single state machine: `LOBBY → STARTING → ACTIVE → END
 | 5:00 elapsed | Free perk pick — **random tier** (roll animation + 3 perk choices) |
 | 10:00 elapsed | Free perk pick — **random tier** |
 | 15:00 elapsed | Free perk pick — **random tier** |
+
+> If you're in a fight when the timer fires, the roll is **queued** — it resolves once you've been out of combat for 7 seconds, so the perk GUI never pops open mid-duel. Taking or dealing PvP damage refreshes the tag.
 | 5:00 / 1:00 / 0:30 remaining | Milestone broadcast |
 | last 5 s | Final countdown |
 
@@ -424,6 +426,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/recovery_compass.png" width="24"> | 🔵 | Always Connected | Reveal all humans + heal 1 ♥ each (45 s cd) |
 | <img src="images/perks/golden_sword.png" width="24"> | 🔵 | Fight or be Forgotten | Fatal: 30 s invuln then convert to vampire |
 | <img src="images/perks/bow.png" width="24"> | 🔵 | Long Bow | +1 % arrow dmg per block (cap +50 %); 75+ blocks = instakill |
+| <img src="images/perks/turtle_helmet.png" width="24"> | 🔵 | Ninja Turtle | Below y=20: Resistance II + Speed II. In water: +Strength I |
 | <img src="images/perks/gold_ingot.png" width="24"> | 🔴 | Blunt Force II | +20 % melee damage (stacks with Silver) |
 | <img src="images/perks/chorus_fruit.png" width="24"> | 🔴 | Shadow Strike | Teleport behind nearest enemy (15 s cd) |
 | <img src="images/perks/blue_ice.png" width="24"> | 🔴 | Frost Bite | Attacks apply Slowness I + Frost Walker boots |

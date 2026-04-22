@@ -259,6 +259,8 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new NetherBladePerk());
         // Long Bow - Gold - Human
         pm.registerPerk(new LongBowPerk());
+        // Ninja Turtle - Gold - Human
+        pm.registerPerk(new NinjaTurtlePerk());
 
         // ===== PRISMATIC PERKS =====
         // Both teams
