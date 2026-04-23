@@ -27,30 +27,19 @@ Built for **Spigot / Paper 1.20.1** with Java 17.
 
 ## Installation
 
-### Quick install (pre-built)
+Requirements: **Paper or Spigot 1.20.1+** and **Java 17+**.
 
-1. Download `VampireZ-1.0.0.jar` from the [Releases](../../releases) page.
-2. Drop it into your server's `plugins/` folder.
-3. Start or restart the server.
-4. (Optional) Download `VampireZ-Map.zip` and extract the `world` folder into your server directory.
-
-### Build from source
-
-Requires **Java 17** and **Maven**.
-
-```bash
-mvn clean package
-```
-
-The built JAR lands at `target/VampireZ-1.0.0.jar`. Copy it into `plugins/`.
+1. Download the latest `VampireZ-*.jar` from the [Releases](../../releases) page (or build with `mvn clean package`) and drop it into your server's `plugins/` folder.
+2. Download `VampireZ-Map.zip`, extract it, and rename the extracted `world` folder to **`arena-template`**. Place that folder in your server root (next to `plugins/`, `server.properties`). Leave your existing `world/` alone — the plugin clones a fresh copy of `arena-template/` every round.
+3. Start the server.
 
 ---
 
 ## First-Time Setup
 
-Spawns persist in `config.yml`, so this is a **one-time** setup per server:
+Spawns persist in `plugins/VampireZ/config.yml`, so this is a **one-time** setup:
 
-1. `/vz arena` — teleport to the arena world.
+1. `/vz arena` — teleport into the arena world.
 2. Walk to the lobby area → `/vz setlobby`.
 3. Walk to the human spawn → `/vz sethumanspawn`.
 4. Walk to the vampire spawn → `/vz setvampspawn`.
