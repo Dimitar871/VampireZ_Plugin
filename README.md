@@ -30,7 +30,7 @@ Built for **Spigot / Paper 1.21.3+** with Java 17.
 Requirements: **Paper or Spigot 1.21.3+** and **Java 17+**.
 
 1. Download the latest `VampireZ-*.jar` from the [Releases](../../releases) page (or build with `mvn clean package`) and drop it into your server's `plugins/` folder.
-2. Download `VampireZ-Map.zip`, extract it, and rename the extracted `world` folder to **`arena-template`**. Place that folder in your server root (next to `plugins/`, `server.properties`). Leave your existing `world/` alone — the plugin clones a fresh copy of `arena-template/` every round.
+2. Download `VampireZ-Map.zip` and extract it into your server root (next to `plugins/`, `server.properties`). It already contains an **`arena-template/`** folder. Leave your existing `world/` alone — the plugin clones a fresh copy of `arena-template/` every round.
 3. Start the server.
 
 ---
