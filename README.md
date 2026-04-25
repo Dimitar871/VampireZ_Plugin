@@ -6,7 +6,7 @@
 
 A Minecraft minigame plugin where **Humans survive against Vampires** for 25 minutes. Dead humans convert into vampires — the last surviving human wins the round, or the vampires do if they wipe everyone out.
 
-Built for **Spigot / Paper 1.20.1** with Java 17.
+Built for **Spigot / Paper 1.21.3+** with Java 17.
 
 > 📖 Full game mechanics, damage math, and the complete 145-perk catalogue live in the **[Wiki](WIKI.md)**.
 
@@ -27,7 +27,7 @@ Built for **Spigot / Paper 1.20.1** with Java 17.
 
 ## Installation
 
-Requirements: **Paper or Spigot 1.20.1+** and **Java 17+**.
+Requirements: **Paper or Spigot 1.21.3+** and **Java 17+**.
 
 1. Download the latest `VampireZ-*.jar` from the [Releases](../../releases) page (or build with `mvn clean package`) and drop it into your server's `plugins/` folder.
 2. Download `VampireZ-Map.zip`, extract it, and rename the extracted `world` folder to **`arena-template`**. Place that folder in your server root (next to `plugins/`, `server.properties`). Leave your existing `world/` alone — the plugin clones a fresh copy of `arena-template/` every round.
@@ -105,7 +105,7 @@ The full schema and tuning tips are in the [Wiki → Configuration](WIKI.md#conf
 
 ## Requirements
 
-- Spigot or Paper 1.20.1+
+- Spigot or Paper 1.21.3+
 - Java 17+
 
 ---
