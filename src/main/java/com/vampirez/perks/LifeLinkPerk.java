@@ -4,18 +4,20 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.EquipmentSlotGroup;
 
 import java.util.*;
 
 public class LifeLinkPerk extends Perk {
 
-    private static final String MODIFIER_NAME = "LifeLink";
+    private static final NamespacedKey MODIFIER_KEY = new NamespacedKey("vampirez", "life_link");
     private final Set<UUID> hasBuff = new HashSet<>();
 
     public LifeLinkPerk() {
@@ -61,14 +63,14 @@ public class LifeLinkPerk extends Perk {
         AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr == null) return;
         removeModifier(player);
-        attr.addModifier(new AttributeModifier(MODIFIER_NAME, 4.0, AttributeModifier.Operation.ADD_NUMBER));
+        attr.addModifier(new AttributeModifier(MODIFIER_KEY, 4.0, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.ANY));
     }
 
     private void removeModifier(Player player) {
         AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr == null) return;
-        for (AttributeModifier mod : attr.getModifiers()) {
-            if (mod.getName().equals(MODIFIER_NAME)) {
+        for (AttributeModifier mod : new ArrayList<>(attr.getModifiers())) {
+            if (MODIFIER_KEY.equals(mod.getKey())) {
                 attr.removeModifier(mod);
             }
         }

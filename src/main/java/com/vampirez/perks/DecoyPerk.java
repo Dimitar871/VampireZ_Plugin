@@ -6,6 +6,7 @@ import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
@@ -15,6 +16,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -117,12 +119,12 @@ public class DecoyPerk extends Perk {
         victim.getInventory().setBoots(null);
 
         // Add attribute modifiers to keep the same defense without visible armor
-        UUID armorModId = UUID.randomUUID();
-        UUID toughnessModId = UUID.randomUUID();
-        AttributeModifier armorMod = new AttributeModifier(armorModId, "decoy_armor", armorValue,
-                AttributeModifier.Operation.ADD_NUMBER);
-        AttributeModifier toughnessMod = new AttributeModifier(toughnessModId, "decoy_toughness", toughnessValue,
-                AttributeModifier.Operation.ADD_NUMBER);
+        NamespacedKey armorKey = new NamespacedKey("vampirez", "decoy_armor_" + UUID.randomUUID());
+        NamespacedKey toughnessKey = new NamespacedKey("vampirez", "decoy_toughness_" + UUID.randomUUID());
+        AttributeModifier armorMod = new AttributeModifier(armorKey, armorValue,
+                AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.ANY);
+        AttributeModifier toughnessMod = new AttributeModifier(toughnessKey, toughnessValue,
+                AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.ANY);
         if (armorAttr != null) armorAttr.addModifier(armorMod);
         if (toughnessAttr != null) toughnessAttr.addModifier(toughnessMod);
 

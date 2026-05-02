@@ -4,16 +4,18 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.EquipmentSlotGroup;
 
 import java.util.ArrayList;
 
 public class SwiftStrikesPerk extends Perk {
 
-    private static final String MODIFIER_NAME = "swift_strikes_speed";
+    private static final NamespacedKey MODIFIER_KEY = new NamespacedKey("vampirez", "swift_strikes_speed");
 
     public SwiftStrikesPerk() {
         super("swift_strikes", "Swift Strikes", PerkTier.SILVER, PerkTeam.BOTH,
@@ -26,9 +28,9 @@ public class SwiftStrikesPerk extends Perk {
         AttributeInstance attr = player.getAttribute(Attribute.ATTACK_SPEED);
         if (attr != null) {
             for (AttributeModifier mod : new ArrayList<>(attr.getModifiers())) {
-                if (mod.getName().equals(MODIFIER_NAME)) attr.removeModifier(mod);
+                if (MODIFIER_KEY.equals(mod.getKey())) attr.removeModifier(mod);
             }
-            attr.addModifier(new AttributeModifier(MODIFIER_NAME, 0.15, AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+            attr.addModifier(new AttributeModifier(MODIFIER_KEY, 0.15, AttributeModifier.Operation.MULTIPLY_SCALAR_1, EquipmentSlotGroup.ANY));
         }
     }
 
@@ -36,9 +38,9 @@ public class SwiftStrikesPerk extends Perk {
     public void remove(Player player) {
         AttributeInstance attr = player.getAttribute(Attribute.ATTACK_SPEED);
         if (attr != null) {
-            attr.getModifiers().stream()
-                    .filter(m -> m.getName().equals(MODIFIER_NAME))
-                    .forEach(attr::removeModifier);
+            for (AttributeModifier mod : new ArrayList<>(attr.getModifiers())) {
+                if (MODIFIER_KEY.equals(mod.getKey())) attr.removeModifier(mod);
+            }
         }
     }
 }
