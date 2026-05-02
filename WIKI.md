@@ -12,17 +12,36 @@ For install & usage, see the [README](README.md).
 
 ## Table of Contents
 
-1. [Game Flow](#game-flow)
-2. [Combat System](#combat-system)
-3. [Economy](#economy)
-4. [Day / Night Cycle](#day--night-cycle)
-5. [Teams & Conversion](#teams--conversion)
-6. [Gear Loadouts](#gear-loadouts)
-7. [Perk System](#perk-system)
-8. [Full Perk Catalogue](#full-perk-catalogue)
-9. [Commands Reference](#commands-reference)
-10. [Configuration Reference](#configuration-reference)
-11. [Arena Map](#arena-map)
+1. [Overview](#overview)
+2. [Game Flow](#game-flow)
+3. [Combat System](#combat-system)
+4. [Economy](#economy)
+5. [Day / Night Cycle](#day--night-cycle)
+6. [Teams & Conversion](#teams--conversion)
+7. [Gear Loadouts](#gear-loadouts)
+8. [Perk System](#perk-system)
+9. [Full Perk Catalogue](#full-perk-catalogue)
+10. [Commands Reference](#commands-reference)
+11. [Configuration Reference](#configuration-reference)
+12. [Arena Map](#arena-map)
+
+---
+
+## Overview
+
+VampireZ is a **team-based survival minigame**. When the game starts, ~30 % of the players are picked at random to be **Vampires** and the rest become **Humans**. They're dropped into the same arena and fight for **25 minutes**.
+
+The catch: **every Human who dies respawns as a Vampire.** Vampires never run out of lives — they just respawn after 4 seconds — but Humans don't get to come back as Humans. That single rule pulls the whole game in two directions.
+
+### Objectives
+- 🛡️ **Humans win** if at least one Human is still alive when the 25-minute timer hits zero. Survive — don't be a hero.
+- 🩸 **Vampires win** the moment the Human team is empty. Convert everyone before time runs out.
+
+### The core loop
+- Earn **gold** from passive income, kills, and assists, then spend it on **perks** that reshape your kit.
+- Every player picks free perks at fixed milestones (game start, 5 / 10 / 15 min) and can buy more from the shop any time.
+- A **day / night cycle** alternates Vampire buffs (Night = Speed I) and debuffs (Day = Slowness I) — Humans plan offensives around it.
+- Combat uses a custom damage formula with a **7 HP cap per hit** so no perk combo can one-shot.
 
 ---
 
