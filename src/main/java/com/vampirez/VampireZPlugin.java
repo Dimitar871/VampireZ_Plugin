@@ -1,14 +1,23 @@
 package com.vampirez;
 
+import com.vampirez.api.VampireZAPI;
+import com.vampirez.api.VampireZAPIImpl;
+import com.vampirez.engine.DataDrivenPerk;
+import com.vampirez.engine.PerkConfigLoader;
 import com.vampirez.perks.*;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+
 public class VampireZPlugin extends JavaPlugin {
+
+    private static VampireZAPI api;
 
     private GameManager gameManager;
     private ArenaManager arenaManager;
@@ -19,10 +28,14 @@ public class VampireZPlugin extends JavaPlugin {
     public GameManager getGameManager() { return gameManager; }
     public ArenaManager getArenaManager() { return arenaManager; }
 
+    /** Public API entry point. Returns null until {@link #onEnable()} has run. */
+    public static VampireZAPI getAPI() { return api; }
+
     @Override
     public void onEnable() {
         getLogger().info("VampireZ Plugin Enabled!");
         saveDefaultConfig();
+        saveResource("perks.yml", false);
 
         // 0. Initialize arena manager and load the arena world
         arenaManager = new ArenaManager(this);
@@ -60,8 +73,15 @@ public class VampireZPlugin extends JavaPlugin {
         gameManager.setPerkSelectionGUI(perkSelectionGUI);
         gameManager.setStatAnvilManager(statAnvilManager);
 
-        // 5. Register commands
-        getCommand("vampirez").setExecutor(new GameCommands(gameManager, perkShopGUI, perkTestGUI));
+        // 4b. Register public API (services manager + static accessor)
+        api = new VampireZAPIImpl(gameManager);
+        Bukkit.getServicesManager().register(VampireZAPI.class, api, this, ServicePriority.Normal);
+        getLogger().info("VampireZAPI registered with ServicesManager");
+
+        // 5. Register commands (executor + tab completer)
+        GameCommands gameCommands = new GameCommands(gameManager, perkShopGUI, perkTestGUI, api);
+        getCommand("vampirez").setExecutor(gameCommands);
+        getCommand("vampirez").setTabCompleter(gameCommands);
 
         // 6. Register event listeners
         getServer().getPluginManager().registerEvents(
@@ -73,6 +93,9 @@ public class VampireZPlugin extends JavaPlugin {
 
         leapListener = new VampireLeapListener(this, gameManager);
         getServer().getPluginManager().registerEvents(leapListener, this);
+
+        // Listener for debug-tool items (left-click → run command)
+        getServer().getPluginManager().registerEvents(new DebugBookManager(), this);
 
         getServer().getPluginManager().registerEvents(perkShopGUI, this);
         getServer().getPluginManager().registerEvents(perkSelectionGUI, this);
@@ -104,22 +127,26 @@ public class VampireZPlugin extends JavaPlugin {
             // Restore all lobby players' saved states so nothing is stale on restart
             gameManager.restoreLobbyPlayers();
         }
+        Bukkit.getServicesManager().unregisterAll(this);
+        api = null;
     }
 
     private void registerAllPerks(PerkManager pm) {
+        // ===== Data-driven perks (loaded from perks.yml) =====
+        PerkConfigLoader loader = new PerkConfigLoader(getLogger());
+        File perksYml = new File(getDataFolder(), "perks.yml");
+        for (DataDrivenPerk p : loader.loadAll(perksYml)) {
+            pm.registerPerk(p);
+        }
+
         // ===== SILVER PERKS =====
         // Both teams
-        pm.registerPerk(new BluntForcePerk());
         pm.registerPerk(new DeftPerk());
         pm.registerPerk(new HeavyHitterPerk());
         pm.registerPerk(new GoredrinkPerk());
         pm.registerPerk(new EscapePlanWeakPerk());
-        pm.registerPerk(new VitalityPerk());
-        pm.registerPerk(new ToughSkinPerk());
-        pm.registerPerk(new SwiftStrikesPerk());
         // Human only
         pm.registerPerk(new FirstAidKitPerk());
-        pm.registerPerk(new BuffBuddiesPerk());
         pm.registerPerk(new SteadyAimPerk());
         // Vampire only
         pm.registerPerk(new HomeguardPerk());
@@ -129,43 +156,26 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new ThornsPerk());
         pm.registerPerk(new ArchersQuiverPerk());
         pm.registerPerk(new DeflectPerk());
-        pm.registerPerk(new FortifyPerk());
         pm.registerPerk(new GuardiansOathPerk());
-        pm.registerPerk(new WolfPackPerk());
-        pm.registerPerk(new SharpnessBoostPerk());
         pm.registerPerk(new ProtectionBoostPerk());
         pm.registerPerk(new ArrowSupplyPerk());
-        pm.registerPerk(new HealingPotionsPerk());
-        pm.registerPerk(new FireAspectPerk());
         pm.registerPerk(new SpeedPotionsPerk());
         // New Silver - Both
-        pm.registerPerk(new DashPerk());
-        pm.registerPerk(new LightweightPerk());
-        pm.registerPerk(new SecondWindPerk());
-        pm.registerPerk(new AdrenalineRushPerk());
         pm.registerPerk(new RipostePerk());
-        pm.registerPerk(new FlameArrowsPerk());
         // New Silver - Vampire
         pm.registerPerk(new ScavengerPerk());
-        pm.registerPerk(new BackstabPerk());
         pm.registerPerk(new BloodlustPerk());
-        pm.registerPerk(new PoisonFangPerk());
         pm.registerPerk(new PackHunterPerk());
         pm.registerPerk(new BoneArmorPerk());
-        pm.registerPerk(new LeechSwarmPerk());
-        pm.registerPerk(new UndeadHordePerk());
         // Expansion Silver - Both
         pm.registerPerk(new MomentumPerk());
         pm.registerPerk(new GravityWellPerk());
         // Expansion Silver - Human
-        pm.registerPerk(new RallyCryPerk());
         pm.registerPerk(new NaturalLeaderPerk());
         pm.registerPerk(new CookerPerk());
         pm.registerPerk(new MedicPerk());
         // Expansion Silver - Vampire
         pm.registerPerk(new BloodScentPerk());
-        pm.registerPerk(new FeralChargePerk());
-        pm.registerPerk(new InfectiousBitePerk());
         // Expansion Silver - Both
         pm.registerPerk(new SupplyDropPerk());
         pm.registerPerk(new ScalingPerk());
@@ -178,7 +188,6 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new RegenerativePerk());
         pm.registerPerk(new HeadhunterPerk());
         // New Silver - Human
-        pm.registerPerk(new HeavyweightPerk());
         pm.registerPerk(new PorcupinePerk());
         pm.registerPerk(new WarDrumsPerk());
         pm.registerPerk(new FortuneTellerPerk());
@@ -187,8 +196,6 @@ public class VampireZPlugin extends JavaPlugin {
 
         // ===== GOLD PERKS =====
         // Both teams
-        pm.registerPerk(new CelestialBodyPerk());
-        pm.registerPerk(new ExecutionerPerk());
         pm.registerPerk(new GetExcitedPerk());
         pm.registerPerk(new ItsCriticalPerk());
         // Human only
@@ -196,31 +203,19 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new AllForYouPerk());
         pm.registerPerk(new ArmoredUpPerk());
         pm.registerPerk(new PhoenixDownPerk());
-        pm.registerPerk(new CrossbowExpertPerk());
         pm.registerPerk(new MirrorShieldPerk());
         pm.registerPerk(new GoldenGuardPerk());
         pm.registerPerk(new BarricadePerk());
-        pm.registerPerk(new PowerShotPerk());
-        pm.registerPerk(new BlastShieldPerk());
         pm.registerPerk(new StrengthPotionsPerk());
-        pm.registerPerk(new GoldenFeastPerk());
-        pm.registerPerk(new KnockbackPerk());
         pm.registerPerk(new ChainArmorPerk());
-        pm.registerPerk(new PoisonQuiverPerk());
         // Vampire only
         pm.registerPerk(new BluntForceGoldPerk());
         pm.registerPerk(new ShadowStrikePerk());
-        pm.registerPerk(new FrostBitePerk());
         pm.registerPerk(new PhantomStepPerk());
         pm.registerPerk(new BloodPricePerk());
         pm.registerPerk(new TetherPerk());
-        pm.registerPerk(new SkeletonArchersPerk());
-        pm.registerPerk(new HarmingPotionsPerk());
         // Both teams (Gold)
-        pm.registerPerk(new BerserkerPerk());
         pm.registerPerk(new SmokeBombPerk());
-        // EnderPearlSupplyPerk removed
-        pm.registerPerk(new IronRationsPerk());
         // Expansion Gold - Both
         pm.registerPerk(new LastStandPerk());
         pm.registerPerk(new SiphonPerk());
@@ -231,7 +226,6 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new LifeLinkPerk());
         // Expansion Gold - Human
         pm.registerPerk(new ConsecratedGroundPerk());
-        pm.registerPerk(new MartyrPerk());
         pm.registerPerk(new ShieldPerk());
         // Expansion Gold - Vampire
         pm.registerPerk(new HemophiliaPerk());
@@ -265,7 +259,6 @@ public class VampireZPlugin extends JavaPlugin {
         // ===== PRISMATIC PERKS =====
         // Both teams
         pm.registerPerk(new CantTouchThisPerk());
-        pm.registerPerk(new GlassCannonPerk());
         pm.registerPerk(new GoliathPerk());
         pm.registerPerk(new ThunderstrikePerk());
         pm.registerPerk(new EarthquakePerk());
@@ -276,7 +269,6 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new NetheriteArsenalPerk());
         pm.registerPerk(new GuardianAngelPerk());
         pm.registerPerk(new TrapperPerk());
-        pm.registerPerk(new MarksmanPerk());
         pm.registerPerk(new CitadelPerk());
         pm.registerPerk(new HolyShieldPerk());
         pm.registerPerk(new TemporalShieldPerk());
@@ -285,16 +277,13 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new ThornsEnchantPerk());
         pm.registerPerk(new RegenPotionsPerk());
         // Vampire only
-        pm.registerPerk(new ErosionPerk());
         pm.registerPerk(new FinalFormPerk());
-        pm.registerPerk(new FirebrandPerk());
         pm.registerPerk(new DoubleTapPerk());
         pm.registerPerk(new BatFormPerk());
         pm.registerPerk(new SoulEaterPerk());
         pm.registerPerk(new SummonerPerk());
         pm.registerPerk(new VoidWalkerPerk());
         pm.registerPerk(new ReapersMarkPerk());
-        pm.registerPerk(new WitherGuardPerk());
         // Expansion Prismatic - Both
         pm.registerPerk(new ChainLightningPerk());
         // DeathsGambitPerk removed

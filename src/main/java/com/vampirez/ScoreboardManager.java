@@ -114,19 +114,16 @@ public class ScoreboardManager {
         else if (remainingSeconds > 60) timeColor = ChatColor.YELLOW;
         else timeColor = ChatColor.RED;
 
-        // Calculate next perk countdown
-        int gameDuration = gameManager.getGameDurationSeconds();
-        int elapsed = gameDuration - remainingSeconds;
+        // Calculate next perk countdown — skip already-fired milestones, use wall-clock elapsed
+        int elapsed = gameManager.getActiveElapsedSeconds();
         String nextPerkLine = null;
-        if (elapsed < 300) {
-            int untilNext = 300 - elapsed;
-            nextPerkLine = ChatColor.WHITE + "  Next Perk: " + ChatColor.GREEN + formatTime(untilNext) + " " + ChatColor.GRAY + "(?)";
-        } else if (elapsed < 600) {
-            int untilNext = 600 - elapsed;
-            nextPerkLine = ChatColor.WHITE + "  Next Perk: " + ChatColor.GREEN + formatTime(untilNext) + " " + ChatColor.GRAY + "(?)";
-        } else if (elapsed < 900) {
-            int untilNext = 900 - elapsed;
-            nextPerkLine = ChatColor.WHITE + "  Next Perk: " + ChatColor.GREEN + formatTime(untilNext) + " " + ChatColor.GRAY + "(?)";
+        for (int milestone : new int[] { 300, 600, 900 }) {
+            if (gameManager.hasFiredTimedMilestone(milestone)) continue;
+            if (elapsed < milestone) {
+                int untilNext = milestone - elapsed;
+                nextPerkLine = ChatColor.WHITE + "  Next Perk: " + ChatColor.GREEN + formatTime(untilNext) + " " + ChatColor.GRAY + "(?)";
+                break;
+            }
         }
 
         List<Perk> perks = perkManager.getPlayerPerks(uuid);

@@ -332,7 +332,7 @@ public class PerkShopGUI implements Listener {
         }
 
         // Add perk
-        if (perkManager.addPerkToPlayer(uuid, selectedPerk)) {
+        if (perkManager.addPerkToPlayer(uuid, selectedPerk, com.vampirez.api.event.PlayerPerkGainedEvent.Source.SHOP)) {
             player.sendMessage(ChatColor.GREEN + "Perk acquired: " + selectedPerk.getTier().getColor() + selectedPerk.getDisplayName());
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
         } else {

@@ -59,7 +59,12 @@ public class PerkListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
+    /**
+     * HIGHEST priority so perk damage modifications run AFTER GameListener (HIGH)
+     * has set its custom base damage. Otherwise GameListener's setDamage(finalDamage)
+     * overwrites whatever the perks did.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onDamage(EntityDamageByEntityEvent event) {
         // Handle attacker perks — fires if player has any perks
         Player attacker = resolveAttacker(event);

@@ -1,5 +1,9 @@
 package com.vampirez;
 
+import com.vampirez.api.event.PlayerConvertedEvent;
+import com.vampirez.api.event.PlayerVampireRespawnEvent;
+import com.vampirez.api.event.VampireZGameEndEvent;
+import com.vampirez.api.event.VampireZGameStartEvent;
 import org.bukkit.*;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
@@ -47,6 +51,9 @@ public class GameManager {
     private BukkitTask vampireReleaseTask;
     private boolean vampiresReleased = true;
     private boolean bloodCompassGiven = false;
+    private boolean lastStartForced = false;
+    private long activeStartedAtMs = 0L;
+    private final Set<Integer> firedTimedMilestones = new HashSet<>();
 
     private int minPlayers;
     private int gameDurationSeconds;
@@ -264,6 +271,7 @@ public class GameManager {
         if (!hasSpawnsSet()) return;
 
         state = GameState.STARTING;
+        lastStartForced = force;
 
         // Auto-assign teams (only from joined players)
         List<Player> players = getJoinedOnlinePlayers();
@@ -379,6 +387,8 @@ public class GameManager {
     private void beginActiveGame() {
         state = GameState.ACTIVE;
         remainingSeconds = gameDurationSeconds;
+        activeStartedAtMs = System.currentTimeMillis();
+        firedTimedMilestones.clear();
 
         // Disable random ticks (prevents leaf decay, crop growth, etc.)
         if (humanSpawn != null && humanSpawn.getWorld() != null) {
@@ -410,10 +420,13 @@ public class GameManager {
 
             remainingSeconds--;
 
-            // Timed free perk triggers
-            int elapsed = gameDurationSeconds - remainingSeconds;
-            if (elapsed == 300 || elapsed == 600 || elapsed == 900) {
-                triggerTimedPerk();
+            // Timed free perk triggers — fire each milestone at most once per game.
+            // Use wall-clock elapsed so /vz settime can't replay or skip milestones.
+            int elapsed = getActiveElapsedSeconds();
+            for (int milestone : new int[] { 300, 600, 900 }) {
+                if (elapsed >= milestone && firedTimedMilestones.add(milestone)) {
+                    triggerTimedPerk();
+                }
             }
 
             // Blood Compass — give to all vampires at 10 minutes remaining
@@ -470,6 +483,9 @@ public class GameManager {
 
         // Start day/night cycle
         dayNightManager.startCycle();
+
+        // Notify external plugins
+        Bukkit.getPluginManager().callEvent(new VampireZGameStartEvent(humanTeam, vampireTeam, lastStartForced));
     }
 
     // ===== VAMPIRE RELEASE (after 45s scouting phase) =====
@@ -525,8 +541,36 @@ public class GameManager {
     // ===== HUMAN DEATH → CONVERT TO VAMPIRE =====
 
     public void convertHumanToVampire(Player player) {
+        convertHumanToVampire(player, PlayerConvertedEvent.Cause.DEATH);
+    }
+
+    /**
+     * @return true if the conversion happened, false if the player wasn't a human or
+     *         the {@link PlayerConvertedEvent} was cancelled (player respawned as human).
+     */
+    public boolean convertHumanToVampire(Player player, PlayerConvertedEvent.Cause cause) {
         UUID uuid = player.getUniqueId();
-        if (!humanTeam.contains(uuid)) return;
+        if (!humanTeam.contains(uuid)) return false;
+
+        PlayerConvertedEvent event = new PlayerConvertedEvent(uuid, cause);
+        Bukkit.getPluginManager().callEvent(event);
+        if (event.isCancelled()) {
+            // Plugin vetoed the conversion — respawn as human, full HP, gear + perks intact.
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (!player.isOnline()) return;
+                if (player.isDead()) player.spigot().respawn();
+                player.setGameMode(GameMode.SURVIVAL);
+                if (humanSpawn != null) player.teleport(humanSpawn);
+                gearManager.giveHumanGear(player);
+                perkManager.reapplyPerks(uuid);
+                org.bukkit.attribute.AttributeInstance maxHp = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+                if (maxHp != null) player.setHealth(maxHp.getValue());
+                player.setFoodLevel(20);
+                player.setSaturation(20f);
+                player.sendMessage(ChatColor.AQUA + "You were saved! You remain a Human.");
+            }, 40L);
+            return false;
+        }
 
         // Broadcast conversion
         String deathMsg = ChatColor.translateAlternateColorCodes('&',
@@ -577,6 +621,7 @@ public class GameManager {
         if (humanTeam.isEmpty()) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> endGame(false), 20L);
         }
+        return true;
     }
 
     // ===== VAMPIRE RESPAWN =====
@@ -592,6 +637,7 @@ public class GameManager {
             if (state != GameState.ACTIVE) return;
             if (player.isDead()) player.spigot().respawn();
 
+            Bukkit.getPluginManager().callEvent(new PlayerVampireRespawnEvent(uuid, vampireSpawn));
             if (vampireSpawn != null) {
                 player.teleport(vampireSpawn);
             }
@@ -613,6 +659,11 @@ public class GameManager {
     public void endGame(boolean humansWin) {
         if (state == GameState.ENDING || state == GameState.LOBBY) return;
         state = GameState.ENDING;
+
+        int playedSec = activeStartedAtMs > 0 ? (int) ((System.currentTimeMillis() - activeStartedAtMs) / 1000) : 0;
+        Bukkit.getPluginManager().callEvent(new VampireZGameEndEvent(
+                humansWin ? VampireZGameEndEvent.Winner.HUMANS : VampireZGameEndEvent.Winner.VAMPIRES,
+                playedSec));
 
         // Stop tasks
         if (countdownTask != null) { countdownTask.cancel(); countdownTask = null; }
@@ -666,6 +717,10 @@ public class GameManager {
 
         // Stop tasks and perks immediately (same as endGame)
         state = GameState.ENDING;
+
+        int playedSec = activeStartedAtMs > 0 ? (int) ((System.currentTimeMillis() - activeStartedAtMs) / 1000) : 0;
+        Bukkit.getPluginManager().callEvent(new VampireZGameEndEvent(
+                VampireZGameEndEvent.Winner.STOPPED, playedSec));
         if (countdownTask != null) { countdownTask.cancel(); countdownTask = null; }
         if (vampireReleaseTask != null) { vampireReleaseTask.cancel(); vampireReleaseTask = null; }
         vampiresReleased = true;
@@ -900,8 +955,8 @@ public class GameManager {
                 perksToGive.add(PerkTier.SILVER);
             }
 
-            // 2. Timed free perks that have already been given
-            int elapsed = gameDurationSeconds - remainingSeconds;
+            // 2. Timed free perks that have already been given (use wall-clock so admin time-edits don't desync)
+            int elapsed = getActiveElapsedSeconds();
             if (elapsed >= 300) perksToGive.add(randomTier());  // 5 min mark
             if (elapsed >= 600) perksToGive.add(randomTier());  // 10 min mark
             if (elapsed >= 900) perksToGive.add(randomTier());  // 15 min mark
@@ -916,7 +971,8 @@ public class GameManager {
                     perksToGive.add(randomTier());
                 }
 
-                // Convert to vampire
+                // Convert to vampire (event is informational only — cancellation can't be acted on after disconnect)
+                Bukkit.getPluginManager().callEvent(new PlayerConvertedEvent(uuid, PlayerConvertedEvent.Cause.DISCONNECT));
                 humanTeam.remove(uuid);
                 vampireTeam.add(uuid);
 
@@ -1089,6 +1145,15 @@ public class GameManager {
     public Set<UUID> getHumanTeam() { return humanTeam; }
     public Set<UUID> getVampireTeam() { return vampireTeam; }
     public int getRemainingSeconds() { return remainingSeconds; }
+
+    /**
+     * Override the active game timer. Clamped to {@code >= 0}; no upper bound, so admins
+     * can extend a game past its configured duration. Setting to 0 ends the game on the
+     * next tick. Milestone announcements (5/1/0:30 minute marks) won't re-fire if skipped past.
+     */
+    public void setRemainingSeconds(int seconds) {
+        this.remainingSeconds = Math.max(0, seconds);
+    }
     public int getMinPlayers() { return minPlayers; }
     public int getGameDurationSeconds() { return gameDurationSeconds; }
 
@@ -1099,6 +1164,12 @@ public class GameManager {
     public boolean isHuman(UUID uuid) { return humanTeam.contains(uuid); }
     public boolean isVampire(UUID uuid) { return vampireTeam.contains(uuid); }
     public boolean isVampiresReleased() { return vampiresReleased; }
+    public boolean hasFiredTimedMilestone(int elapsedSeconds) { return firedTimedMilestones.contains(elapsedSeconds); }
+    /** Wall-clock seconds since the active phase began. Immune to {@link #setRemainingSeconds(int)}. */
+    public int getActiveElapsedSeconds() {
+        if (activeStartedAtMs == 0L) return 0;
+        return (int) ((System.currentTimeMillis() - activeStartedAtMs) / 1000);
+    }
 
     public void tagCombat(UUID uuid) { lastCombatMs.put(uuid, System.currentTimeMillis()); }
     public boolean isInCombat(UUID uuid) {

@@ -1,5 +1,8 @@
+
 package com.vampirez;
 
+import com.vampirez.api.event.PlayerPerkGainedEvent;
+import com.vampirez.api.event.PlayerPerkLostEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -35,8 +38,17 @@ public class PerkManager {
     }
 
     public boolean addPerkToPlayer(UUID uuid, Perk perk) {
+        return addPerkToPlayer(uuid, perk, PlayerPerkGainedEvent.Source.INTERNAL);
+    }
+
+    public boolean addPerkToPlayer(UUID uuid, Perk perk, PlayerPerkGainedEvent.Source source) {
         List<Perk> perks = playerPerks.computeIfAbsent(uuid, k -> new ArrayList<>());
         if (perks.size() >= maxPerks) return false;
+
+        PlayerPerkGainedEvent event = new PlayerPerkGainedEvent(uuid, perk.getId(), source);
+        Bukkit.getPluginManager().callEvent(event);
+        if (event.isCancelled()) return false;
+
         perks.add(perk);
         Player player = Bukkit.getPlayer(uuid);
         if (player != null && !player.isDead()) {
@@ -50,21 +62,32 @@ public class PerkManager {
      * Adds a perk bypassing the max perk limit. Used by Lucky Roll Prismatic.
      */
     public void forceAddPerkToPlayer(UUID uuid, Perk perk) {
+        forceAddPerkToPlayer(uuid, perk, PlayerPerkGainedEvent.Source.INTERNAL);
+    }
+
+    public boolean forceAddPerkToPlayer(UUID uuid, Perk perk, PlayerPerkGainedEvent.Source source) {
+        PlayerPerkGainedEvent event = new PlayerPerkGainedEvent(uuid, perk.getId(), source);
+        Bukkit.getPluginManager().callEvent(event);
+        if (event.isCancelled()) return false;
+
         List<Perk> perks = playerPerks.computeIfAbsent(uuid, k -> new ArrayList<>());
         perks.add(perk);
         Player player = Bukkit.getPlayer(uuid);
         if (player != null && !player.isDead()) {
             perk.apply(player);
         }
+        return true;
     }
 
     public void removePerk(UUID uuid, Perk perk) {
         List<Perk> perks = playerPerks.get(uuid);
         if (perks != null) {
-            perks.remove(perk);
-            Player player = Bukkit.getPlayer(uuid);
-            if (player != null) {
-                perk.remove(player);
+            if (perks.remove(perk)) {
+                Player player = Bukkit.getPlayer(uuid);
+                if (player != null) {
+                    perk.remove(player);
+                }
+                Bukkit.getPluginManager().callEvent(new PlayerPerkLostEvent(uuid, perk.getId()));
             }
         }
     }
@@ -84,6 +107,7 @@ public class PerkManager {
                 }
                 removed.add(perk);
                 it.remove();
+                Bukkit.getPluginManager().callEvent(new PlayerPerkLostEvent(uuid, perk.getId()));
             }
         }
         return removed;
@@ -97,6 +121,9 @@ public class PerkManager {
                 for (Perk perk : perks) {
                     perk.remove(player);
                 }
+            }
+            for (Perk perk : perks) {
+                Bukkit.getPluginManager().callEvent(new PlayerPerkLostEvent(uuid, perk.getId()));
             }
         }
     }

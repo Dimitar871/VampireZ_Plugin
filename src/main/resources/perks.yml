@@ -1,0 +1,1255 @@
+# Data-driven perk definitions. Each top-level key is a unique perk id.
+#
+# Schema:
+#   name        — display name (string)
+#   tier        — SILVER | GOLD | PRISMATIC
+#   team        — HUMAN | VAMPIRE | BOTH
+#   icon        — Bukkit Material name (used for GUI icons)
+#   description — list of lore strings
+#   attributes: [optional]               shortcut: each entry expands into
+#     - key:        "vampirez:foo"       APPLY: add modifier  +  REMOVE: remove modifier
+#       attribute:  MAX_HEALTH | ATTACK_SPEED | ATTACK_DAMAGE | MOVEMENT_SPEED | ARMOR | ...
+#       operation:  ADD_NUMBER | ADD_SCALAR | MULTIPLY_SCALAR_1
+#       value:      <double>
+#       slot_group: any | mainhand | armor | ...   (default: any)
+#   hooks:
+#     <hook_name>:                       e.g. on_damage_dealt, on_damage_taken
+#       - conditions: [optional list]    all must pass for actions to run
+#         actions: [list]                executed in order
+#
+# Available hooks: apply, remove, on_damage_dealt, on_damage_taken,
+#                  on_kill, on_death, on_tick, on_health_regain,
+#                  on_interact, on_respawn
+#
+# Available conditions: victim_is_player, from_behind, is_sprinting, is_sneaking,
+#                       hp_below_percent, hp_below_absolute, cooldown,
+#                       ally_within_range (radius),
+#                       is_right_click,
+#                       item_count_below (material, threshold),
+#                       item_in_hand (material, name_contains)
+#
+# Available actions: multiply_damage, set_damage, add_damage,
+#                    add_attribute_modifier, remove_attribute_modifier,
+#                    add_enchant (target via material | material_contains | slot:armor),
+#                    apply_potion (target: victim/attacker/owner; effect, duration_ticks, amplifier,
+#                                  ambient, particles, stack_duration),
+#                    apply_potion_aura (radius, allies_only, include_self; effect, duration_ticks,
+#                                       amplifier, ambient, particles) — applies to nearby players,
+#                    aoe_heal (radius, allies_only, include_self, amount) — heal nearby players,
+#                    play_sound (sound, volume, pitch; target: attacker by default),
+#                    spawn_particle (particle, count, offset_y, spread_x/y/z, extra,
+#                                    dust_color "r,g,b", dust_size, block; target: victim by default),
+#                    set_fire (duration_ticks; target: victim by default),
+#                    spawn_mob (entity_type, count, lifetime_ticks, custom_name, name_color,
+#                               team, no_baby, angry, tamed, equipment_main_hand,
+#                               equipment_helmet, spread_x),
+#                    give_item (material, amount, display_name, lore [list],
+#                               enchantments [list of {name, level}], potion_type),
+#                    dash (magnitude, lift),
+#                    cancel_event
+
+blunt_force:
+  name: "Blunt Force"
+  tier: SILVER
+  team: BOTH
+  icon: IRON_INGOT
+  description:
+    - "+20% melee damage"
+  hooks:
+    on_damage_dealt:
+      - actions:
+          - type: multiply_damage
+            factor: 1.2
+
+tough_skin:
+  name: "Tough Skin"
+  tier: SILVER
+  team: BOTH
+  icon: IRON_INGOT
+  description:
+    - "-10% damage taken"
+  hooks:
+    on_damage_taken:
+      - actions:
+          - type: multiply_damage
+            factor: 0.9
+
+backstab:
+  name: "Backstab"
+  tier: SILVER
+  team: VAMPIRE
+  icon: IRON_SWORD
+  description:
+    - "Deal 30% more damage when hitting"
+    - "from behind."
+  hooks:
+    on_damage_dealt:
+      - conditions:
+          - type: from_behind
+        actions:
+          - type: multiply_damage
+            factor: 1.3
+
+feral_charge:
+  name: "Feral Charge"
+  tier: SILVER
+  team: VAMPIRE
+  icon: RABBIT_FOOT
+  description:
+    - "Sprinting attacks deal +30% damage"
+    - "6s cooldown"
+  hooks:
+    on_damage_dealt:
+      - conditions:
+          - type: is_sprinting
+            target: attacker
+          - type: cooldown
+            ms: 6000
+        actions:
+          - type: multiply_damage
+            factor: 1.3
+
+executioner:
+  name: "Executioner"
+  tier: GOLD
+  team: BOTH
+  icon: DIAMOND_AXE
+  description:
+    - "+30% damage to targets below 40% HP"
+    - "Targets below 1.5 hearts are"
+    - "instantly executed"
+  hooks:
+    on_damage_dealt:
+      - conditions:
+          - type: hp_below_absolute
+            target: victim
+            threshold: 3.0
+        actions:
+          - type: set_damage
+            value: 100.0
+      - conditions:
+          - type: hp_below_percent
+            target: victim
+            threshold: 0.4
+        actions:
+          - type: multiply_damage
+            factor: 1.3
+
+# ===== Attribute-modifier perks (Batch 3) =====
+
+vitality:
+  name: "Vitality"
+  tier: SILVER
+  team: BOTH
+  icon: APPLE
+  description:
+    - "+2 max hearts"
+  attributes:
+    - key: "vampirez:vitality"
+      attribute: MAX_HEALTH
+      operation: ADD_NUMBER
+      value: 4.0
+
+swift_strikes:
+  name: "Swift Strikes"
+  tier: SILVER
+  team: BOTH
+  icon: GOLD_INGOT
+  description:
+    - "+15% attack speed"
+  attributes:
+    - key: "vampirez:swift_strikes_speed"
+      attribute: ATTACK_SPEED
+      operation: MULTIPLY_SCALAR_1
+      value: 0.15
+
+heavyweight:
+  name: "Heavyweight"
+  tier: SILVER
+  team: HUMAN
+  icon: IRON_BLOCK
+  description:
+    - "Double your max hearts."
+    - "-50% damage dealt."
+  attributes:
+    - key: "vampirez:heavyweight"
+      attribute: MAX_HEALTH
+      operation: MULTIPLY_SCALAR_1
+      value: 1.0
+  hooks:
+    on_damage_dealt:
+      - actions:
+          - type: multiply_damage
+            factor: 0.5
+
+lightweight:
+  name: "Lightweight"
+  tier: GOLD
+  team: BOTH
+  icon: FEATHER
+  description:
+    - "+25% damage dealt."
+    - "-4 max hearts."
+  attributes:
+    - key: "vampirez:lightweight"
+      attribute: MAX_HEALTH
+      operation: ADD_NUMBER
+      value: -8.0
+  hooks:
+    on_damage_dealt:
+      - actions:
+          - type: multiply_damage
+            factor: 1.25
+
+celestial_body:
+  name: "Celestial Body"
+  tier: GOLD
+  team: BOTH
+  icon: GOLDEN_CHESTPLATE
+  description:
+    - "+4 max hearts, -10% damage dealt"
+  attributes:
+    - key: "vampirez:celestial_body"
+      attribute: MAX_HEALTH
+      operation: ADD_NUMBER
+      value: 8.0
+  hooks:
+    on_damage_dealt:
+      - actions:
+          - type: multiply_damage
+            factor: 0.9
+
+glass_cannon:
+  name: "Glass Cannon"
+  tier: PRISMATIC
+  team: BOTH
+  icon: TNT
+  description:
+    - "-30% max HP, +35% damage dealt"
+  attributes:
+    - key: "vampirez:glass_cannon"
+      attribute: MAX_HEALTH
+      operation: MULTIPLY_SCALAR_1
+      value: -0.3
+  hooks:
+    on_damage_dealt:
+      - actions:
+          - type: multiply_damage
+            factor: 1.35
+
+# ===== Enchant-on-apply perks (Batch 6) =====
+
+sharpness_boost:
+  name: "Sharpness Boost"
+  tier: SILVER
+  team: HUMAN
+  icon: IRON_SWORD
+  description:
+    - "Upgrades your sword to"
+    - "Sharpness II"
+  hooks:
+    apply:
+      - actions: &sharpness_boost_actions
+          - type: add_enchant
+            material_contains: SWORD
+            enchantment: SHARPNESS
+            level: 2
+    on_tick:
+      - actions: *sharpness_boost_actions
+
+fire_aspect:
+  name: "Fire Aspect"
+  tier: SILVER
+  team: HUMAN
+  icon: FLINT_AND_STEEL
+  description:
+    - "Sword gets Fire Aspect I"
+  hooks:
+    apply:
+      - actions: &fire_aspect_actions
+          - type: add_enchant
+            material_contains: SWORD
+            enchantment: FIRE_ASPECT
+            level: 1
+    on_tick:
+      - actions: *fire_aspect_actions
+
+flame_arrows:
+  name: "Flame Arrows"
+  tier: SILVER
+  team: BOTH
+  icon: BOW
+  description:
+    - "Bow gets Flame I"
+  hooks:
+    apply:
+      - actions: &flame_arrows_actions
+          - type: add_enchant
+            material: BOW
+            enchantment: FLAME
+            level: 1
+    on_tick:
+      - actions: *flame_arrows_actions
+
+power_shot:
+  name: "Power Shot"
+  tier: GOLD
+  team: HUMAN
+  icon: BOW
+  description:
+    - "Bow gets Power I"
+  hooks:
+    apply:
+      - actions: &power_shot_actions
+          - type: add_enchant
+            material: BOW
+            enchantment: POWER
+            level: 1
+    on_tick:
+      - actions: *power_shot_actions
+
+knockback:
+  name: "Knockback"
+  tier: GOLD
+  team: HUMAN
+  icon: PISTON
+  description:
+    - "Your sword gets"
+    - "Knockback II"
+  hooks:
+    apply:
+      - actions: &knockback_actions
+          - type: add_enchant
+            material_contains: SWORD
+            enchantment: KNOCKBACK
+            level: 2
+    on_tick:
+      - actions: *knockback_actions
+
+blast_shield:
+  name: "Blast Shield"
+  tier: GOLD
+  team: HUMAN
+  icon: TNT
+  description:
+    - "Your armor gets"
+    - "Blast Protection II"
+  hooks:
+    apply:
+      - actions: &blast_shield_actions
+          - type: add_enchant
+            slot: armor
+            enchantment: BLAST_PROTECTION
+            level: 2
+    on_tick:
+      - actions: *blast_shield_actions
+
+# ===== Potion-on-hit perks (Batch 2) =====
+
+poison_fang:
+  name: "Poison Fang"
+  tier: SILVER
+  team: VAMPIRE
+  icon: SPIDER_EYE
+  description:
+    - "Attacks apply Poison I for 3 seconds"
+  hooks:
+    on_damage_dealt:
+      - actions:
+          - type: apply_potion
+            effect: POISON
+            duration_ticks: 60
+            amplifier: 0
+            ambient: false
+            particles: true
+          - type: spawn_particle
+            particle: WITCH
+            count: 12
+            offset_y: 1.0
+            spread_x: 0.3
+            spread_y: 0.5
+            spread_z: 0.3
+          - type: spawn_particle
+            particle: DUST
+            count: 15
+            offset_y: 1.5
+            spread_x: 0.3
+            spread_y: 0.5
+            spread_z: 0.3
+            dust_color: "0,180,0"
+            dust_size: 1.2
+          - type: spawn_particle
+            particle: ITEM_SLIME
+            count: 6
+            offset_y: 0.8
+            spread_x: 0.2
+            spread_y: 0.2
+            spread_z: 0.2
+            extra: 0.02
+          - type: play_sound
+            sound: ENTITY_SPIDER_AMBIENT
+            volume: 0.5
+            pitch: 1.2
+
+frost_bite:
+  name: "Frost Bite"
+  tier: GOLD
+  team: VAMPIRE
+  icon: BLUE_ICE
+  description:
+    - "Attacks apply Slowness I for 3s"
+    - "and Frost Walker on boots"
+  hooks:
+    apply:
+      - actions: &frost_bite_apply
+          - type: add_enchant
+            material_contains: BOOTS
+            enchantment: FROST_WALKER
+            level: 2
+    on_tick:
+      - actions: *frost_bite_apply
+    on_damage_dealt:
+      - actions:
+          - type: apply_potion
+            effect: SLOWNESS
+            duration_ticks: 60
+            amplifier: 0
+            ambient: false
+            particles: true
+          - type: spawn_particle
+            particle: SNOWFLAKE
+            count: 30
+            offset_y: 1.0
+            spread_x: 0.3
+            spread_y: 0.3
+            spread_z: 0.3
+            extra: 0.02
+          - type: spawn_particle
+            particle: DUST
+            count: 20
+            offset_y: 1.0
+            spread_x: 0.3
+            spread_y: 0.3
+            spread_z: 0.3
+            dust_color: "0,255,255"
+            dust_size: 1.5
+          - type: play_sound
+            sound: BLOCK_GLASS_BREAK
+            volume: 0.5
+            pitch: 1.8
+
+erosion:
+  name: "Erosion"
+  tier: PRISMATIC
+  team: VAMPIRE
+  icon: NETHERITE_PICKAXE
+  description:
+    - "Hits apply Weakness I for 3s"
+    - "Stacking duration"
+  hooks:
+    on_damage_dealt:
+      - actions:
+          - type: apply_potion
+            effect: WEAKNESS
+            duration_ticks: 60
+            amplifier: 0
+            ambient: false
+            particles: true
+            stack_duration: true
+          - type: spawn_particle
+            particle: SMOKE
+            count: 12
+            offset_y: 1.0
+            spread_x: 0.3
+            spread_y: 0.5
+            spread_z: 0.3
+            extra: 0.03
+          - type: spawn_particle
+            particle: BLOCK
+            count: 8
+            offset_y: 0.5
+            spread_x: 0.3
+            spread_y: 0.2
+            spread_z: 0.3
+            block: NETHERRACK
+          - type: spawn_particle
+            particle: DUST
+            count: 10
+            offset_y: 1.2
+            spread_x: 0.3
+            spread_y: 0.4
+            spread_z: 0.3
+            dust_color: "80,60,40"
+            dust_size: 1.2
+          - type: play_sound
+            sound: BLOCK_GRAVEL_BREAK
+            volume: 0.5
+            pitch: 0.8
+
+firebrand:
+  name: "Firebrand"
+  tier: PRISMATIC
+  team: VAMPIRE
+  icon: FIRE_CHARGE
+  description:
+    - "Attacks set target on fire (3s)"
+    - "+ half heart bonus damage"
+  hooks:
+    on_damage_dealt:
+      - actions:
+          - type: set_fire
+            duration_ticks: 60
+          - type: add_damage
+            amount: 1.0
+          - type: spawn_particle
+            particle: FLAME
+            count: 20
+            offset_y: 1.0
+            spread_x: 0.3
+            spread_y: 0.6
+            spread_z: 0.3
+            extra: 0.04
+          - type: spawn_particle
+            particle: LAVA
+            count: 5
+            offset_y: 0.5
+            spread_x: 0.3
+            spread_y: 0.2
+            spread_z: 0.3
+          - type: spawn_particle
+            particle: DUST
+            count: 10
+            offset_y: 1.3
+            spread_x: 0.4
+            spread_y: 0.5
+            spread_z: 0.4
+            dust_color: "255,100,0"
+            dust_size: 1.5
+          - type: play_sound
+            sound: ITEM_FIRECHARGE_USE
+            volume: 0.5
+            pitch: 1.2
+
+# ===== Mob-spawner perks (Batch 4) =====
+
+undead_horde:
+  name: "Undead Horde"
+  tier: SILVER
+  team: VAMPIRE
+  icon: ZOMBIE_HEAD
+  description:
+    - "Every 30s, automatically spawn"
+    - "2 zombies that fight for you (10s)"
+  hooks:
+    on_tick:
+      - conditions:
+          - type: cooldown
+            ms: 30000
+        actions:
+          - type: spawn_mob
+            entity_type: ZOMBIE
+            count: 2
+            lifetime_ticks: 200
+            custom_name: "Zombie"
+            name_color: RED
+            team: VAMPIRE
+            no_baby: true
+            equipment_main_hand: WOODEN_SWORD
+            equipment_helmet: LEATHER_HELMET
+            spread_x: 1.0
+          - type: spawn_particle
+            particle: LARGE_SMOKE
+            count: 15
+            offset_y: 0.5
+            spread_x: 0.5
+            spread_y: 0.3
+            spread_z: 0.5
+            extra: 0.02
+            target: owner
+          - type: play_sound
+            sound: ENTITY_ZOMBIE_AMBIENT
+            volume: 1.0
+            pitch: 0.8
+            target: owner
+
+skeleton_archers:
+  name: "Skeleton Archers"
+  tier: GOLD
+  team: VAMPIRE
+  icon: SKELETON_SKULL
+  description:
+    - "Every 30s, automatically spawn"
+    - "2 skeleton archers (10s)"
+  hooks:
+    on_tick:
+      - conditions:
+          - type: cooldown
+            ms: 30000
+        actions:
+          - type: spawn_mob
+            entity_type: SKELETON
+            count: 2
+            lifetime_ticks: 200
+            custom_name: "Skeleton"
+            name_color: RED
+            team: VAMPIRE
+            equipment_main_hand: BOW
+            equipment_helmet: LEATHER_HELMET
+            spread_x: 1.0
+          - type: spawn_particle
+            particle: LARGE_SMOKE
+            count: 15
+            offset_y: 0.5
+            spread_x: 0.5
+            spread_y: 0.3
+            spread_z: 0.5
+            extra: 0.02
+            target: owner
+          - type: play_sound
+            sound: ENTITY_SKELETON_AMBIENT
+            volume: 1.0
+            pitch: 0.8
+            target: owner
+
+wither_guard:
+  name: "Wither Guard"
+  tier: PRISMATIC
+  team: VAMPIRE
+  icon: WITHER_SKELETON_SKULL
+  description:
+    - "Every 30s, automatically spawn"
+    - "2 wither skeletons (12s)"
+  hooks:
+    on_tick:
+      - conditions:
+          - type: cooldown
+            ms: 30000
+        actions:
+          - type: spawn_mob
+            entity_type: WITHER_SKELETON
+            count: 2
+            lifetime_ticks: 240
+            custom_name: "Wither Guard"
+            name_color: DARK_RED
+            team: VAMPIRE
+            equipment_main_hand: STONE_SWORD
+            equipment_helmet: CHAINMAIL_HELMET
+            spread_x: 1.5
+          - type: spawn_particle
+            particle: SOUL_FIRE_FLAME
+            count: 20
+            offset_y: 0.5
+            spread_x: 0.5
+            spread_y: 0.3
+            spread_z: 0.5
+            extra: 0.02
+            target: owner
+          - type: play_sound
+            sound: ENTITY_WITHER_SKELETON_AMBIENT
+            volume: 1.0
+            pitch: 0.8
+            target: owner
+
+wolf_pack:
+  name: "Wolf Pack"
+  tier: SILVER
+  team: HUMAN
+  icon: BONE
+  description:
+    - "On vampire kill: summon 2 wolves"
+    - "that fight for you (8s)"
+  hooks:
+    on_kill:
+      - actions:
+          - type: spawn_mob
+            entity_type: WOLF
+            count: 2
+            lifetime_ticks: 160
+            custom_name: "Wolf"
+            name_color: GREEN
+            team: HUMAN
+            tamed: true
+            angry: true
+            spread_x: 1.0
+          - type: spawn_particle
+            particle: LARGE_SMOKE
+            count: 15
+            offset_y: 0.5
+            spread_x: 0.5
+            spread_y: 0.3
+            spread_z: 0.5
+            extra: 0.02
+            target: owner
+          - type: play_sound
+            sound: ENTITY_WOLF_GROWL
+            volume: 1.0
+            pitch: 1.0
+            target: owner
+
+leech_swarm:
+  name: "Leech Swarm"
+  tier: SILVER
+  team: VAMPIRE
+  icon: FERMENTED_SPIDER_EYE
+  description:
+    - "On death, spawn 3 silverfish"
+    - "at your death location for 5s"
+  hooks:
+    on_death:
+      - actions:
+          - type: spawn_mob
+            entity_type: SILVERFISH
+            count: 3
+            lifetime_ticks: 100
+            custom_name: "Leech"
+            name_color: RED
+            team: VAMPIRE
+            spread_x: 0.5
+          - type: spawn_particle
+            particle: LARGE_SMOKE
+            count: 20
+            offset_y: 0.5
+            spread_x: 0.5
+            spread_y: 0.3
+            spread_z: 0.5
+            extra: 0.02
+            target: owner
+          - type: play_sound
+            sound: ENTITY_SILVERFISH_AMBIENT
+            volume: 1.0
+            pitch: 0.8
+            target: owner
+
+# ===== Threshold-buff perks (Batch 5) =====
+
+fortify:
+  name: "Fortify"
+  tier: SILVER
+  team: HUMAN
+  icon: IRON_CHESTPLATE
+  description:
+    - "Crouching grants Resistance I"
+    - "Stand up to remove the effect"
+  hooks:
+    on_tick:
+      - conditions:
+          - type: is_sneaking
+            target: owner
+        actions:
+          - type: apply_potion
+            target: owner
+            effect: RESISTANCE
+            duration_ticks: 30
+            amplifier: 0
+            ambient: false
+            particles: false
+
+buff_buddies:
+  name: "Buff Buddies"
+  tier: SILVER
+  team: HUMAN
+  icon: BEACON
+  description:
+    - "Allies within 10 blocks get"
+    - "Resistance I"
+  hooks:
+    on_tick:
+      - actions:
+          - type: apply_potion_aura
+            radius: 10.0
+            allies_only: true
+            include_self: false
+            effect: RESISTANCE
+            duration_ticks: 40
+            amplifier: 0
+            ambient: false
+            particles: false
+
+berserker:
+  name: "Berserker"
+  tier: GOLD
+  team: BOTH
+  icon: BLAZE_POWDER
+  description:
+    - "Below 30% HP: Strength I + Speed I"
+    - "Above 30% HP: effects removed"
+  hooks:
+    on_tick:
+      - conditions:
+          - type: hp_below_percent
+            target: owner
+            threshold: 0.3
+        actions:
+          - type: apply_potion
+            target: owner
+            effect: STRENGTH
+            duration_ticks: 30
+            amplifier: 0
+            ambient: false
+            particles: true
+          - type: apply_potion
+            target: owner
+            effect: SPEED
+            duration_ticks: 30
+            amplifier: 0
+            ambient: false
+            particles: true
+          - type: spawn_particle
+            target: owner
+            particle: FLAME
+            count: 3
+            offset_y: 1.0
+            spread_x: 0.3
+            spread_y: 0.3
+            spread_z: 0.3
+            extra: 0.01
+
+second_wind:
+  name: "Second Wind"
+  tier: SILVER
+  team: BOTH
+  icon: GHAST_TEAR
+  description:
+    - "Regeneration I when below 50% HP"
+  hooks:
+    on_tick:
+      - conditions:
+          - type: hp_below_percent
+            target: owner
+            threshold: 0.5
+        actions:
+          - type: apply_potion
+            target: owner
+            effect: REGENERATION
+            duration_ticks: 100
+            amplifier: 0
+            ambient: false
+            particles: true
+          - type: spawn_particle
+            target: owner
+            particle: DUST
+            count: 12
+            offset_y: 1.2
+            spread_x: 0.5
+            spread_y: 0.6
+            spread_z: 0.5
+            dust_color: "50,200,50"
+            dust_size: 1.0
+          - type: spawn_particle
+            target: owner
+            particle: HAPPY_VILLAGER
+            count: 3
+            offset_y: 1.0
+            spread_x: 0.4
+            spread_y: 0.4
+            spread_z: 0.4
+
+adrenaline_rush:
+  name: "Adrenaline Rush"
+  tier: SILVER
+  team: BOTH
+  icon: SUGAR
+  description:
+    - "Taking damage grants"
+    - "Speed I for 3 seconds"
+  hooks:
+    on_damage_taken:
+      - actions:
+          - type: apply_potion
+            target: owner
+            effect: SPEED
+            duration_ticks: 60
+            amplifier: 0
+            ambient: false
+            particles: true
+          - type: spawn_particle
+            target: owner
+            particle: DUST
+            count: 15
+            offset_y: 0.5
+            spread_x: 0.4
+            spread_y: 0.1
+            spread_z: 0.4
+            dust_color: "255,255,0"
+            dust_size: 1.0
+          - type: spawn_particle
+            target: owner
+            particle: CLOUD
+            count: 8
+            offset_y: 0.5
+            spread_x: 0.3
+            spread_y: 0.1
+            spread_z: 0.3
+            extra: 0.03
+          - type: play_sound
+            target: owner
+            sound: ENTITY_PLAYER_BREATH
+            volume: 0.6
+            pitch: 0.5
+
+# ===== Item-supply perks (Batch 7) =====
+
+iron_rations:
+  name: "Iron Rations"
+  tier: GOLD
+  team: HUMAN
+  icon: COOKED_BEEF
+  description:
+    - "Start with 8 extra cooked beef"
+    - "and 2 extra golden apples"
+  hooks:
+    apply:
+      - actions:
+          - type: give_item
+            material: COOKED_BEEF
+            amount: 8
+          - type: give_item
+            material: GOLDEN_APPLE
+            amount: 2
+
+golden_feast:
+  name: "Golden Feast"
+  tier: GOLD
+  team: HUMAN
+  icon: GOLDEN_APPLE
+  description:
+    - "Start with 9 extra"
+    - "Golden Apples (12 total)"
+  hooks:
+    apply:
+      - actions:
+          - type: give_item
+            material: GOLDEN_APPLE
+            amount: 9
+
+healing_potions:
+  name: "Healing Potions"
+  tier: SILVER
+  team: HUMAN
+  icon: SPLASH_POTION
+  description:
+    - "Start with 3 Splash Healing potions"
+    - "Regenerate 1 every 2 minutes"
+  hooks:
+    apply:
+      - actions:
+          - type: give_item
+            material: SPLASH_POTION
+            amount: 3
+            potion_type: HEALING
+    on_tick:
+      - conditions:
+          - type: cooldown
+            ms: 120000
+        actions:
+          - type: give_item
+            material: SPLASH_POTION
+            amount: 1
+            potion_type: HEALING
+
+harming_potions:
+  name: "Harming Potions"
+  tier: GOLD
+  team: VAMPIRE
+  icon: SPLASH_POTION
+  description:
+    - "Start with 3 Splash Harming potions"
+    - "Regenerate 1 every 2 minutes"
+  hooks:
+    apply:
+      - actions:
+          - type: give_item
+            material: SPLASH_POTION
+            amount: 3
+            potion_type: HARMING
+    on_tick:
+      - conditions:
+          - type: cooldown
+            ms: 120000
+        actions:
+          - type: give_item
+            material: SPLASH_POTION
+            amount: 1
+            potion_type: HARMING
+
+ender_pearl_supply:
+  name: "Ender Pearl Supply"
+  tier: GOLD
+  team: BOTH
+  icon: ENDER_PEARL
+  description:
+    - "Gives 3 Ender Pearls"
+    - "Regenerate 1 every 30 seconds"
+  hooks:
+    apply:
+      - actions:
+          - type: give_item
+            material: ENDER_PEARL
+            amount: 3
+    on_tick:
+      - conditions:
+          - type: cooldown
+            ms: 30000
+          - type: item_count_below
+            material: ENDER_PEARL
+            threshold: 3
+        actions:
+          - type: give_item
+            material: ENDER_PEARL
+            amount: 1
+
+poison_quiver:
+  name: "Poison Quiver"
+  tier: GOLD
+  team: HUMAN
+  icon: TIPPED_ARROW
+  description:
+    - "Start with 8 Poison tipped arrows"
+    - "Regenerate 1 every 10 seconds"
+  hooks:
+    apply:
+      - actions:
+          - type: give_item
+            material: TIPPED_ARROW
+            amount: 8
+            potion_type: POISON
+    on_tick:
+      - conditions:
+          - type: cooldown
+            ms: 10000
+        actions:
+          - type: give_item
+            material: TIPPED_ARROW
+            amount: 1
+            potion_type: POISON
+
+crossbow_expert:
+  name: "Crossbow Expert"
+  tier: GOLD
+  team: HUMAN
+  icon: CROSSBOW
+  description:
+    - "Gives Crossbow with Quick Charge II"
+    - "and Piercing"
+  hooks:
+    apply:
+      - actions:
+          - type: give_item
+            material: CROSSBOW
+            amount: 1
+            enchantments:
+              - { name: QUICK_CHARGE, level: 2 }
+              - { name: PIERCING, level: 1 }
+
+marksman:
+  name: "Marksman"
+  tier: PRISMATIC
+  team: HUMAN
+  icon: BOW
+  description:
+    - "Gives Power III + Punch I bow"
+    - "and 32 arrows"
+  hooks:
+    apply:
+      - actions:
+          - type: give_item
+            material: BOW
+            amount: 1
+            enchantments:
+              - { name: POWER, level: 3 }
+              - { name: PUNCH, level: 1 }
+          - type: give_item
+            material: ARROW
+            amount: 32
+
+# ===== Right-click ability perks (Batch 8) =====
+
+dash:
+  name: "Dash"
+  tier: SILVER
+  team: BOTH
+  icon: FEATHER
+  description:
+    - "Right-click Feather to dash forward"
+    - "5 second cooldown"
+  hooks:
+    apply:
+      - actions: &dash_apply
+          - type: give_item
+            material: FEATHER
+            amount: 1
+            display_name: "&bDash&7 (Right-Click)"
+            lore:
+              - "&7Dash forward"
+              - "&eCooldown: 5s"
+    on_tick:
+      - conditions:
+          - type: item_count_below
+            material: FEATHER
+            threshold: 1
+        actions: *dash_apply
+    on_interact:
+      - conditions:
+          - type: is_right_click
+          - type: item_in_hand
+            material: FEATHER
+            name_contains: "Dash"
+          - type: cooldown
+            ms: 5000
+        actions:
+          - type: cancel_event
+          - type: dash
+            magnitude: 1.5
+            lift: 0.15
+          - type: spawn_particle
+            target: owner
+            particle: CLOUD
+            count: 50
+            offset_y: 0.0
+            spread_x: 0.4
+            spread_y: 0.15
+            spread_z: 0.4
+            extra: 0.06
+          - type: spawn_particle
+            target: owner
+            particle: DUST
+            count: 25
+            offset_y: 0.5
+            spread_x: 0.4
+            spread_y: 0.15
+            spread_z: 0.4
+            dust_color: "255,255,255"
+            dust_size: 1.5
+          - type: play_sound
+            target: owner
+            sound: ENTITY_ENDER_DRAGON_FLAP
+            volume: 0.6
+            pitch: 1.8
+
+# ===== Aura cleanup (Batch 9) =====
+
+rally_cry:
+  name: "Rally Cry"
+  tier: SILVER
+  team: HUMAN
+  icon: GOAT_HORN
+  description:
+    - "On kill, allies within 8 blocks"
+    - "get Speed I + Regen I for 4s"
+  hooks:
+    on_kill:
+      - actions:
+          - type: apply_potion_aura
+            radius: 8.0
+            allies_only: true
+            include_self: false
+            effect: SPEED
+            duration_ticks: 80
+            amplifier: 0
+            ambient: false
+            particles: true
+          - type: apply_potion_aura
+            radius: 8.0
+            allies_only: true
+            include_self: false
+            effect: REGENERATION
+            duration_ticks: 80
+            amplifier: 0
+            ambient: false
+            particles: true
+          - type: spawn_particle
+            target: owner
+            particle: HAPPY_VILLAGER
+            count: 40
+            offset_y: 2.0
+            spread_x: 2.0
+            spread_y: 1.0
+            spread_z: 2.0
+            extra: 0.1
+          - type: spawn_particle
+            target: owner
+            particle: DUST
+            count: 30
+            offset_y: 2.0
+            spread_x: 2.0
+            spread_y: 1.0
+            spread_z: 2.0
+            dust_color: "0,255,0"
+            dust_size: 1.5
+          - type: play_sound
+            target: owner
+            sound: ITEM_GOAT_HORN_SOUND_0
+            volume: 1.0
+            pitch: 1.2
+
+martyr:
+  name: "Martyr"
+  tier: GOLD
+  team: HUMAN
+  icon: TOTEM_OF_UNDYING
+  description:
+    - "When you die, allies within 10 blocks"
+    - "heal 4 hearts + Absorption II for 5s"
+  hooks:
+    on_death:
+      - actions:
+          - type: aoe_heal
+            radius: 10.0
+            allies_only: true
+            include_self: false
+            amount: 8.0
+          - type: apply_potion_aura
+            radius: 10.0
+            allies_only: true
+            include_self: false
+            effect: ABSORPTION
+            duration_ticks: 100
+            amplifier: 1
+            ambient: false
+            particles: true
+          - type: spawn_particle
+            target: owner
+            particle: TOTEM_OF_UNDYING
+            count: 100
+            offset_y: 1.0
+            spread_x: 1.0
+            spread_y: 1.0
+            spread_z: 1.0
+            extra: 0.3
+          - type: spawn_particle
+            target: owner
+            particle: DUST
+            count: 50
+            offset_y: 1.0
+            spread_x: 1.0
+            spread_y: 1.0
+            spread_z: 1.0
+            dust_color: "255,215,0"
+            dust_size: 2.0
+          - type: play_sound
+            target: owner
+            sound: ITEM_TOTEM_USE
+            volume: 0.8
+            pitch: 1.2
+
+infectious_bite:
+  name: "Infectious Bite"
+  tier: SILVER
+  team: VAMPIRE
+  icon: SPIDER_EYE
+  description:
+    - "On kill, heal all nearby vampires"
+    - "(8 block radius) for 4 hearts"
+  hooks:
+    on_kill:
+      - actions:
+          - type: aoe_heal
+            radius: 8.0
+            allies_only: true
+            include_self: false
+            amount: 8.0
+          - type: play_sound
+            target: owner
+            sound: ENTITY_PLAYER_LEVELUP
+            volume: 0.5
+            pitch: 1.5

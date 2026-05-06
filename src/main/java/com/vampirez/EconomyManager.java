@@ -84,6 +84,10 @@ public class EconomyManager {
         gold.merge(uuid, amount, Integer::sum);
     }
 
+    public void setGold(UUID uuid, int amount) {
+        gold.put(uuid, Math.max(0, amount));
+    }
+
     public boolean removeGold(UUID uuid, int amount) {
         int current = getGold(uuid);
         if (current < amount) return false;

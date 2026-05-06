@@ -1,5 +1,6 @@
 package com.vampirez;
 
+import com.vampirez.api.event.DayPhaseChangeEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -89,6 +90,7 @@ public class DayNightManager {
         }
 
         applyNightEffects();
+        Bukkit.getPluginManager().callEvent(new DayPhaseChangeEvent(true));
     }
 
     private void onDayBreak() {
@@ -103,6 +105,33 @@ public class DayNightManager {
         }
 
         applyDayEffects();
+        Bukkit.getPluginManager().callEvent(new DayPhaseChangeEvent(false));
+    }
+
+    /**
+     * Force the day/night cycle to night immediately. No-op if the cycle is not running.
+     * Restarts the phase timer (so a forced phase will last its full configured duration
+     * before transitioning to the next).
+     */
+    public void forceNight() {
+        if (cycleTask == null || !enabled) return;
+        if (isNight) return;
+        isNight = true;
+        ticksInPhase = 0;
+        setWorldTime(13000);
+        onNightFall();
+    }
+
+    /**
+     * Force the day/night cycle to day immediately. No-op if the cycle is not running.
+     */
+    public void forceDay() {
+        if (cycleTask == null || !enabled) return;
+        if (!isNight) return;
+        isNight = false;
+        ticksInPhase = 0;
+        setWorldTime(1000);
+        onDayBreak();
     }
 
     private void applyNightEffects() {

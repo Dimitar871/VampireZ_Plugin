@@ -42,6 +42,7 @@ public class PerkSelectionGUI implements Listener {
     private static class SelectionState {
         List<Perk> offeredPerks;
         boolean isFreeSelection;
+        boolean isTimed = false;
         int remainingConversionPicks;
         PerkTeam playerTeam;
         PerkTier perkTier;
@@ -51,6 +52,12 @@ public class PerkSelectionGUI implements Listener {
         boolean[] rerolled = {false, false, false}; // track per-slot rerolls
         boolean rerolling = false; // true while a reroll is reopening the inventory
         BukkitTask countdownTask;
+    }
+
+    private static com.vampirez.api.event.PlayerPerkGainedEvent.Source sourceFor(SelectionState s) {
+        if (s.isTimed) return com.vampirez.api.event.PlayerPerkGainedEvent.Source.TIMED;
+        if (s.isFreeSelection) return com.vampirez.api.event.PlayerPerkGainedEvent.Source.FREE;
+        return com.vampirez.api.event.PlayerPerkGainedEvent.Source.CONVERSION;
     }
 
     private static final int MAX_REOPEN_ATTEMPTS = 3;
@@ -85,6 +92,7 @@ public class PerkSelectionGUI implements Listener {
         SelectionState state = new SelectionState();
         state.offeredPerks = options;
         state.isFreeSelection = true;
+        state.isTimed = true;
         state.playerTeam = team;
         state.perkTier = tier;
         state.guiTitle = title;
@@ -145,7 +153,7 @@ public class PerkSelectionGUI implements Listener {
             if (secondsLeft[0] <= 0) {
                 // Auto-assign random perk
                 Perk randomPerk = state.offeredPerks.get(new Random().nextInt(state.offeredPerks.size()));
-                perkManager.addPerkToPlayer(uuid, randomPerk);
+                perkManager.addPerkToPlayer(uuid, randomPerk, sourceFor(state));
                 p.sendMessage(ChatColor.YELLOW + "Perk auto-assigned: " + randomPerk.getTier().getColor() + randomPerk.getDisplayName());
                 p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
 
@@ -295,7 +303,7 @@ public class PerkSelectionGUI implements Listener {
         Perk selectedPerk = state.offeredPerks.get(perkIndex);
 
         // Add perk (free, no gold cost)
-        perkManager.addPerkToPlayer(uuid, selectedPerk);
+        perkManager.addPerkToPlayer(uuid, selectedPerk, sourceFor(state));
         player.sendMessage(ChatColor.GREEN + "Perk acquired: " + selectedPerk.getTier().getColor() + selectedPerk.getDisplayName());
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
 
@@ -347,7 +355,7 @@ public class PerkSelectionGUI implements Listener {
             // Auto-assign a random perk from the offered options
             if (state.countdownTask != null) { state.countdownTask.cancel(); state.countdownTask = null; }
             Perk randomPerk = state.offeredPerks.get(new Random().nextInt(state.offeredPerks.size()));
-            perkManager.addPerkToPlayer(uuid, randomPerk);
+            perkManager.addPerkToPlayer(uuid, randomPerk, sourceFor(state));
             player.sendMessage(ChatColor.YELLOW + "Perk auto-assigned: " + randomPerk.getTier().getColor() + randomPerk.getDisplayName());
             player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
 
