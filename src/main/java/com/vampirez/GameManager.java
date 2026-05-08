@@ -1326,4 +1326,5 @@ public class GameManager {
     public PerkManager getPerkManager() { return perkManager; }
     public ScoreboardManager getScoreboardManager() { return scoreboardManager; }
     public DayNightManager getDayNightManager() { return dayNightManager; }
+    public JavaPlugin getPlugin() { return plugin; }
 }

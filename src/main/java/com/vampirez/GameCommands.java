@@ -76,6 +76,8 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             case "addgold" -> handleAddGold(player, args);
             case "apitest" -> handleApiTest(player);
             case "leaderboard", "lb" -> handleLeaderboard(player);
+            case "disableperk" -> handleDisablePerk(player, args);
+            case "enableperk" -> handleEnablePerk(player, args);
             default -> {
                 player.sendMessage(ChatColor.RED + "Unknown subcommand. Use /vz help");
             }
@@ -112,6 +114,8 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             player.sendMessage(ChatColor.RED + "/vz setgold <player> <amount>" + ChatColor.GRAY + " - Set gold");
             player.sendMessage(ChatColor.RED + "/vz addgold <player> <amount>" + ChatColor.GRAY + " - Add gold");
             player.sendMessage(ChatColor.RED + "/vz apitest" + ChatColor.GRAY + " - Run API self-test");
+            player.sendMessage(ChatColor.RED + "/vz disableperk <perkId>" + ChatColor.GRAY + " - Disable a perk (saves to config)");
+            player.sendMessage(ChatColor.RED + "/vz enableperk <perkId>" + ChatColor.GRAY + " - Enable a disabled perk (saves to config)");
         }
     }
 
@@ -273,7 +277,8 @@ public class GameCommands implements CommandExecutor, TabCompleter {
                     "start", "forcestart", "stop", "setlobby", "sethumanspawn", "setvampspawn",
                     "test", "tools", "debugdmg", "announce", "arena", "reload",
                     "giveperk", "removeperk", "forceconvert", "settime", "setphase",
-                    "setgold", "addgold", "apitest", "leaderboard", "lb"
+                    "setgold", "addgold", "apitest", "leaderboard", "lb",
+                    "disableperk", "enableperk"
             ));
         }
 
@@ -290,6 +295,20 @@ public class GameCommands implements CommandExecutor, TabCompleter {
                 }
                 case "settime" -> { return filter(args[1], List.of("60", "300", "600", "900", "1500")); }
                 case "setphase" -> { return filter(args[1], List.of("day", "night")); }
+                case "disableperk" -> {
+                    // suggest only currently enabled perks
+                    List<String> enabled = api.getAvailablePerkIds().stream()
+                            .filter(id -> !gameManager.getPerkManager().isDisabled(id))
+                            .collect(java.util.stream.Collectors.toList());
+                    return filter(args[1], enabled);
+                }
+                case "enableperk" -> {
+                    // suggest only currently disabled perks
+                    List<String> disabled = api.getAvailablePerkIds().stream()
+                            .filter(id -> gameManager.getPerkManager().isDisabled(id))
+                            .collect(java.util.stream.Collectors.toList());
+                    return filter(args[1], disabled);
+                }
             }
         }
 
@@ -571,5 +590,48 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             return;
         }
         leaderboardGUI.open(player);
+    }
+
+    private void handleDisablePerk(Player player, String[] args) {
+        if (!checkAdmin(player)) return;
+        if (args.length < 2) {
+            player.sendMessage(ChatColor.RED + "Usage: /vz disableperk <perkId>");
+            return;
+        }
+        String perkId = args[1].toLowerCase();
+        if (gameManager.getPerkManager().getPerkById(perkId) == null) {
+            player.sendMessage(ChatColor.RED + "Unknown perk: " + perkId);
+            return;
+        }
+        if (gameManager.getPerkManager().isDisabled(perkId)) {
+            player.sendMessage(ChatColor.YELLOW + perkId + " is already disabled.");
+            return;
+        }
+        // Update config and apply immediately
+        List<String> list = new ArrayList<>(gameManager.getPlugin().getConfig().getStringList("perks.disabled-perks"));
+        list.add(perkId);
+        gameManager.getPlugin().getConfig().set("perks.disabled-perks", list);
+        gameManager.getPlugin().saveConfig();
+        gameManager.getPerkManager().setDisabledPerks(list);
+        player.sendMessage(ChatColor.RED + "⊘ " + ChatColor.BOLD + perkId + ChatColor.RESET + ChatColor.RED + " disabled. Will not appear in perk selections.");
+    }
+
+    private void handleEnablePerk(Player player, String[] args) {
+        if (!checkAdmin(player)) return;
+        if (args.length < 2) {
+            player.sendMessage(ChatColor.RED + "Usage: /vz enableperk <perkId>");
+            return;
+        }
+        String perkId = args[1].toLowerCase();
+        if (!gameManager.getPerkManager().isDisabled(perkId)) {
+            player.sendMessage(ChatColor.YELLOW + perkId + " is not currently disabled.");
+            return;
+        }
+        List<String> list = new ArrayList<>(gameManager.getPlugin().getConfig().getStringList("perks.disabled-perks"));
+        list.remove(perkId);
+        gameManager.getPlugin().getConfig().set("perks.disabled-perks", list);
+        gameManager.getPlugin().saveConfig();
+        gameManager.getPerkManager().setDisabledPerks(list);
+        player.sendMessage(ChatColor.GREEN + "✔ " + ChatColor.BOLD + perkId + ChatColor.RESET + ChatColor.GREEN + " enabled and back in the perk pool.");
     }
 }
