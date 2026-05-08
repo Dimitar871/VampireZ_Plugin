@@ -14,9 +14,18 @@ public class PerkManager {
     private final Map<String, Perk> perkRegistry = new LinkedHashMap<>();
     private final Map<UUID, List<Perk>> playerPerks = new HashMap<>();
     private int maxPerks = 10;
+    private Set<String> disabledPerks = new HashSet<>();
 
     public void setMaxPerks(int max) {
         this.maxPerks = max;
+    }
+
+    public void setDisabledPerks(java.util.Collection<String> ids) {
+        this.disabledPerks = new HashSet<>(ids);
+    }
+
+    public boolean isDisabled(String perkId) {
+        return disabledPerks.contains(perkId);
     }
 
     public void registerPerk(Perk perk) {
@@ -31,6 +40,7 @@ public class PerkManager {
                 .filter(p -> p.getTier() == tier)
                 .filter(p -> p.getTeam() == playerTeam || p.getTeam() == PerkTeam.BOTH)
                 .filter(p -> !ownedIds.contains(p.getId()))
+                .filter(p -> !disabledPerks.contains(p.getId()))
                 .collect(Collectors.toList());
 
         Collections.shuffle(pool);

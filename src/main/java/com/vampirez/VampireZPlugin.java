@@ -24,6 +24,7 @@ public class VampireZPlugin extends JavaPlugin {
     private PerkListener perkListener;
     private VampireLeapListener leapListener;
     private StatAnvilManager statAnvilManager;
+    private PerkStatsManager perkStatsManager;
 
     public GameManager getGameManager() { return gameManager; }
     public ArenaManager getArenaManager() { return arenaManager; }
@@ -52,8 +53,9 @@ public class VampireZPlugin extends JavaPlugin {
         DayNightManager dayNightManager = new DayNightManager(this);
         ScoreboardManager scoreboardManager = new ScoreboardManager();
 
-        // 2. Register all perks
+        // 2. Register all perks and apply disabled list from config
         registerAllPerks(perkManager);
+        perkManager.setDisabledPerks(getConfig().getStringList("perks.disabled-perks"));
 
         // 3. Initialize game manager
         gameManager = new GameManager(this, economyManager, perkManager,
@@ -73,7 +75,10 @@ public class VampireZPlugin extends JavaPlugin {
         gameManager.setPerkSelectionGUI(perkSelectionGUI);
         gameManager.setStatAnvilManager(statAnvilManager);
 
-        // 4b. Register public API (services manager + static accessor)
+        // 4b. Perk stats tracker
+        perkStatsManager = new PerkStatsManager(this, gameManager, perkManager);
+
+        // 4c. Register public API (services manager + static accessor)
         api = new VampireZAPIImpl(gameManager);
         Bukkit.getServicesManager().register(VampireZAPI.class, api, this, ServicePriority.Normal);
         getLogger().info("VampireZAPI registered with ServicesManager");
@@ -100,6 +105,7 @@ public class VampireZPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(perkShopGUI, this);
         getServer().getPluginManager().registerEvents(perkSelectionGUI, this);
         getServer().getPluginManager().registerEvents(perkTestGUI, this);
+        getServer().getPluginManager().registerEvents(perkStatsManager, this);
 
         // 7. Scoreboard join/quit listener (uses joined player count, not total online)
         getServer().getPluginManager().registerEvents(new Listener() {
@@ -127,6 +133,7 @@ public class VampireZPlugin extends JavaPlugin {
             // Restore all lobby players' saved states so nothing is stale on restart
             gameManager.restoreLobbyPlayers();
         }
+        if (perkStatsManager != null) perkStatsManager.save();
         Bukkit.getServicesManager().unregisterAll(this);
         api = null;
     }

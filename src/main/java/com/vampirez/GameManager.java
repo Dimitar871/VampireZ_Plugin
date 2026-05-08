@@ -49,6 +49,8 @@ public class GameManager {
     private BukkitTask scoreboardTask;
     private BukkitTask countdownTask;
     private BukkitTask vampireReleaseTask;
+    private BukkitTask autoStartTask;
+    private int autoStartCountdown = -1;
     private boolean vampiresReleased = true;
     private boolean bloodCompassGiven = false;
     private boolean lastStartForced = false;
@@ -60,6 +62,7 @@ public class GameManager {
     private double vampireRatio;
     private int vampireRespawnDelayTicks;
     private int startCountdownSeconds;
+    private int autoStartCountdownSeconds;
 
     private Location lobbySpawn;
     private Location humanSpawn;
@@ -84,6 +87,7 @@ public class GameManager {
         vampireRatio = plugin.getConfig().getDouble("game.vampire-ratio", 0.3);
         vampireRespawnDelayTicks = plugin.getConfig().getInt("game.vampire-respawn-delay-ticks", 80);
         startCountdownSeconds = plugin.getConfig().getInt("game.start-countdown-seconds", 15);
+        autoStartCountdownSeconds = plugin.getConfig().getInt("game.lobby-countdown-seconds", 30);
 
         perkManager.setMaxPerks(plugin.getConfig().getInt("perks.max-perks-per-player", 10));
 
@@ -185,7 +189,7 @@ public class GameManager {
 
         player.sendMessage(ChatColor.GREEN + "You joined VampireZ! " + ChatColor.GRAY + "Waiting for the game to start...");
         scoreboardManager.showLobbyScoreboard(player);
-        scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers);
+        scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers, autoStartCountdown);
 
         // Announce
         for (UUID jUuid : joinedPlayers) {
@@ -195,6 +199,8 @@ public class GameManager {
                         ChatColor.GRAY + "(" + joinedPlayers.size() + "/" + minPlayers + ")");
             }
         }
+
+        checkAndTriggerAutoStart();
         return true;
     }
 
@@ -224,7 +230,10 @@ public class GameManager {
         player.sendMessage(ChatColor.YELLOW + "You left VampireZ. Your inventory has been restored.");
 
         if (state == GameState.LOBBY) {
-            scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers);
+            if (autoStartTask != null && getJoinedOnlinePlayers().size() < minPlayers) {
+                cancelAutoStartCountdown("Not enough players (" + getJoinedOnlinePlayers().size() + "/" + minPlayers + ").");
+            }
+            scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers, autoStartCountdown);
         }
 
         // Check win condition
@@ -255,6 +264,80 @@ public class GameManager {
         return players;
     }
 
+    // ===== AUTO-START =====
+
+    private void checkAndTriggerAutoStart() {
+        if (state != GameState.LOBBY) return;
+        if (autoStartTask != null) return;
+        if (!hasSpawnsSet()) return;
+        if (getJoinedOnlinePlayers().size() >= minPlayers) {
+            startAutoStartCountdown();
+        }
+    }
+
+    private void startAutoStartCountdown() {
+        autoStartCountdown = autoStartCountdownSeconds;
+        String prefix = ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix", ""));
+        for (Player p : getJoinedOnlinePlayers()) {
+            p.sendMessage(prefix + ChatColor.GREEN + "Enough players! Starting in " +
+                    ChatColor.YELLOW + ChatColor.BOLD + autoStartCountdown + ChatColor.RESET + ChatColor.GREEN + " seconds.");
+            p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f);
+        }
+        scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers, autoStartCountdown);
+
+        autoStartTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (state != GameState.LOBBY) {
+                autoStartTask.cancel();
+                autoStartTask = null;
+                autoStartCountdown = -1;
+                return;
+            }
+
+            autoStartCountdown--;
+
+            if (autoStartCountdown == 20 || autoStartCountdown == 10) {
+                for (Player p : getJoinedOnlinePlayers()) {
+                    p.sendMessage(prefix + ChatColor.YELLOW + "Game starting in " + ChatColor.BOLD + autoStartCountdown + ChatColor.RESET + ChatColor.YELLOW + " seconds!");
+                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
+                }
+            } else if (autoStartCountdown <= 5 && autoStartCountdown > 0) {
+                for (Player p : getJoinedOnlinePlayers()) {
+                    p.sendMessage(prefix + ChatColor.RED + "" + ChatColor.BOLD + autoStartCountdown + "...");
+                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f + (autoStartCountdown * 0.05f));
+                }
+            }
+
+            scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers, autoStartCountdown);
+
+            if (autoStartCountdown <= 0) {
+                autoStartTask.cancel();
+                autoStartTask = null;
+                autoStartCountdown = -1;
+                if (canStart()) {
+                    startGame(false);
+                }
+            }
+        }, 20L, 20L);
+    }
+
+    private void cancelAutoStartCountdown(String reason) {
+        if (autoStartTask != null) {
+            autoStartTask.cancel();
+            autoStartTask = null;
+        }
+        autoStartCountdown = -1;
+        if (reason != null) {
+            String prefix = ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix", ""));
+            for (Player p : getJoinedOnlinePlayers()) {
+                p.sendMessage(prefix + ChatColor.RED + "Auto-start cancelled: " + reason);
+                p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.8f);
+            }
+        }
+        scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers, -1);
+    }
+
+    public int getAutoStartCountdown() { return autoStartCountdown; }
+
     // ===== GAME START =====
 
     public boolean canStart() {
@@ -269,6 +352,13 @@ public class GameManager {
         if (state != GameState.LOBBY) return;
         if (!force && !canStart()) return;
         if (!hasSpawnsSet()) return;
+
+        // Cancel any pending auto-start countdown silently
+        if (autoStartTask != null) {
+            autoStartTask.cancel();
+            autoStartTask = null;
+        }
+        autoStartCountdown = -1;
 
         state = GameState.STARTING;
         lastStartForced = force;
@@ -737,6 +827,8 @@ public class GameManager {
 
     private void resetToLobby() {
         state = GameState.LOBBY;
+        if (autoStartTask != null) { autoStartTask.cancel(); autoStartTask = null; }
+        autoStartCountdown = -1;
 
         // Cleanup
         for (Perk perk : perkManager.getAllPerks()) {
@@ -793,7 +885,7 @@ public class GameManager {
                         scoreboardManager.showLobbyScoreboard(player);
                     }
                 }
-                scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers);
+                scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers, autoStartCountdown);
             });
         }
     }
@@ -918,7 +1010,8 @@ public class GameManager {
             if (lobbySpawn != null) player.teleport(lobbySpawn);
             player.setGameMode(org.bukkit.GameMode.ADVENTURE);
             scoreboardManager.showLobbyScoreboard(player);
-            scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers);
+            scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers, autoStartCountdown);
+            checkAndTriggerAutoStart();
             player.sendMessage(ChatColor.GREEN + "Welcome back to the VampireZ lobby!");
             return;
         }
@@ -941,7 +1034,10 @@ public class GameManager {
         if (state == GameState.LOBBY) {
             // Keep in joinedPlayers so they rejoin the lobby automatically
             scoreboardManager.removePlayer(uuid);
-            scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers);
+            if (autoStartTask != null && getJoinedOnlinePlayers().size() < minPlayers) {
+                cancelAutoStartCountdown("Not enough players online.");
+            }
+            scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers, autoStartCountdown);
             return;
         }
 

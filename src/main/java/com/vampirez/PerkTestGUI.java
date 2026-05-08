@@ -49,6 +49,7 @@ public class PerkTestGUI implements Listener {
 
         for (int i = 0; i < perksPerPage && (startIndex + i) < allPerks.size(); i++) {
             Perk perk = allPerks.get(startIndex + i);
+            boolean isDisabled = perkManager.isDisabled(perk.getId());
             ItemStack display = perk.createDisplayItem();
             ItemMeta meta = display.getItemMeta();
             if (meta != null) {
@@ -65,7 +66,11 @@ public class PerkTestGUI implements Listener {
                 }
                 lore.add(ChatColor.YELLOW + "Team: " + teamStr);
 
-                if (ownedIds.contains(perk.getId())) {
+                if (isDisabled) {
+                    lore.add("");
+                    lore.add(ChatColor.RED + "" + ChatColor.BOLD + "⊘ DISABLED");
+                    lore.add(ChatColor.GRAY + "Remove from disabled-perks in config.yml to enable");
+                } else if (ownedIds.contains(perk.getId())) {
                     lore.add("");
                     lore.add(ChatColor.GREEN + "" + ChatColor.BOLD + "OWNED - Click to remove");
                     // Add enchant glow
@@ -77,6 +82,9 @@ public class PerkTestGUI implements Listener {
                 }
                 meta.setLore(lore);
                 display.setItemMeta(meta);
+                if (isDisabled) {
+                    display.setType(Material.BARRIER);
+                }
             }
             inv.setItem(i, display);
         }

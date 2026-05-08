@@ -32,6 +32,10 @@ public class ScoreboardManager {
     }
 
     public void updateLobbyScoreboard(int playerCount, int minPlayers) {
+        updateLobbyScoreboard(playerCount, minPlayers, -1);
+    }
+
+    public void updateLobbyScoreboard(int playerCount, int minPlayers, int autoStartCountdown) {
         if (teamScoreboard == null) setupLobbyScoreboard();
 
         for (FastBoard board : boards.values()) {
@@ -44,10 +48,12 @@ public class ScoreboardManager {
                 lines.add(ChatColor.WHITE + "  Players: " + ChatColor.GREEN + playerCount + ChatColor.GRAY + "/" + ChatColor.WHITE + "100");
                 lines.add(ChatColor.WHITE + "  Min to start: " + ChatColor.YELLOW + minPlayers);
                 lines.add("");
-                if (playerCount < minPlayers) {
-                    lines.add(ChatColor.YELLOW + "  Waiting for players...");
-                } else {
+                if (autoStartCountdown >= 0) {
+                    lines.add(ChatColor.GREEN + "  Starting in: " + ChatColor.YELLOW + ChatColor.BOLD + autoStartCountdown + "s");
+                } else if (playerCount >= minPlayers) {
                     lines.add(ChatColor.GREEN + "  \u2714 Ready to start!");
+                } else {
+                    lines.add(ChatColor.YELLOW + "  Waiting for players...");
                 }
                 lines.add("");
                 lines.add(SEPARATOR);

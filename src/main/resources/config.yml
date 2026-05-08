@@ -21,6 +21,7 @@ perks:
   gold-cost: 150
   prismatic-cost: 400
   options-per-purchase: 3
+  disabled-perks: []
 
 arena:
   world-name: "vampirez_arena"
