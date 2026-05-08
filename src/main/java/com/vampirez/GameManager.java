@@ -857,7 +857,9 @@ public class GameManager {
         humanTeam.clear();
         vampireTeam.clear();
 
-        // Wipe all players' game state and park them in the main world during arena reset
+        boolean resettingArena = arenaManager != null && arenaManager.hasTemplate();
+
+        // Wipe all players' game state
         for (UUID uuid : new HashSet<>(joinedPlayers)) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline()) {
@@ -869,20 +871,23 @@ public class GameManager {
                 player.setHealth(player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getBaseValue());
                 player.setFoodLevel(20);
                 player.setSaturation(20f);
-                // Temporarily send to main world while arena resets
-                player.teleport(Bukkit.getWorlds().get(0).getSpawnLocation());
-                // Clear saved state — game ended normally, no need to restore on next login
+                if (resettingArena) {
+                    // Arena world is about to be unloaded — park players in the main world temporarily
+                    player.teleport(Bukkit.getWorlds().get(0).getSpawnLocation());
+                } else if (lobbySpawn != null) {
+                    // No arena reset — go straight to lobby spawn, no intermediate teleport
+                    player.teleport(lobbySpawn);
+                }
                 if (playerStateManager != null) {
                     playerStateManager.clearSavedState(uuid);
                 }
             } else {
-                // Offline player — remove from joinedPlayers, keep saved state for restore on next login
                 joinedPlayers.remove(uuid);
             }
         }
 
-        // Reset the arena world, then teleport players to lobby in the fresh arena
-        if (arenaManager != null && arenaManager.hasTemplate()) {
+        if (resettingArena) {
+            // Reset the arena world, then bring everyone to the fresh lobby spawn
             arenaManager.resetArena(() -> {
                 loadSpawns();
                 plugin.getLogger().info("Arena world has been reset and reloaded.");
@@ -891,14 +896,22 @@ public class GameManager {
                 for (UUID uuid : new HashSet<>(joinedPlayers)) {
                     Player player = Bukkit.getPlayer(uuid);
                     if (player != null && player.isOnline()) {
-                        if (lobbySpawn != null) {
-                            player.teleport(lobbySpawn);
-                        }
+                        if (lobbySpawn != null) player.teleport(lobbySpawn);
                         scoreboardManager.showLobbyScoreboard(player);
                     }
                 }
                 scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers, autoStartCountdown);
             });
+        } else {
+            // No arena reset — set up lobby scoreboard immediately
+            scoreboardManager.setupLobbyScoreboard();
+            for (UUID uuid : new HashSet<>(joinedPlayers)) {
+                Player player = Bukkit.getPlayer(uuid);
+                if (player != null && player.isOnline()) {
+                    scoreboardManager.showLobbyScoreboard(player);
+                }
+            }
+            scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers, autoStartCountdown);
         }
     }
 
