@@ -30,6 +30,8 @@ public class DayNightManager {
         loadConfig();
     }
 
+    public void reloadConfig() { loadConfig(); }
+
     private void loadConfig() {
         enabled = plugin.getConfig().getBoolean("day-night.enabled", true);
         dayDurationTicks = plugin.getConfig().getInt("day-night.day-duration-ticks", 7200);

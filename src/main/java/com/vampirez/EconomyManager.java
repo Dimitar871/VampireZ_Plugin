@@ -28,6 +28,8 @@ public class EconomyManager {
         loadConfig();
     }
 
+    public void reloadConfig() { loadConfig(); }
+
     private void loadConfig() {
         passiveIncomeAmount = plugin.getConfig().getInt("economy.passive-income-amount", 2);
         passiveIncomeIntervalTicks = plugin.getConfig().getInt("economy.passive-income-interval-ticks", 200);

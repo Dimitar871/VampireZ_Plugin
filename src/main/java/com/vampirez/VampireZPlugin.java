@@ -25,6 +25,7 @@ public class VampireZPlugin extends JavaPlugin {
     private VampireLeapListener leapListener;
     private StatAnvilManager statAnvilManager;
     private PerkStatsManager perkStatsManager;
+    private PlayerStatsManager playerStatsManager;
 
     public GameManager getGameManager() { return gameManager; }
     public ArenaManager getArenaManager() { return arenaManager; }
@@ -75,16 +76,21 @@ public class VampireZPlugin extends JavaPlugin {
         gameManager.setPerkSelectionGUI(perkSelectionGUI);
         gameManager.setStatAnvilManager(statAnvilManager);
 
-        // 4b. Perk stats tracker
+        // 4b. Stats trackers
         perkStatsManager = new PerkStatsManager(this, gameManager, perkManager);
+        playerStatsManager = new PlayerStatsManager(this, gameManager);
 
         // 4c. Register public API (services manager + static accessor)
         api = new VampireZAPIImpl(gameManager);
         Bukkit.getServicesManager().register(VampireZAPI.class, api, this, ServicePriority.Normal);
         getLogger().info("VampireZAPI registered with ServicesManager");
 
+        // 4d. Leaderboard GUI
+        LeaderboardGUI leaderboardGUI = new LeaderboardGUI(playerStatsManager);
+
         // 5. Register commands (executor + tab completer)
         GameCommands gameCommands = new GameCommands(gameManager, perkShopGUI, perkTestGUI, api);
+        gameCommands.setLeaderboardGUI(leaderboardGUI);
         getCommand("vampirez").setExecutor(gameCommands);
         getCommand("vampirez").setTabCompleter(gameCommands);
 
@@ -106,6 +112,8 @@ public class VampireZPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(perkSelectionGUI, this);
         getServer().getPluginManager().registerEvents(perkTestGUI, this);
         getServer().getPluginManager().registerEvents(perkStatsManager, this);
+        getServer().getPluginManager().registerEvents(playerStatsManager, this);
+        getServer().getPluginManager().registerEvents(leaderboardGUI, this);
 
         // 7. Scoreboard join/quit listener (uses joined player count, not total online)
         getServer().getPluginManager().registerEvents(new Listener() {
@@ -134,6 +142,7 @@ public class VampireZPlugin extends JavaPlugin {
             gameManager.restoreLobbyPlayers();
         }
         if (perkStatsManager != null) perkStatsManager.save();
+        if (playerStatsManager != null) playerStatsManager.save();
         Bukkit.getServicesManager().unregisterAll(this);
         api = null;
     }

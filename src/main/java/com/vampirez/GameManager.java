@@ -94,6 +94,18 @@ public class GameManager {
         loadSpawns();
     }
 
+    /**
+     * Hot-reload all manager configs from disk. Safe to call during LOBBY only.
+     * Re-reads config.yml from disk, then propagates new values to all managers.
+     */
+    public void reloadAllConfig() {
+        plugin.reloadConfig();
+        loadConfig();
+        economyManager.reloadConfig();
+        dayNightManager.reloadConfig();
+        perkManager.setDisabledPerks(plugin.getConfig().getStringList("perks.disabled-perks"));
+    }
+
     private void loadSpawns() {
         lobbySpawn = loadLocation("spawns.lobby");
         humanSpawn = loadLocation("spawns.human");

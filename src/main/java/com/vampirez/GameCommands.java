@@ -24,6 +24,7 @@ public class GameCommands implements CommandExecutor, TabCompleter {
     private final PerkShopGUI perkShopGUI;
     private final PerkTestGUI perkTestGUI;
     private final VampireZAPI api;
+    private LeaderboardGUI leaderboardGUI;
 
     public GameCommands(GameManager gameManager, PerkShopGUI perkShopGUI, PerkTestGUI perkTestGUI, VampireZAPI api) {
         this.gameManager = gameManager;
@@ -31,6 +32,8 @@ public class GameCommands implements CommandExecutor, TabCompleter {
         this.perkTestGUI = perkTestGUI;
         this.api = api;
     }
+
+    public void setLeaderboardGUI(LeaderboardGUI gui) { this.leaderboardGUI = gui; }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -72,6 +75,7 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             case "setgold" -> handleSetGold(player, args);
             case "addgold" -> handleAddGold(player, args);
             case "apitest" -> handleApiTest(player);
+            case "leaderboard", "lb" -> handleLeaderboard(player);
             default -> {
                 player.sendMessage(ChatColor.RED + "Unknown subcommand. Use /vz help");
             }
@@ -87,6 +91,7 @@ public class GameCommands implements CommandExecutor, TabCompleter {
         player.sendMessage(ChatColor.GOLD + "/vz perks [player]" + ChatColor.GRAY + " - List your perks (admins: any player's perks)");
         player.sendMessage(ChatColor.GOLD + "/vz gold" + ChatColor.GRAY + " - Show your gold");
         player.sendMessage(ChatColor.GOLD + "/vz status" + ChatColor.GRAY + " - Show game status");
+        player.sendMessage(ChatColor.GOLD + "/vz leaderboard" + ChatColor.GRAY + " - Open the player leaderboard");
         if (player.hasPermission("vampirez.admin")) {
             player.sendMessage(ChatColor.RED + "/vz start" + ChatColor.GRAY + " - Start the game");
             player.sendMessage(ChatColor.RED + "/vz forcestart" + ChatColor.GRAY + " - Force start");
@@ -268,7 +273,7 @@ public class GameCommands implements CommandExecutor, TabCompleter {
                     "start", "forcestart", "stop", "setlobby", "sethumanspawn", "setvampspawn",
                     "test", "tools", "debugdmg", "announce", "arena", "reload",
                     "giveperk", "removeperk", "forceconvert", "settime", "setphase",
-                    "setgold", "addgold", "apitest"
+                    "setgold", "addgold", "apitest", "leaderboard", "lb"
             ));
         }
 
@@ -552,11 +557,19 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             player.sendMessage(ChatColor.RED + "No permission!");
             return;
         }
-        // Reload is not safe during active game
         if (gameManager.getState() != GameState.LOBBY) {
             player.sendMessage(ChatColor.RED + "Cannot reload during an active game!");
             return;
         }
-        player.sendMessage(ChatColor.GREEN + "Config reloaded! (Restart server for full effect)");
+        gameManager.reloadAllConfig();
+        player.sendMessage(ChatColor.GREEN + "Config reloaded! Updated: game settings, economy, day/night, disabled perks, perk limits.");
+    }
+
+    private void handleLeaderboard(Player player) {
+        if (leaderboardGUI == null) {
+            player.sendMessage(ChatColor.RED + "Leaderboard is not available.");
+            return;
+        }
+        leaderboardGUI.open(player);
     }
 }
