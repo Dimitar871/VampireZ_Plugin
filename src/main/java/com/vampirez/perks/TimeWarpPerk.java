@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -82,7 +82,7 @@ public class TimeWarpPerk extends Perk {
         victim.getWorld().spawnParticle(Particle.DUST, victim.getLocation().add(0, 1, 0), 40, 0.5, 1, 0.5, 0,
                 new Particle.DustOptions(org.bukkit.Color.PURPLE, 1.5f));
         victim.playSound(victim.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 0.5f, 2.0f);
-        victim.sendMessage(ChatColor.LIGHT_PURPLE + "Time Warp! Rewound 3 seconds!");
+        victim.sendMessage(MM.parse("<light_purple>Time Warp! Rewound 3 seconds!"));
         incrementStat(uuid, "rewinds");
     }
 

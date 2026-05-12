@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -36,7 +39,7 @@ public class MedicPerk extends Perk {
         ItemStack snowballs = new ItemStack(Material.SNOWBALL, 3);
         ItemMeta meta = snowballs.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.GREEN + "Healing Snowball");
+            meta.displayName(Component.text("Healing Snowball").color(NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
             snowballs.setItemMeta(meta);
         }
         player.getInventory().addItem(snowballs);
@@ -67,8 +70,8 @@ public class MedicPerk extends Perk {
             target.setHealth(Math.min(target.getHealth() + healAmount, maxHealth));
             target.getWorld().spawnParticle(Particle.HEART, target.getLocation().add(0, 2, 0), 6, 0.3, 0.3, 0.3, 0);
             target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 2.0f);
-            attacker.sendMessage(ChatColor.GREEN + "You healed " + target.getName() + " for 3 hearts!");
-            target.sendMessage(ChatColor.GREEN + attacker.getName() + " healed you for 3 hearts!");
+            attacker.sendMessage(MM.parse("<green>You healed " + target.getName() + " for 3 hearts!"));
+            target.sendMessage(MM.parse("<green>" + attacker.getName() + " healed you for 3 hearts!"));
             addStat(attacker.getUniqueId(), "healing", 6.0);
         }
         // If enemy, let normal snowball damage proceed (basically 0)
@@ -90,7 +93,7 @@ public class MedicPerk extends Perk {
             }
             if (current < MAX_SNOWBALLS) {
                 player.getInventory().addItem(new ItemStack(Material.SNOWBALL, 1));
-                player.sendMessage(ChatColor.GREEN + "Medic: Snowball regenerated! (" + (current + 1) + "/" + MAX_SNOWBALLS + ")");
+                player.sendMessage(MM.parse("<green>Medic: Snowball regenerated! (" + (current + 1) + "/" + MAX_SNOWBALLS + ")"));
             }
         }
         tickCounters.put(uuid, count);

@@ -4,7 +4,10 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -41,8 +44,8 @@ public class ReapersMarkPerk extends Perk {
         ItemStack item = new ItemStack(Material.SPECTRAL_ARROW);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.RED + "Reaper's Mark" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Mark an enemy for death", ChatColor.YELLOW + "Cooldown: 45s"));
+            meta.displayName(Component.text("Reaper's Mark (Right-Click)").color(NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Mark an enemy for death").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 45s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -78,7 +81,7 @@ public class ReapersMarkPerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Reaper's Mark on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Reaper's Mark on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
 
@@ -96,7 +99,7 @@ public class ReapersMarkPerk extends Perk {
         }
 
         if (nearest == null) {
-            player.sendMessage(ChatColor.RED + "No enemies in range!");
+            player.sendMessage(MM.parse("<red>No enemies in range!"));
             return;
         }
 
@@ -116,8 +119,8 @@ public class ReapersMarkPerk extends Perk {
         nearest.getWorld().spawnParticle(Particle.DUST, nearest.getLocation().add(0, 2, 0), 20, 0.3, 0.3, 0.3, 0,
                 new Particle.DustOptions(org.bukkit.Color.RED, 1.5f));
         player.playSound(player.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.5f, 1.5f);
-        nearest.sendMessage(ChatColor.RED + "You have been marked by the Reaper!");
-        player.sendMessage(ChatColor.RED + "Marked " + nearest.getName() + "!");
+        nearest.sendMessage(MM.parse("<red>You have been marked by the Reaper!"));
+        player.sendMessage(MM.parse("<red>Marked " + nearest.getName() + "!"));
         incrementStat(uuid, "marks");
     }
 
@@ -146,7 +149,7 @@ public class ReapersMarkPerk extends Perk {
             killer.setHealth(maxHealth);
             killer.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, killer.getLocation().add(0, 1, 0), 30, 0.5, 1, 0.5, 0.1);
             killer.playSound(killer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-            killer.sendMessage(ChatColor.RED + "Reaper's execution! Healed to full!");
+            killer.sendMessage(MM.parse("<red>Reaper's execution! Healed to full!"));
             incrementStat(killerUUID, "executions");
         }
 

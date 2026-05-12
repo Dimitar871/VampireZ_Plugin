@@ -4,7 +4,10 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -31,8 +34,8 @@ public class TrapperPerk extends Perk {
         ItemStack webs = new ItemStack(Material.COBWEB, amount);
         ItemMeta meta = webs.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.WHITE + "Trap Web");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Place to trap enemies"));
+            meta.displayName(Component.text("Trap Web").color(NamedTextColor.WHITE).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Place to trap enemies").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
             webs.setItemMeta(meta);
         }
         return webs;
@@ -96,7 +99,7 @@ public class TrapperPerk extends Perk {
             }
             if (currentWebs < MAX_WEBS) {
                 player.getInventory().addItem(createTrapWeb(1));
-                player.sendMessage(ChatColor.WHITE + "Trap Web refilled! (" + (currentWebs + 1) + "/" + MAX_WEBS + ")");
+                player.sendMessage(MM.parse("<white>Trap Web refilled! (" + (currentWebs + 1) + "/" + MAX_WEBS + ")"));
             }
         }
     }

@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -58,7 +58,7 @@ public class OverchargePerk extends Perk {
 
         if (!chargeStart.containsKey(uuid)) {
             chargeStart.put(uuid, now);
-            player.sendMessage(ChatColor.GOLD + "Overcharging bow...");
+            player.sendMessage(MM.parse("<gold>Overcharging bow..."));
         }
     }
 
@@ -87,8 +87,8 @@ public class OverchargePerk extends Perk {
         target.getWorld().spawnParticle(Particle.EXPLOSION, target.getLocation().add(0, 1, 0), 3, 0.5, 0.5, 0.5, 0);
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.2f);
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.5f, 1.5f);
-        attacker.sendMessage(ChatColor.GOLD + "OVERCHARGED! 2x damage!");
-        target.sendMessage(ChatColor.GOLD + "You were hit by an overcharged shot!");
+        attacker.sendMessage(MM.parse("<gold>OVERCHARGED! 2x damage!"));
+        target.sendMessage(MM.parse("<gold>You were hit by an overcharged shot!"));
         incrementStat(uuid, "overcharges");
     }
 

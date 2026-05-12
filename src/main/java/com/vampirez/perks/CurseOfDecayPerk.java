@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.Particle;
@@ -44,7 +44,7 @@ public class CurseOfDecayPerk extends Perk {
                 new Particle.DustOptions(org.bukkit.Color.fromRGB(48, 0, 48), 1.5f));
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_HUSK_AMBIENT, 0.5f, 0.8f);
         incrementStat(attacker.getUniqueId(), "curses_applied");
-        target.sendMessage(ChatColor.DARK_GRAY + "Curse of Decay! Your healing is reduced by 50%!");
+        target.sendMessage(MM.parse("<dark_gray>Curse of Decay! Your healing is reduced by 50%!"));
     }
 
     @Override

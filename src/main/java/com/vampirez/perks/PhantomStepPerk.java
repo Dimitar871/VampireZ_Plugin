@@ -4,7 +4,7 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -64,7 +64,7 @@ public class PhantomStepPerk extends Perk {
         victim.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 20, 0, false, true), true);
         victim.getWorld().spawnParticle(Particle.LARGE_SMOKE, victim.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.02);
         victim.playSound(victim.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 1.0f, 1.5f);
-        victim.sendMessage(ChatColor.DARK_PURPLE + "Phantom Step! You vanished!");
+        victim.sendMessage(MM.parse("<dark_purple>Phantom Step! You vanished!"));
         incrementStat(uuid, "vanishes");
 
         // Restore armor after 1s (20 ticks)

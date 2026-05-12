@@ -169,43 +169,11 @@ class PlayerStatsManagerTest {
     // ===== Save / load round-trip =====
 
     @Test
-    void saveAndLoad_roundTrips() throws IOException {
-        UUID uuid = UUID.randomUUID();
-        manager.recordKill(uuid, "Carol");
-        manager.recordKill(uuid, "Carol");
-        manager.recordWin(uuid, "Carol");
-        manager.recordLoss(uuid, "Carol");
-        manager.save();
-
-        // New instance reads the same file
-        PlayerStatsManager loaded = new PlayerStatsManager(plugin, gameManager);
-        PlayerStatsManager.PlayerStats s = loaded.getStats(uuid);
-
-        assertEquals(2, s.kills);
-        assertEquals(1, s.wins);
-        assertEquals(1, s.losses);
-        assertEquals("Carol", s.name);
-    }
-
-    @Test
-    void load_ignoresNonUUIDKeys() throws IOException {
-        // Write a YAML file with a non-UUID key
-        File statsFile = new File(tempDir.toFile(), "player-stats.yml");
-        YamlConfiguration config = new YamlConfiguration();
-        config.set("not-a-uuid.kills", 5);
-        config.set("not-a-uuid.wins", 2);
-        config.set("not-a-uuid.losses", 1);
-        config.save(statsFile);
-
-        // Should load without throwing
-        PlayerStatsManager m = new PlayerStatsManager(plugin, gameManager);
-        assertTrue(m.stats.isEmpty(), "Non-UUID keys must be ignored");
-    }
-
-    @Test
-    void load_withNoFile_producesEmptyState() {
-        // stats file doesn't exist at this point
+    void load_withNoRepository_producesEmptyState() {
+        // The 2-arg test constructor uses repo=null and skips persistence; in-memory only.
         PlayerStatsManager m = new PlayerStatsManager(plugin, gameManager);
         assertEquals(0, m.stats.size());
     }
+
+    // SQLite round-trip + YAML migration tests live in Phase 5 (MockBukkit + in-memory SQLite).
 }

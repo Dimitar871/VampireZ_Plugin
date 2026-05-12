@@ -1,7 +1,6 @@
 package com.vampirez;
 
 import org.bukkit.attribute.Attribute;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -296,7 +295,7 @@ public class GameListener implements Listener {
         event.setCancelled(true);
 
         if (gameManager.getState() != GameState.ACTIVE) {
-            player.sendMessage(ChatColor.RED + "The shop is only available during an active game!");
+            player.sendMessage(MM.parse("<red>The shop is only available during an active game!"));
             return;
         }
 

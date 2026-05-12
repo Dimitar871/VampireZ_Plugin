@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.Particle;
@@ -64,7 +64,7 @@ public class SiphonPerk extends Perk {
             addStat(attackerUUID, "health_stolen", actualHeal);
         }
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_WITCH_DRINK, 0.5f, 1.5f);
-        attacker.sendMessage(ChatColor.RED + "Siphon! Stole 1 heart from " + target.getName());
+        attacker.sendMessage(MM.parse("<red>Siphon! Stole 1 heart from " + target.getName()));
     }
 
     @Override

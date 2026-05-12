@@ -4,7 +4,7 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.Particle;
@@ -78,7 +78,7 @@ public class HemophiliaPerk extends Perk {
                 new Particle.DustOptions(org.bukkit.Color.fromRGB(200, 0, 0), 1.0f));
         target.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, target.getLocation().add(0, 1.2, 0), 5, 0.2, 0.3, 0.2, 0.02);
         incrementStat(attackerUUID, "bleeds_applied");
-        target.sendMessage(ChatColor.DARK_RED + "You are bleeding!");
+        target.sendMessage(MM.parse("<dark_red>You are bleeding!"));
     }
 
     /**

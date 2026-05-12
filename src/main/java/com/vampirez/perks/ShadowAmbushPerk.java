@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -38,8 +41,8 @@ public class ShadowAmbushPerk extends Perk {
         ItemStack item = new ItemStack(Material.FLINT);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_GRAY + "Shadow Ambush" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "3s Invisibility + Bonus Damage", ChatColor.YELLOW + "Cooldown: 30s"));
+            meta.displayName(Component.text("Shadow Ambush (Right-Click)").color(NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("3s Invisibility + Bonus Damage").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 30s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -70,7 +73,7 @@ public class ShadowAmbushPerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Shadow Ambush on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Shadow Ambush on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
         cooldowns.put(uuid, now);
@@ -80,7 +83,7 @@ public class ShadowAmbushPerk extends Perk {
         player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 60, 0, false, false));
         player.getWorld().spawnParticle(Particle.LARGE_SMOKE, player.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.02);
         player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.7f, 1.5f);
-        player.sendMessage(ChatColor.DARK_GRAY + "You vanish into the shadows...");
+        player.sendMessage(MM.parse("<dark_gray>You vanish into the shadows..."));
         incrementStat(uuid, "activations");
 
         // Auto-remove stealth flag after 3s if not broken by attack
@@ -104,7 +107,7 @@ public class ShadowAmbushPerk extends Perk {
 
         attacker.getWorld().spawnParticle(Particle.ENCHANTED_HIT, victim.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0.1);
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 0.8f);
-        attacker.sendMessage(ChatColor.DARK_GRAY + "Shadow Ambush! +50% damage!");
+        attacker.sendMessage(MM.parse("<dark_gray>Shadow Ambush! +50% damage!"));
         incrementStat(uuid, "ambush_hits");
     }
 

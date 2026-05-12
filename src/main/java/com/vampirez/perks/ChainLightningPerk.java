@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -59,8 +59,8 @@ public class ChainLightningPerk extends Perk {
             nearest.damage(chainDamage);
             addStat(attacker.getUniqueId(), "chain_damage", chainDamage);
             incrementStat(attacker.getUniqueId(), "chains");
-            attacker.sendMessage(ChatColor.AQUA + "Chain Lightning arcs to " + nearest.getName() + "!");
-            nearest.sendMessage(ChatColor.AQUA + "Chain Lightning strikes you!");
+            attacker.sendMessage(MM.parse("<aqua>Chain Lightning arcs to " + nearest.getName() + "!"));
+            nearest.sendMessage(MM.parse("<aqua>Chain Lightning strikes you!"));
         }
     }
 

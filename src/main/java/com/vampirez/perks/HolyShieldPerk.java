@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -49,7 +49,7 @@ public class HolyShieldPerk extends Perk {
                 // On cooldown - keep accumulated at threshold so it triggers immediately when ready
                 accumulated.put(uuid, 10.0);
                 long remaining = (getEffectiveCooldown(victim, COOLDOWN_MS) - (now - lastUse)) / 1000;
-                victim.sendMessage(ChatColor.GOLD + "Holy Shield on cooldown! " + remaining + "s remaining");
+                victim.sendMessage(MM.parse("<gold>Holy Shield on cooldown! " + remaining + "s remaining"));
                 return;
             }
             accumulated.put(uuid, 0.0);
@@ -70,14 +70,14 @@ public class HolyShieldPerk extends Perk {
                 target.damage(8.0, victim);
                 Vector knockback = target.getLocation().toVector().subtract(victim.getLocation().toVector()).normalize().multiply(0.6).setY(0.3);
                 target.setVelocity(knockback);
-                target.sendMessage(ChatColor.GOLD + "Holy Shield explosion!");
+                target.sendMessage(MM.parse("<gold>Holy Shield explosion!"));
                 hits++;
                 totalDamage += 8.0;
             }
 
             incrementStat(uuid, "explosions");
             addStat(uuid, "aoe_damage", totalDamage);
-            victim.sendMessage(ChatColor.GOLD + "Holy Shield detonated! Hit " + hits + " enemies!");
+            victim.sendMessage(MM.parse("<gold>Holy Shield detonated! Hit " + hits + " enemies!"));
         } else {
             accumulated.put(uuid, total);
         }

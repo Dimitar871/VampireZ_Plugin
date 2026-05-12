@@ -2,9 +2,15 @@ package com.vampirez;
 
 import com.vampirez.api.VampireZAPI;
 import com.vampirez.api.VampireZAPIImpl;
+import com.vampirez.config.PluginConfig;
+import com.vampirez.db.DatabaseManager;
+import com.vampirez.db.PlayerStatsRepository;
 import com.vampirez.engine.DataDrivenPerk;
 import com.vampirez.engine.PerkConfigLoader;
 import com.vampirez.perks.*;
+import de.exlll.configlib.NameFormatters;
+import de.exlll.configlib.YamlConfigurationProperties;
+import de.exlll.configlib.YamlConfigurations;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -14,6 +20,7 @@ import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.nio.file.Path;
 
 public class VampireZPlugin extends JavaPlugin {
 
@@ -26,9 +33,34 @@ public class VampireZPlugin extends JavaPlugin {
     private StatAnvilManager statAnvilManager;
     private PerkStatsManager perkStatsManager;
     private PlayerStatsManager playerStatsManager;
+    private PerkSelectionGUI perkSelectionGUI;
+    private PluginConfig pluginConfig;
+    private DatabaseManager databaseManager;
+
+    private static final YamlConfigurationProperties CONFIG_PROPERTIES =
+            YamlConfigurationProperties.newBuilder()
+                    .setNameFormatter(NameFormatters.LOWER_KEBAB_CASE)
+                    .build();
 
     public GameManager getGameManager() { return gameManager; }
     public ArenaManager getArenaManager() { return arenaManager; }
+    public PerkSelectionGUI getPerkSelectionGUI() { return perkSelectionGUI; }
+    public PluginConfig getPluginConfig() { return pluginConfig; }
+
+    /** Persist {@link #pluginConfig} back to disk. Call after mutating typed config (e.g. spawn updates). */
+    public void savePluginConfig() {
+        YamlConfigurations.save(configPath(), PluginConfig.class, pluginConfig, CONFIG_PROPERTIES);
+    }
+
+    /** Reload {@link #pluginConfig} from disk and refresh Bukkit's view. Lobby-only. */
+    public void reloadPluginConfig() {
+        pluginConfig = YamlConfigurations.update(configPath(), PluginConfig.class, CONFIG_PROPERTIES);
+        reloadConfig();
+    }
+
+    private Path configPath() {
+        return new File(getDataFolder(), "config.yml").toPath();
+    }
 
     /** Public API entry point. Returns null until {@link #onEnable()} has run. */
     public static VampireZAPI getAPI() { return api; }
@@ -39,6 +71,15 @@ public class VampireZPlugin extends JavaPlugin {
         saveDefaultConfig();
         saveResource("perks.yml", false);
 
+        // Load typed configuration (creates / migrates fields against the existing config.yml).
+        pluginConfig = YamlConfigurations.update(configPath(), PluginConfig.class, CONFIG_PROPERTIES);
+        // Reload Bukkit's view of config.yml so getConfig() sees any new keys ConfigLib added.
+        reloadConfig();
+
+        // Initialize SQLite (HikariCP pool + schema migrations) before any manager that uses it.
+        databaseManager = new DatabaseManager(this);
+        databaseManager.start();
+
         // 0. Initialize arena manager and load the arena world
         arenaManager = new ArenaManager(this);
         if (arenaManager.hasTemplate()) {
@@ -47,52 +88,45 @@ public class VampireZPlugin extends JavaPlugin {
             getLogger().warning("No arena template found! Place your arena world in the 'arena-template' folder.");
         }
 
-        // 1. Initialize managers
+        // 1. Build leaf managers (no GameManager dependency)
         EconomyManager economyManager = new EconomyManager(this);
         PerkManager perkManager = new PerkManager();
         GearManager gearManager = new GearManager();
-        DayNightManager dayNightManager = new DayNightManager(this);
         ScoreboardManager scoreboardManager = new ScoreboardManager();
+        PlayerStateManager playerStateManager = new PlayerStateManager(this);
+        statAnvilManager = new StatAnvilManager(economyManager);
 
         // 2. Register all perks and apply disabled list from config
         registerAllPerks(perkManager);
-        perkManager.setDisabledPerks(getConfig().getStringList("perks.disabled-perks"));
+        perkManager.setDisabledPerks(pluginConfig.perks.disabledPerks);
 
-        // 3. Initialize game manager
-        gameManager = new GameManager(this, economyManager, perkManager,
-                gearManager, dayNightManager, scoreboardManager);
-        gameManager.setArenaManager(arenaManager);
-        dayNightManager.setGameManager(gameManager);
+        // 3. DayNightManager needs a lazy GameManager reference (cycle: GameManager → DayNightManager → GameManager)
+        DayNightManager dayNightManager = new DayNightManager(this, this::getGameManager);
 
-        // 3b. Initialize player state manager (inventory save/restore for join/leave)
-        PlayerStateManager playerStateManager = new PlayerStateManager(this);
-        gameManager.setPlayerStateManager(playerStateManager);
+        // 4. GameManager — fully constructor-injected. PerkSelectionGUI is supplied lazily (cycle: GUI → GameManager → GUI)
+        gameManager = new GameManager(this, economyManager, perkManager, gearManager, dayNightManager,
+                scoreboardManager, arenaManager, playerStateManager, statAnvilManager,
+                this::getPerkSelectionGUI);
 
-        // 4. Initialize GUIs and StatAnvil
-        statAnvilManager = new StatAnvilManager(economyManager);
+        // 5. Build GUIs that depend on GameManager (PerkSelectionGUI completes the lazy cycle)
         PerkShopGUI perkShopGUI = new PerkShopGUI(perkManager, economyManager, gameManager, statAnvilManager);
-        PerkSelectionGUI perkSelectionGUI = new PerkSelectionGUI(perkManager, gameManager, this);
+        perkSelectionGUI = new PerkSelectionGUI(perkManager, gameManager, this);
         PerkTestGUI perkTestGUI = new PerkTestGUI(perkManager);
-        gameManager.setPerkSelectionGUI(perkSelectionGUI);
-        gameManager.setStatAnvilManager(statAnvilManager);
 
-        // 4b. Stats trackers
+        // 6. Stats trackers — PlayerStatsManager persists to SQLite via the repository.
         perkStatsManager = new PerkStatsManager(this, gameManager, perkManager);
-        playerStatsManager = new PlayerStatsManager(this, gameManager);
+        playerStatsManager = new PlayerStatsManager(this, gameManager,
+                new PlayerStatsRepository(databaseManager));
 
-        // 4c. Register public API (services manager + static accessor)
+        // 7. Register public API (services manager + static accessor)
         api = new VampireZAPIImpl(gameManager);
         Bukkit.getServicesManager().register(VampireZAPI.class, api, this, ServicePriority.Normal);
         getLogger().info("VampireZAPI registered with ServicesManager");
 
-        // 4d. Leaderboard GUI
+        // 8. Leaderboard GUI + commands (Cloud handles dispatch + tab-complete + Brigadier)
         LeaderboardGUI leaderboardGUI = new LeaderboardGUI(playerStatsManager);
-
-        // 5. Register commands (executor + tab completer)
-        GameCommands gameCommands = new GameCommands(gameManager, perkShopGUI, perkTestGUI, api);
-        gameCommands.setLeaderboardGUI(leaderboardGUI);
-        getCommand("vampirez").setExecutor(gameCommands);
-        getCommand("vampirez").setTabCompleter(gameCommands);
+        GameCommands gameCommands = new GameCommands(gameManager, perkShopGUI, perkTestGUI, api, leaderboardGUI);
+        new VampireZCloudCommands(this, gameCommands, gameManager, api).register();
 
         // 6. Register event listeners
         getServer().getPluginManager().registerEvents(
@@ -108,12 +142,12 @@ public class VampireZPlugin extends JavaPlugin {
         // Listener for debug-tool items (left-click → run command)
         getServer().getPluginManager().registerEvents(new DebugBookManager(), this);
 
-        getServer().getPluginManager().registerEvents(perkShopGUI, this);
-        getServer().getPluginManager().registerEvents(perkSelectionGUI, this);
-        getServer().getPluginManager().registerEvents(perkTestGUI, this);
+        // PerkShopGUI uses triumph-gui (handles its own click events)
+        // PerkSelectionGUI uses triumph-gui (handles its own click + close events)
+        // PerkTestGUI uses triumph-gui (handles its own click events)
         getServer().getPluginManager().registerEvents(perkStatsManager, this);
         getServer().getPluginManager().registerEvents(playerStatsManager, this);
-        getServer().getPluginManager().registerEvents(leaderboardGUI, this);
+        // LeaderboardGUI uses triumph-gui (handles its own click events)
 
         // 7. Scoreboard join/quit listener (uses joined player count, not total online)
         getServer().getPluginManager().registerEvents(new Listener() {
@@ -142,7 +176,9 @@ public class VampireZPlugin extends JavaPlugin {
             gameManager.restoreLobbyPlayers();
         }
         if (perkStatsManager != null) perkStatsManager.save();
-        if (playerStatsManager != null) playerStatsManager.save();
+        // Player stats: synchronous flush since the scheduler is shutting down.
+        if (playerStatsManager != null) playerStatsManager.saveBlocking();
+        if (databaseManager != null) databaseManager.stop();
         Bukkit.getServicesManager().unregisterAll(this);
         api = null;
     }
@@ -311,6 +347,7 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new PlantMasterPerk());
         // Expansion Prismatic - Both
         pm.registerPerk(new DecoyPerk());
+        pm.registerPerk(new AnkhOfRebirthPerk());
         // Expansion Prismatic - Human
         pm.registerPerk(new DimensionalPocketPerk());
         // Expansion Prismatic - Vampire

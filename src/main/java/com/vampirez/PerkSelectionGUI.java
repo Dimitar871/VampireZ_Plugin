@@ -1,377 +1,326 @@
 package com.vampirez;
 
+import dev.triumphteam.gui.guis.Gui;
+import dev.triumphteam.gui.guis.GuiItem;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 
-public class PerkSelectionGUI implements Listener {
+/**
+ * Free / conversion / timed perk selection screen, built on triumph-gui.
+ * Handles per-slot rerolls, a 15-second auto-pick countdown, and a max-attempts
+ * close-and-reopen loop that auto-assigns a random perk if the player keeps closing the GUI.
+ *
+ * <p>State lives in a {@link SelectionState} closure attached to the {@link Gui} via
+ * {@link Gui#setCloseGuiAction}; no plugin-level map is needed.
+ */
+public class PerkSelectionGUI {
 
-    private static final String FREE_GUI_TITLE = ChatColor.GREEN + "Choose Your Starting Perk";
-    private static final String CONVERSION_GUI_TITLE = ChatColor.DARK_PURPLE + "Choose Replacement Perk";
-    private static final String TIMED_GUI_TITLE_PREFIX = ChatColor.GREEN + "Free ";
+    private static final int SELECTION_TIME_SECONDS = 15;
+    private static final int MAX_REOPEN_ATTEMPTS = 3;
 
     private final PerkManager perkManager;
     private final GameManager gameManager;
-    private final JavaPlugin plugin;
+    private final VampireZPlugin plugin;
+    private final Random rng = new Random();
 
-    private final Map<UUID, SelectionState> selectionStates = new HashMap<>();
-
-    public PerkSelectionGUI(PerkManager perkManager, GameManager gameManager, JavaPlugin plugin) {
+    public PerkSelectionGUI(PerkManager perkManager, GameManager gameManager, VampireZPlugin plugin) {
         this.perkManager = perkManager;
         this.gameManager = gameManager;
         this.plugin = plugin;
     }
 
-    private static final int SELECTION_TIME_SECONDS = 15;
+    private enum Mode { FREE, TIMED, CONVERSION }
 
     private static class SelectionState {
-        List<Perk> offeredPerks;
-        boolean isFreeSelection;
-        boolean isTimed = false;
-        int remainingConversionPicks;
-        PerkTeam playerTeam;
+        Mode mode;
         PerkTier perkTier;
-        String guiTitle;
-        boolean selected = false;
-        int reopenAttempts = 0;
-        boolean[] rerolled = {false, false, false}; // track per-slot rerolls
-        boolean rerolling = false; // true while a reroll is reopening the inventory
+        PerkTeam playerTeam;
+        List<Perk> offeredPerks;
+        int remainingConversionPicks;
+        Component title;
+        boolean selected;
+        boolean rerolling;
+        int reopenAttempts;
+        boolean[] rerolled = new boolean[3];
         BukkitTask countdownTask;
     }
 
-    private static com.vampirez.api.event.PlayerPerkGainedEvent.Source sourceFor(SelectionState s) {
-        if (s.isTimed) return com.vampirez.api.event.PlayerPerkGainedEvent.Source.TIMED;
-        if (s.isFreeSelection) return com.vampirez.api.event.PlayerPerkGainedEvent.Source.FREE;
-        return com.vampirez.api.event.PlayerPerkGainedEvent.Source.CONVERSION;
-    }
-
-    private static final int MAX_REOPEN_ATTEMPTS = 3;
+    // ===== Public entry points =====
 
     public void openFreeSelection(Player player, PerkTeam team) {
-        UUID uuid = player.getUniqueId();
-
-        List<Perk> options = perkManager.getRandomPerks(PerkTier.SILVER, team, 3, uuid);
+        List<Perk> options = perkManager.getRandomPerks(PerkTier.SILVER, team, 3, player.getUniqueId());
         if (options.isEmpty()) return;
 
         SelectionState state = new SelectionState();
-        state.offeredPerks = options;
-        state.isFreeSelection = true;
-        state.playerTeam = team;
+        state.mode = Mode.FREE;
         state.perkTier = PerkTier.SILVER;
-        state.guiTitle = FREE_GUI_TITLE;
-        selectionStates.put(uuid, state);
-
-        Inventory inv = buildSelectionInventory(state, FREE_GUI_TITLE);
-        player.openInventory(inv);
-        startCountdown(player, state);
+        state.playerTeam = team;
+        state.offeredPerks = new ArrayList<>(options);
+        state.title = Component.text("Choose Your Starting Perk").color(NamedTextColor.GREEN);
+        openSelectionGui(player, state);
     }
 
     public void openTimedSelection(Player player, PerkTier tier, PerkTeam team) {
-        UUID uuid = player.getUniqueId();
-
-        List<Perk> options = perkManager.getRandomPerks(tier, team, 3, uuid);
+        List<Perk> options = perkManager.getRandomPerks(tier, team, 3, player.getUniqueId());
         if (options.isEmpty()) return;
 
-        String title = TIMED_GUI_TITLE_PREFIX + tier.getColor() + tier.getDisplayName() + ChatColor.GREEN + " Perk!";
-
         SelectionState state = new SelectionState();
-        state.offeredPerks = options;
-        state.isFreeSelection = true;
-        state.isTimed = true;
-        state.playerTeam = team;
+        state.mode = Mode.TIMED;
         state.perkTier = tier;
-        state.guiTitle = title;
-        selectionStates.put(uuid, state);
-
-        Inventory inv = buildSelectionInventory(state, title);
-        player.openInventory(inv);
-        startCountdown(player, state);
+        state.playerTeam = team;
+        state.offeredPerks = new ArrayList<>(options);
+        state.title = Component.text("Free ").color(NamedTextColor.GREEN)
+                .append(Component.text(tier.getDisplayName()).color(tier.getTextColor()))
+                .append(Component.text(" Perk!").color(NamedTextColor.GREEN));
+        openSelectionGui(player, state);
     }
 
     public void openConversionSelection(Player player, PerkTeam newTeam, int picksRemaining) {
-        UUID uuid = player.getUniqueId();
-
-        List<Perk> options = perkManager.getRandomPerks(PerkTier.SILVER, newTeam, 3, uuid);
+        List<Perk> options = perkManager.getRandomPerks(PerkTier.SILVER, newTeam, 3, player.getUniqueId());
         if (options.isEmpty()) return;
 
         SelectionState state = new SelectionState();
-        state.offeredPerks = options;
-        state.isFreeSelection = false;
-        state.remainingConversionPicks = picksRemaining;
-        state.playerTeam = newTeam;
+        state.mode = Mode.CONVERSION;
         state.perkTier = PerkTier.SILVER;
-        state.guiTitle = CONVERSION_GUI_TITLE;
-        selectionStates.put(uuid, state);
+        state.playerTeam = newTeam;
+        state.offeredPerks = new ArrayList<>(options);
+        state.remainingConversionPicks = picksRemaining;
+        state.title = Component.text("Choose Replacement Perk").color(NamedTextColor.DARK_PURPLE);
+        openSelectionGui(player, state);
+    }
 
-        Inventory inv = buildSelectionInventory(state, CONVERSION_GUI_TITLE);
-        player.openInventory(inv);
+    // ===== GUI building =====
+
+    private void openSelectionGui(Player player, SelectionState state) {
+        Gui gui = buildGui(player, state);
+        gui.open(player);
         startCountdown(player, state);
     }
+
+    private Gui buildGui(Player player, SelectionState state) {
+        Gui gui = Gui.gui()
+                .title(state.title)
+                .rows(3)
+                .disableAllInteractions()
+                .create();
+
+        int[] perkSlots = {11, 13, 15};
+        int[] rerollSlots = {20, 22, 24};
+
+        for (int i = 0; i < state.offeredPerks.size() && i < 3; i++) {
+            final int idx = i;
+            Perk perk = state.offeredPerks.get(i);
+
+            // Perk choice
+            gui.setItem(perkSlots[i], new GuiItem(perkChoiceIcon(perk, state),
+                    event -> selectPerk(player, state, idx)));
+
+            // Reroll button (or "used" marker)
+            if (!state.rerolled[i]) {
+                gui.setItem(rerollSlots[i], new GuiItem(rerollIcon(),
+                        event -> rerollSlot(player, state, idx, gui)));
+            } else {
+                gui.setItem(rerollSlots[i], new GuiItem(rerolledIcon()));
+            }
+        }
+
+        // Auto-reopen + max-attempts handling
+        gui.setCloseGuiAction(event -> handleClose(player, state));
+
+        return gui;
+    }
+
+    private ItemStack perkChoiceIcon(Perk perk, SelectionState state) {
+        ItemStack item = perk.createDisplayItem();
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            List<Component> lore = meta.lore() != null ? new ArrayList<>(meta.lore()) : new ArrayList<>();
+            lore.add(Component.empty());
+            if (state.mode == Mode.FREE || state.mode == Mode.TIMED) {
+                lore.add(Component.text("FREE!").color(NamedTextColor.GREEN)
+                        .decorate(TextDecoration.BOLD).decoration(TextDecoration.ITALIC, false));
+            } else {
+                lore.add(Component.text("Replacement perk (" + state.remainingConversionPicks + " remaining)")
+                        .color(NamedTextColor.DARK_PURPLE).decoration(TextDecoration.ITALIC, false));
+            }
+            meta.lore(lore);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    private ItemStack rerollIcon() {
+        ItemStack item = new ItemStack(Material.SUNFLOWER);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text("Reroll").color(NamedTextColor.YELLOW)
+                    .decorate(TextDecoration.BOLD).decoration(TextDecoration.ITALIC, false));
+            meta.lore(List.of(
+                    Component.text("Replace this perk with").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("a different random one.").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("One use only!").color(NamedTextColor.RED).decoration(TextDecoration.ITALIC, false)));
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    private ItemStack rerolledIcon() {
+        ItemStack item = new ItemStack(Material.GRAY_DYE);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text("Already Rerolled").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    // ===== Click handlers =====
+
+    private void selectPerk(Player player, SelectionState state, int idx) {
+        if (state.selected) return;
+        Perk picked = state.offeredPerks.get(idx);
+        UUID uuid = player.getUniqueId();
+
+        perkManager.addPerkToPlayer(uuid, picked, sourceFor(state));
+        player.sendMessage(Component.empty()
+                .append(MM.parse("<green>Perk acquired: "))
+                .append(Component.text(picked.getDisplayName()).color(picked.getTier().getTextColor())));
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
+
+        finalizeSelection(player, state);
+    }
+
+    private void rerollSlot(Player player, SelectionState state, int idx, Gui gui) {
+        UUID uuid = player.getUniqueId();
+        Set<String> excludeIds = new HashSet<>();
+        for (Perk p : perkManager.getPlayerPerks(uuid)) excludeIds.add(p.getId());
+        for (int i = 0; i < state.offeredPerks.size(); i++) excludeIds.add(state.offeredPerks.get(i).getId());
+
+        List<Perk> replacement = perkManager.getRandomPerks(state.perkTier, state.playerTeam, 1, uuid);
+        replacement.removeIf(p -> excludeIds.contains(p.getId()));
+        if (replacement.isEmpty()) {
+            // Try again without excluding the other shown perks (just exclude the current one).
+            replacement = perkManager.getRandomPerks(state.perkTier, state.playerTeam, 1, uuid);
+            replacement.removeIf(p -> p.getId().equals(state.offeredPerks.get(idx).getId()));
+        }
+
+        if (replacement.isEmpty()) {
+            player.sendMessage(MM.parse("<red>No other perks available to reroll into!"));
+            return;
+        }
+
+        state.offeredPerks.set(idx, replacement.get(0));
+        state.rerolled[idx] = true;
+        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f);
+
+        // Rebuild + reopen — flag prevents close handler from triggering reopen logic
+        state.rerolling = true;
+        Gui refreshed = buildGui(player, state);
+        refreshed.open(player);
+        state.rerolling = false;
+    }
+
+    private void handleClose(Player player, SelectionState state) {
+        if (state.selected || state.rerolling) return;
+
+        if (state.reopenAttempts < MAX_REOPEN_ATTEMPTS - 1) {
+            state.reopenAttempts++;
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (!player.isOnline()) return;
+                if (gameManager.getState() != GameState.ACTIVE && gameManager.getState() != GameState.STARTING) return;
+                buildGui(player, state).open(player);
+            }, 20L);
+        } else {
+            // Out of patience — auto-assign a random perk.
+            cancelCountdown(state);
+            Perk randomPerk = state.offeredPerks.get(rng.nextInt(state.offeredPerks.size()));
+            perkManager.addPerkToPlayer(player.getUniqueId(), randomPerk, sourceFor(state));
+            player.sendMessage(Component.empty()
+                    .append(MM.parse("<yellow>Perk auto-assigned: "))
+                    .append(Component.text(randomPerk.getDisplayName()).color(randomPerk.getTier().getTextColor())));
+            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
+            chainNextConversionPick(player, state);
+        }
+    }
+
+    // ===== Countdown =====
 
     private void startCountdown(Player player, SelectionState state) {
         UUID uuid = player.getUniqueId();
         final int[] secondsLeft = {SELECTION_TIME_SECONDS};
 
         state.countdownTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (state.selected || !selectionStates.containsKey(uuid)) {
-                if (state.countdownTask != null) state.countdownTask.cancel();
-                return;
-            }
+            if (state.selected) { cancelCountdown(state); return; }
             Player p = Bukkit.getPlayer(uuid);
-            if (p == null || !p.isOnline()) {
-                if (state.countdownTask != null) state.countdownTask.cancel();
-                selectionStates.remove(uuid);
-                return;
-            }
+            if (p == null || !p.isOnline()) { cancelCountdown(state); return; }
 
             secondsLeft[0]--;
-
-            // Ticking countdown at 5 seconds and below
             if (secondsLeft[0] <= 5 && secondsLeft[0] > 0) {
                 p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 1.0f + (5 - secondsLeft[0]) * 0.1f);
-                p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                        new TextComponent(ChatColor.RED + "\u26a0 " + ChatColor.YELLOW + "Auto-selecting in " +
-                                ChatColor.RED + "" + ChatColor.BOLD + secondsLeft[0] +
-                                ChatColor.RESET + ChatColor.YELLOW + "s " + ChatColor.RED + "\u26a0"));
+                p.sendActionBar(MM.parse("<red>⚠ <yellow>Auto-selecting in <red><bold>"
+                        + secondsLeft[0] + "</bold><yellow>s <red>⚠"));
             }
-
             if (secondsLeft[0] <= 0) {
-                // Auto-assign random perk
-                Perk randomPerk = state.offeredPerks.get(new Random().nextInt(state.offeredPerks.size()));
+                Perk randomPerk = state.offeredPerks.get(rng.nextInt(state.offeredPerks.size()));
                 perkManager.addPerkToPlayer(uuid, randomPerk, sourceFor(state));
-                p.sendMessage(ChatColor.YELLOW + "Perk auto-assigned: " + randomPerk.getTier().getColor() + randomPerk.getDisplayName());
+                p.sendMessage(Component.empty()
+                        .append(MM.parse("<yellow>Perk auto-assigned: "))
+                        .append(Component.text(randomPerk.getDisplayName()).color(randomPerk.getTier().getTextColor())));
                 p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
 
                 state.selected = true;
                 p.closeInventory();
-
-                // Handle conversion chain
-                if (!state.isFreeSelection && state.remainingConversionPicks > 1) {
-                    int remaining = state.remainingConversionPicks - 1;
-                    PerkTeam team = state.playerTeam;
-                    selectionStates.remove(uuid);
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        if (p.isOnline()) {
-                            openConversionSelection(p, team, remaining);
-                        }
-                    }, 20L);
-                } else {
-                    selectionStates.remove(uuid);
-                }
-
-                if (state.countdownTask != null) state.countdownTask.cancel();
+                chainNextConversionPick(p, state);
             }
         }, 20L, 20L);
     }
 
-    private Inventory buildSelectionInventory(SelectionState state, String title) {
-        Inventory inv = Bukkit.createInventory(null, 27, title);
-        int[] perkSlots = {11, 13, 15};
-        int[] rerollSlots = {20, 22, 24};
-
-        for (int i = 0; i < state.offeredPerks.size() && i < 3; i++) {
-            ItemStack display = state.offeredPerks.get(i).createDisplayItem();
-            ItemMeta meta = display.getItemMeta();
-            if (meta != null) {
-                List<String> lore = meta.getLore() != null ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
-                lore.add("");
-                if (state.isFreeSelection) {
-                    lore.add(ChatColor.GREEN + "" + ChatColor.BOLD + "FREE!");
-                } else {
-                    lore.add(ChatColor.DARK_PURPLE + "Replacement perk (" + state.remainingConversionPicks + " remaining)");
-                }
-                meta.setLore(lore);
-                display.setItemMeta(meta);
-            }
-            inv.setItem(perkSlots[i], display);
-
-            // Reroll button below each perk
-            if (!state.rerolled[i]) {
-                ItemStack rerollBtn = new ItemStack(Material.SUNFLOWER);
-                ItemMeta rMeta = rerollBtn.getItemMeta();
-                if (rMeta != null) {
-                    rMeta.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "Reroll");
-                    rMeta.setLore(Arrays.asList(
-                            ChatColor.GRAY + "Replace this perk with",
-                            ChatColor.GRAY + "a different random one.",
-                            ChatColor.RED + "One use only!"));
-                    rerollBtn.setItemMeta(rMeta);
-                }
-                inv.setItem(rerollSlots[i], rerollBtn);
-            } else {
-                // Already rerolled - show disabled indicator
-                ItemStack used = new ItemStack(Material.GRAY_DYE);
-                ItemMeta uMeta = used.getItemMeta();
-                if (uMeta != null) {
-                    uMeta.setDisplayName(ChatColor.GRAY + "Already Rerolled");
-                    used.setItemMeta(uMeta);
-                }
-                inv.setItem(rerollSlots[i], used);
-            }
+    private void cancelCountdown(SelectionState state) {
+        if (state.countdownTask != null) {
+            state.countdownTask.cancel();
+            state.countdownTask = null;
         }
-
-        return inv;
     }
 
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
+    // ===== Lifecycle helpers =====
 
-        String title = event.getView().getTitle();
-        if (!title.equals(FREE_GUI_TITLE) && !title.equals(CONVERSION_GUI_TITLE) && !title.startsWith(TIMED_GUI_TITLE_PREFIX)) return;
-
-        event.setCancelled(true);
-
-        UUID uuid = player.getUniqueId();
-        SelectionState state = selectionStates.get(uuid);
-        if (state == null) return;
-
-        int slot = event.getSlot();
-
-        // Check if it's a reroll button click
-        int rerollIndex = switch (slot) {
-            case 20 -> 0;
-            case 22 -> 1;
-            case 24 -> 2;
-            default -> -1;
-        };
-
-        if (rerollIndex >= 0 && rerollIndex < state.offeredPerks.size() && !state.rerolled[rerollIndex]) {
-            // Reroll this specific perk
-            // Collect IDs to exclude: player's owned perks + the other offered perks
-            Set<String> excludeIds = new HashSet<>();
-            for (Perk p : perkManager.getPlayerPerks(uuid)) {
-                excludeIds.add(p.getId());
-            }
-            for (int i = 0; i < state.offeredPerks.size(); i++) {
-                if (i != rerollIndex) excludeIds.add(state.offeredPerks.get(i).getId());
-            }
-            excludeIds.add(state.offeredPerks.get(rerollIndex).getId()); // exclude current too
-
-            // Get 1 new random perk of the same tier/team
-            List<Perk> replacement = perkManager.getRandomPerks(state.perkTier, state.playerTeam, 1, uuid);
-            // Filter out the ones already shown
-            replacement.removeIf(p -> excludeIds.contains(p.getId()));
-
-            if (replacement.isEmpty()) {
-                // Try without excluding shown perks (no alternatives available)
-                replacement = perkManager.getRandomPerks(state.perkTier, state.playerTeam, 1, uuid);
-                replacement.removeIf(p -> p.getId().equals(state.offeredPerks.get(rerollIndex).getId()));
-            }
-
-            if (!replacement.isEmpty()) {
-                state.offeredPerks.set(rerollIndex, replacement.get(0));
-                state.rerolled[rerollIndex] = true;
-                state.rerolling = true; // prevent close handler from counting this as a manual close
-                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f);
-
-                // Rebuild the inventory in-place
-                Inventory newInv = buildSelectionInventory(state, state.guiTitle);
-                player.openInventory(newInv);
-                state.rerolling = false;
-            } else {
-                player.sendMessage(ChatColor.RED + "No other perks available to reroll into!");
-            }
-            return;
-        }
-
-        // Check if it's a perk selection click
-        int perkIndex = switch (slot) {
-            case 11 -> 0;
-            case 13 -> 1;
-            case 15 -> 2;
-            default -> -1;
-        };
-
-        if (perkIndex < 0 || perkIndex >= state.offeredPerks.size()) return;
-
-        Perk selectedPerk = state.offeredPerks.get(perkIndex);
-
-        // Add perk (free, no gold cost)
-        perkManager.addPerkToPlayer(uuid, selectedPerk, sourceFor(state));
-        player.sendMessage(ChatColor.GREEN + "Perk acquired: " + selectedPerk.getTier().getColor() + selectedPerk.getDisplayName());
-        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
-
+    private void finalizeSelection(Player player, SelectionState state) {
         state.selected = true;
-        if (state.countdownTask != null) { state.countdownTask.cancel(); state.countdownTask = null; }
+        cancelCountdown(state);
         player.closeInventory();
+        chainNextConversionPick(player, state);
+    }
 
-        // If conversion picks remaining, open next
-        if (!state.isFreeSelection && state.remainingConversionPicks > 1) {
+    private void chainNextConversionPick(Player player, SelectionState state) {
+        if (state.mode == Mode.CONVERSION && state.remainingConversionPicks > 1) {
+            int remaining = state.remainingConversionPicks - 1;
+            PerkTeam team = state.playerTeam;
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (player.isOnline()) {
-                    openConversionSelection(player, state.playerTeam, state.remainingConversionPicks - 1);
-                }
+                if (player.isOnline()) openConversionSelection(player, team, remaining);
             }, 20L);
-        } else {
-            selectionStates.remove(uuid);
         }
     }
 
-    private void reopenFromState(Player player, SelectionState state, String title) {
-        Inventory inv = buildSelectionInventory(state, title);
-        player.openInventory(inv);
-    }
-
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getPlayer() instanceof Player player)) return;
-
-        String title = event.getView().getTitle();
-        if (!title.equals(FREE_GUI_TITLE) && !title.equals(CONVERSION_GUI_TITLE) && !title.startsWith(TIMED_GUI_TITLE_PREFIX)) return;
-
-        UUID uuid = player.getUniqueId();
-        SelectionState state = selectionStates.get(uuid);
-        if (state == null) return;
-
-        // If a perk was selected or a reroll is in progress, don't reopen
-        if (state.selected || state.rerolling) return;
-
-        // Force reopen with the same perks if no selection was made (limit retries to prevent loops)
-        if (state.offeredPerks != null && !state.offeredPerks.isEmpty() && state.reopenAttempts < MAX_REOPEN_ATTEMPTS) {
-            state.reopenAttempts++;
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (selectionStates.containsKey(uuid) && player.isOnline()
-                        && (gameManager.getState() == GameState.ACTIVE || gameManager.getState() == GameState.STARTING)) {
-                    reopenFromState(player, state, state.guiTitle);
-                }
-            }, 20L);
-        } else if (state.reopenAttempts >= MAX_REOPEN_ATTEMPTS) {
-            // Auto-assign a random perk from the offered options
-            if (state.countdownTask != null) { state.countdownTask.cancel(); state.countdownTask = null; }
-            Perk randomPerk = state.offeredPerks.get(new Random().nextInt(state.offeredPerks.size()));
-            perkManager.addPerkToPlayer(uuid, randomPerk, sourceFor(state));
-            player.sendMessage(ChatColor.YELLOW + "Perk auto-assigned: " + randomPerk.getTier().getColor() + randomPerk.getDisplayName());
-            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-
-            // If conversion picks remaining, continue the chain
-            if (!state.isFreeSelection && state.remainingConversionPicks > 1) {
-                int remaining = state.remainingConversionPicks - 1;
-                PerkTeam team = state.playerTeam;
-                selectionStates.remove(uuid);
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    if (player.isOnline()) {
-                        openConversionSelection(player, team, remaining);
-                    }
-                }, 20L);
-            } else {
-                selectionStates.remove(uuid);
-            }
-        }
+    private static com.vampirez.api.event.PlayerPerkGainedEvent.Source sourceFor(SelectionState s) {
+        return switch (s.mode) {
+            case TIMED -> com.vampirez.api.event.PlayerPerkGainedEvent.Source.TIMED;
+            case FREE -> com.vampirez.api.event.PlayerPerkGainedEvent.Source.FREE;
+            case CONVERSION -> com.vampirez.api.event.PlayerPerkGainedEvent.Source.CONVERSION;
+        };
     }
 }

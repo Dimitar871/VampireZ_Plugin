@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -34,8 +37,8 @@ public class TetherPerk extends Perk {
         ItemStack item = new ItemStack(Material.CHAIN);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.GRAY + "Tether" + ChatColor.DARK_GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Pull nearest enemy", ChatColor.YELLOW + "Cooldown: 15s"));
+            meta.displayName(Component.text("Tether (Right-Click)").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Pull nearest enemy").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 15s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -64,7 +67,7 @@ public class TetherPerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Tether on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Tether on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
 
@@ -82,7 +85,7 @@ public class TetherPerk extends Perk {
         }
 
         if (nearest == null) {
-            player.sendMessage(ChatColor.RED + "No enemies in range!");
+            player.sendMessage(MM.parse("<red>No enemies in range!"));
             return;
         }
 
@@ -101,8 +104,8 @@ public class TetherPerk extends Perk {
 
         nearest.getWorld().spawnParticle(Particle.CRIT, nearest.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3, 0.1);
         player.playSound(player.getLocation(), Sound.BLOCK_CHAIN_BREAK, 1.0f, 0.8f);
-        nearest.sendMessage(ChatColor.RED + "You've been tethered!");
-        player.sendMessage(ChatColor.GRAY + "Tethered " + nearest.getName() + "!");
+        nearest.sendMessage(MM.parse("<red>You've been tethered!"));
+        player.sendMessage(MM.parse("<gray>Tethered " + nearest.getName() + "!"));
         incrementStat(uuid, "pulls");
     }
 

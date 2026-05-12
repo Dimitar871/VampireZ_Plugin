@@ -4,7 +4,10 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -38,7 +41,7 @@ public class GaleforcePerk extends Perk {
     // All tiers require hits (arrow hits on enemies)
     private static final int[] REQ_AMOUNT = {25, 50, 100, 200};
 
-    private static final String BOW_TAG = ChatColor.AQUA + "Galeforce";
+    private static final String BOW_TAG = "Galeforce";
 
     public GaleforcePerk() {
         super("galeforce", "Galeforce", PerkTier.PRISMATIC, PerkTeam.BOTH,
@@ -85,7 +88,7 @@ public class GaleforcePerk extends Perk {
         ItemStack bow = new ItemStack(Material.BOW);
         ItemMeta meta = bow.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(BOW_TAG + getTierSuffix(tier));
+            meta.displayName(getBowDisplayName(tier));
             meta.setUnbreakable(true);
 
             // Infinity on all tiers
@@ -94,7 +97,7 @@ public class GaleforcePerk extends Perk {
             // Tier-based enchants
             applyTierEnchants(meta, tier);
 
-            meta.setLore(buildLore(tier, progress));
+            meta.lore(buildLore(tier, progress));
             bow.setItemMeta(meta);
         }
 
@@ -159,7 +162,7 @@ public class GaleforcePerk extends Perk {
             if (isGaleforceBow(item)) {
                 ItemMeta meta = item.getItemMeta();
                 if (meta != null) {
-                    meta.setDisplayName(BOW_TAG + getTierSuffix(tier));
+                    meta.displayName(getBowDisplayName(tier));
 
                     // Clear old enchants and reapply
                     meta.removeEnchant(Enchantment.POWER);
@@ -168,16 +171,21 @@ public class GaleforcePerk extends Perk {
                     meta.addEnchant(Enchantment.INFINITY, 1, true);
                     applyTierEnchants(meta, tier);
 
-                    meta.setLore(buildLore(tier, progress));
+                    meta.lore(buildLore(tier, progress));
                     item.setItemMeta(meta);
                 }
             }
         }
     }
 
-    private String getTierSuffix(int tier) {
-        if (tier == 0) return "";
-        return " " + ChatColor.GRAY + "[" + ChatColor.AQUA + tierToRoman(tier) + ChatColor.GRAY + "]";
+    private Component getBowDisplayName(int tier) {
+        if (tier == 0) {
+            return Component.text(BOW_TAG).color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false);
+        }
+        return Component.text(BOW_TAG + " ").color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false)
+                .append(Component.text("[").color(NamedTextColor.GRAY))
+                .append(Component.text(tierToRoman(tier)).color(NamedTextColor.AQUA))
+                .append(Component.text("]").color(NamedTextColor.GRAY));
     }
 
     private String tierToRoman(int tier) {
@@ -190,33 +198,37 @@ public class GaleforcePerk extends Perk {
         };
     }
 
-    private List<String> buildLore(int tier, int progress) {
-        List<String> lore = new ArrayList<>();
-        lore.add("");
-        lore.add(ChatColor.AQUA + "Tier " + tier + "/4");
+    private List<Component> buildLore(int tier, int progress) {
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.add(Component.text("Tier " + tier + "/4").color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
 
         // Current enchants summary
-        lore.add(ChatColor.GRAY + "Enchants: " + ChatColor.WHITE + getEnchantsLabel(tier));
+        lore.add(Component.text("Enchants: ").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+                .append(Component.text(getEnchantsLabel(tier)).color(NamedTextColor.WHITE)));
 
         if (tier >= 3) {
-            lore.add(ChatColor.GRAY + "Bonus: " + ChatColor.WHITE + "Speed II");
+            lore.add(Component.text("Bonus: ").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text("Speed II").color(NamedTextColor.WHITE)));
         }
 
-        lore.add("");
+        lore.add(Component.empty());
 
         if (tier >= 4) {
-            lore.add(ChatColor.GREEN + "\u2714 MAX TIER");
-            lore.add(ChatColor.AQUA + "Left-click: Gale Dash");
-            lore.add(ChatColor.GRAY + "Dash forward + Regen II (10s)");
-            lore.add(ChatColor.GRAY + "Cooldown: 30s");
+            lore.add(Component.text("\u2714 MAX TIER").color(NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+            lore.add(Component.text("Left-click: Gale Dash").color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+            lore.add(Component.text("Dash forward + Regen II (10s)").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            lore.add(Component.text("Cooldown: 30s").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         } else {
             // Show progress to next tier
             int reqAmount = REQ_AMOUNT[tier];
-            ChatColor progressColor = progress >= reqAmount ? ChatColor.GREEN : ChatColor.YELLOW;
-            lore.add(ChatColor.GRAY + "Next tier: " + progressColor + progress + "/" + reqAmount + " Hits");
+            NamedTextColor progressColor = progress >= reqAmount ? NamedTextColor.GREEN : NamedTextColor.YELLOW;
+            lore.add(Component.text("Next tier: ").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text(progress + "/" + reqAmount + " Hits").color(progressColor)));
 
             // Preview next tier bonus
-            lore.add(ChatColor.GRAY + "Next: " + ChatColor.WHITE + getNextTierPreview(tier));
+            lore.add(Component.text("Next: ").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text(getNextTierPreview(tier)).color(NamedTextColor.WHITE)));
         }
 
         return lore;
@@ -282,10 +294,7 @@ public class GaleforcePerk extends Perk {
         } else {
             updateBowInHand(attacker);
             // Show progress in action bar
-            attacker.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                    new net.md_5.bungee.api.chat.TextComponent(
-                            ChatColor.AQUA + "Galeforce: " + ChatColor.YELLOW +
-                                    progress + "/" + REQ_AMOUNT[tier] + " Hits"));
+            attacker.sendActionBar(MM.parse("<aqua>Galeforce: <yellow>" + progress + "/" + REQ_AMOUNT[tier] + " Hits"));
         }
 
         incrementStat(uuid, "hits");
@@ -306,19 +315,16 @@ public class GaleforcePerk extends Perk {
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1.5, 0), 15, 0.3, 0.3, 0.3, 0,
                 new Particle.DustOptions(Color.fromRGB(0, 200, 255), 1.5f));
 
-        player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "GALEFORCE UPGRADED!" +
-                ChatColor.RESET + ChatColor.GOLD + " Tier " + tierToRoman(newTier) +
-                ChatColor.GRAY + " (" + getEnchantsLabel(newTier) + ")");
+        player.sendMessage(MM.parse("<aqua><bold>GALEFORCE UPGRADED!</bold> <gold>Tier " + tierToRoman(newTier) + " <gray>(" + getEnchantsLabel(newTier) + ")"));
 
         // Tier 3+: grant Speed II
         if (newTier >= 3) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 999999, 1, false, false, true));
-            player.sendMessage(ChatColor.GREEN + "Speed II activated!");
+            player.sendMessage(MM.parse("<green>Speed II activated!"));
         }
 
         if (newTier == 4) {
-            player.sendMessage(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "GALE DASH UNLOCKED! " +
-                    ChatColor.RESET + ChatColor.GRAY + "Left-click with bow to dash + regen!");
+            player.sendMessage(MM.parse("<light_purple><bold>GALE DASH UNLOCKED! </bold><gray>Left-click with bow to dash + regen!"));
             player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.2f);
         }
 
@@ -343,7 +349,7 @@ public class GaleforcePerk extends Perk {
         Long last = dashCooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, DASH_COOLDOWN_MS)) {
             long remaining = (getEffectiveCooldown(player, DASH_COOLDOWN_MS) - (now - last)) / 1000 + 1;
-            player.sendMessage(ChatColor.RED + "Gale Dash on cooldown! " + remaining + "s");
+            player.sendMessage(MM.parse("<red>Gale Dash on cooldown! " + remaining + "s"));
             return;
         }
         dashCooldowns.put(uuid, now);
@@ -377,7 +383,7 @@ public class GaleforcePerk extends Perk {
             }
         }.runTaskTimer(getPlugin(), 1L, 1L);
 
-        player.sendMessage(ChatColor.AQUA + "Gale Dash! " + ChatColor.GREEN + "Regeneration II for 10s!");
+        player.sendMessage(MM.parse("<aqua>Gale Dash! <green>Regeneration II for 10s!"));
         incrementStat(uuid, "dashes");
     }
 

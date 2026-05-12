@@ -5,7 +5,9 @@ import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.VampireZPlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -40,7 +42,7 @@ public class IronGuardianPerk extends Perk {
 
         IronGolem golem = killer.getWorld().spawn(
                 killer.getLocation().add(2, 0, 0), IronGolem.class, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, g -> {
-            g.setCustomName(ChatColor.GREEN + killer.getName() + "'s Golem");
+            g.customName(Component.text(killer.getName() + "'s Golem").color(NamedTextColor.GREEN));
             g.setCustomNameVisible(true);
             g.setMetadata("vampirez_team", new FixedMetadataValue(getPlugin(), "HUMAN"));
         });
@@ -82,7 +84,7 @@ public class IronGuardianPerk extends Perk {
 
         killer.getWorld().spawnParticle(Particle.EXPLOSION, golem.getLocation().add(0, 1, 0), 3, 0.5, 0.5, 0.5, 0);
         killer.playSound(killer.getLocation(), Sound.ENTITY_IRON_GOLEM_REPAIR, 1.0f, 0.8f);
-        killer.sendMessage(ChatColor.GREEN + "Iron Guardian summoned!");
+        killer.sendMessage(MM.parse("<green>Iron Guardian summoned!"));
     }
 
     @Override

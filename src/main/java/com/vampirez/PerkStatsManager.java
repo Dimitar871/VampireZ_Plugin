@@ -7,12 +7,16 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 public class PerkStatsManager implements Listener {
+
+    private static final Logger log = LoggerFactory.getLogger(PerkStatsManager.class);
 
     private final JavaPlugin plugin;
     private final GameManager gameManager;
@@ -76,7 +80,7 @@ public class PerkStatsManager implements Listener {
         try {
             config.save(statsFile);
         } catch (IOException e) {
-            plugin.getLogger().warning("Failed to save perk-stats.yml: " + e.getMessage());
+            log.warn("Failed to save perk-stats.yml: {}", e.getMessage());
         }
     }
 

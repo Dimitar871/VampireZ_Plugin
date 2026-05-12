@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -39,8 +42,8 @@ public class ConsecratedGroundPerk extends Perk {
         ItemStack item = new ItemStack(Material.GOLDEN_SHOVEL);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.GOLD + "Consecrated Ground" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Create a holy zone", ChatColor.YELLOW + "Cooldown: 40s"));
+            meta.displayName(Component.text("Consecrated Ground (Right-Click)").color(NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Create a holy zone").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 40s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -72,7 +75,7 @@ public class ConsecratedGroundPerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Consecrated Ground on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Consecrated Ground on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
         cooldowns.put(uuid, now);
@@ -86,7 +89,7 @@ public class ConsecratedGroundPerk extends Perk {
         player.getWorld().spawnParticle(Particle.DUST, loc.clone().add(0, 1, 0), 40, 2, 0.5, 2, 0,
                 new Particle.DustOptions(org.bukkit.Color.fromRGB(255, 215, 0), 2.0f));
         incrementStat(uuid, "activations");
-        player.sendMessage(ChatColor.GOLD + "Consecrated Ground activated!");
+        player.sendMessage(MM.parse("<gold>Consecrated Ground activated!"));
     }
 
     @Override

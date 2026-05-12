@@ -32,7 +32,7 @@ import com.vampirez.engine.condition.ItemCountBelowCondition;
 import com.vampirez.engine.condition.ItemInHandCondition;
 import com.vampirez.engine.condition.Target;
 import com.vampirez.engine.condition.VictimIsPlayerCondition;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -411,7 +411,7 @@ public class PerkConfigLoader {
                 int count = (int) asLong(map.get("count"), 1L);
                 long lifetime = asLong(map.get("lifetime_ticks"), 0L);
                 String customName = asString(map.get("custom_name"));
-                ChatColor nameColor = parseChatColor(asString(map.get("name_color")));
+                NamedTextColor nameColor = parseNamedTextColor(asString(map.get("name_color")));
                 String team = asString(map.get("team"));
                 boolean noBaby = asBool(map.get("no_baby"), false);
                 boolean angry = asBool(map.get("angry"), false);
@@ -509,10 +509,10 @@ public class PerkConfigLoader {
         catch (IllegalArgumentException ex) { return null; }
     }
 
-    private static ChatColor parseChatColor(String s) {
+    private static NamedTextColor parseNamedTextColor(String s) {
         if (s == null) return null;
-        try { return ChatColor.valueOf(s.toUpperCase()); }
-        catch (IllegalArgumentException ex) { return null; }
+        NamedTextColor color = NamedTextColor.NAMES.value(s.toLowerCase());
+        return color;
     }
 
     /** Parses "r,g,b" (each 0-255) into a Color, or null if not parseable. */

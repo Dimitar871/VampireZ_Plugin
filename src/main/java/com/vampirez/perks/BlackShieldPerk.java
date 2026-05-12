@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -29,7 +29,7 @@ public class BlackShieldPerk extends Perk {
     @Override
     public void apply(Player player) {
         shielded.add(player.getUniqueId());
-        player.sendMessage(ChatColor.DARK_GRAY + "Black Shield " + ChatColor.GREEN + "active!");
+        player.sendMessage(MM.parse("<dark_gray>Black Shield <green>active!"));
     }
 
     @Override
@@ -50,7 +50,7 @@ public class BlackShieldPerk extends Perk {
                 shielded.add(uuid);
                 player.getWorld().spawnParticle(Particle.SMOKE, player.getLocation().add(0, 1, 0), 8, 0.3, 0.5, 0.3, 0.01);
                 player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.3f, 2.0f);
-                player.sendMessage(ChatColor.DARK_GRAY + "Black Shield " + ChatColor.GREEN + "recharged!");
+                player.sendMessage(MM.parse("<dark_gray>Black Shield <green>recharged!"));
                 incrementStat(uuid, "recharges");
             }
         }
@@ -82,10 +82,9 @@ public class BlackShieldPerk extends Perk {
         victim.playSound(victim.getLocation(), Sound.ITEM_SHIELD_BLOCK, 1.0f, 0.6f);
 
         // Notify both players
-        victim.sendMessage(ChatColor.DARK_GRAY + "Black Shield " + ChatColor.WHITE + "blocked "
-                + ChatColor.RED + abilityName + ChatColor.WHITE + "! " + ChatColor.GRAY + "(30s cooldown)");
+        victim.sendMessage(MM.parse("<dark_gray>Black Shield <white>blocked <red>" + abilityName + "<white>! <gray>(30s cooldown)"));
         if (attacker != null) {
-            attacker.sendMessage(ChatColor.RED + "Your " + abilityName + " was blocked by Black Shield!");
+            attacker.sendMessage(MM.parse("<red>Your " + abilityName + " was blocked by Black Shield!"));
         }
 
         return true;

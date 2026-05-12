@@ -4,7 +4,10 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -39,8 +42,8 @@ public class BatFormPerk extends Perk {
         ItemStack item = new ItemStack(Material.PHANTOM_MEMBRANE);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_PURPLE + "Bat Form" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Invisibility + Speed III", ChatColor.YELLOW + "Cooldown: 25s"));
+            meta.displayName(Component.text("Bat Form (Right-Click)").color(NamedTextColor.DARK_PURPLE).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Invisibility + Speed III").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 25s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -108,7 +111,7 @@ public class BatFormPerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Bat Form on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Bat Form on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
         cooldowns.put(uuid, now);
@@ -125,7 +128,7 @@ public class BatFormPerk extends Perk {
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 30, 0.5, 1, 0.5, 0,
                 new Particle.DustOptions(Color.fromRGB(48, 0, 48), 1.5f));
         player.playSound(player.getLocation(), Sound.ENTITY_BAT_TAKEOFF, 1.0f, 0.8f);
-        player.sendMessage(ChatColor.DARK_PURPLE + "You transform into a bat!");
+        player.sendMessage(MM.parse("<dark_purple>You transform into a bat!"));
 
         incrementStat(uuid, "activations");
 

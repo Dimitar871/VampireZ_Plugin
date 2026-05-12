@@ -1,9 +1,11 @@
 package com.vampirez;
 
+import com.vampirez.config.PluginConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +13,6 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 /**
  * Manages the arena world lifecycle using unique world names per game.
@@ -20,19 +21,21 @@ import java.util.logging.Level;
  */
 public class ArenaManager {
 
-    private final JavaPlugin plugin;
+    private static final Logger log = LoggerFactory.getLogger(ArenaManager.class);
+
+    private final VampireZPlugin plugin;
     private final String baseWorldName;
     private final File templateDir;
     private final File serverDir;
     private int worldCounter = 0;
     private String currentWorldName;
 
-    public ArenaManager(JavaPlugin plugin) {
+    public ArenaManager(VampireZPlugin plugin) {
         this.plugin = plugin;
-        this.baseWorldName = plugin.getConfig().getString("arena.world-name", "vampirez_arena");
-        String templatePath = plugin.getConfig().getString("arena.template-folder", "arena-template");
+        PluginConfig.ArenaSection cfg = plugin.getPluginConfig().arena;
+        this.baseWorldName = cfg.worldName;
         this.serverDir = plugin.getServer().getWorldContainer();
-        this.templateDir = new File(serverDir, templatePath);
+        this.templateDir = new File(serverDir, cfg.templateFolder);
     }
 
     /**
@@ -63,7 +66,7 @@ public class ArenaManager {
      */
     public World loadArenaWorld() {
         if (!hasTemplate()) {
-            plugin.getLogger().warning("Arena template not found at: " + templateDir.getAbsolutePath());
+            log.warn("Arena template not found at: " + templateDir.getAbsolutePath());
             return null;
         }
 
@@ -76,14 +79,14 @@ public class ArenaManager {
         File arenaDir = new File(serverDir, currentWorldName);
 
         // Copy from template
-        plugin.getLogger().info("Copying arena from template to '" + currentWorldName + "'...");
+        log.info("Copying arena from template to '" + currentWorldName + "'...");
         if (!copyDirectory(templateDir, arenaDir)) {
-            plugin.getLogger().severe("Failed to copy arena template!");
+            log.error("Failed to copy arena template!");
             return null;
         }
         new File(arenaDir, "session.lock").delete();
         new File(arenaDir, "uid.dat").delete();
-        plugin.getLogger().info("Arena copied successfully.");
+        log.info("Arena copied successfully.");
 
         // Load the world
         WorldCreator creator = new WorldCreator(currentWorldName);
@@ -105,7 +108,7 @@ public class ArenaManager {
             // then copy the saved world back as the template for future resets.
             File bakeMarker = new File(templateDir, ".paper-baked");
             if (!bakeMarker.exists()) {
-                plugin.getLogger().info("First load: baking template in Paper format...");
+                log.info("First load: baking template in Paper format...");
                 // Force load chunks around spawn so Paper converts them
                 int spawnX = world.getSpawnLocation().getBlockX() >> 4;
                 int spawnZ = world.getSpawnLocation().getBlockZ() >> 4;
@@ -117,7 +120,7 @@ public class ArenaManager {
                 }
                 // Save the converted data to disk
                 world.save();
-                plugin.getLogger().info("World saved with Paper-converted data.");
+                log.info("World saved with Paper-converted data.");
 
                 // Copy the saved world back as the new template
                 final File bakedDir = new File(serverDir, currentWorldName);
@@ -141,20 +144,20 @@ public class ArenaManager {
                                 new File(templateDir, "level.dat").toPath(),
                                 StandardCopyOption.REPLACE_EXISTING);
                     } catch (IOException e) {
-                        plugin.getLogger().warning("Could not copy level.dat to template");
+                        log.warn("Could not copy level.dat to template");
                     }
                     // Create marker so we don't bake again
                     try {
                         bakeMarker.createNewFile();
                     } catch (IOException e) {
-                        plugin.getLogger().warning("Could not create bake marker");
+                        log.warn("Could not create bake marker");
                     }
-                    plugin.getLogger().info("Template baked in Paper format. Future resets will use this.");
+                    log.info("Template baked in Paper format. Future resets will use this.");
                 });
             }
 
             world.setAutoSave(false);
-            plugin.getLogger().info("Arena world '" + currentWorldName + "' loaded.");
+            log.info("Arena world '" + currentWorldName + "' loaded.");
         }
         return world;
     }
@@ -188,7 +191,7 @@ public class ArenaManager {
             }
 
             Bukkit.unloadWorld(arenaWorld, false);
-            plugin.getLogger().info("Old arena world '" + oldWorldName + "' unloaded.");
+            log.info("Old arena world '" + oldWorldName + "' unloaded.");
         }
 
         // Wait 3 seconds for Paper's chunk system to fully release all cached data,
@@ -207,9 +210,9 @@ public class ArenaManager {
                     if (oldDir.exists()) {
                         deleteDirectory(oldDir);
                         if (oldDir.exists()) {
-                            plugin.getLogger().warning("Could not fully delete old arena '" + oldWorldName + "', will retry on next reset.");
+                            log.warn("Could not fully delete old arena '" + oldWorldName + "', will retry on next reset.");
                         } else {
-                            plugin.getLogger().info("Cleaned up old arena folder: " + oldWorldName);
+                            log.info("Cleaned up old arena folder: " + oldWorldName);
                         }
                     }
                 }, 100L);
@@ -231,7 +234,7 @@ public class ArenaManager {
                 if (Bukkit.getWorld(f.getName()) != null) continue;
                 deleteDirectory(f);
                 if (!f.exists()) {
-                    plugin.getLogger().info("Cleaned up old arena folder: " + f.getName());
+                    log.info("Cleaned up old arena folder: " + f.getName());
                 }
             }
         }
@@ -264,7 +267,7 @@ public class ArenaManager {
             });
             return true;
         } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to copy directory", e);
+            log.error("Failed to copy directory", e);
             return false;
         }
     }
@@ -293,7 +296,7 @@ public class ArenaManager {
                 }
             });
         } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to delete directory: " + dir.getAbsolutePath(), e);
+            log.error("Failed to delete directory: {}", dir.getAbsolutePath(), e);
         }
     }
 }

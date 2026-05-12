@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -37,7 +37,7 @@ public class DeflectPerk extends Perk {
             event.setCancelled(true);
             victim.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3, 0.1);
             victim.playSound(victim.getLocation(), Sound.ITEM_SHIELD_BLOCK, 1.0f, 1.5f);
-            victim.sendMessage(ChatColor.WHITE + "Deflect! Projectile negated!");
+            victim.sendMessage(MM.parse("<white>Deflect! Projectile negated!"));
             incrementStat(victim.getUniqueId(), "deflections");
         }
     }

@@ -4,7 +4,7 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -57,7 +57,7 @@ public class GravityWellPerk extends Perk {
                 new Particle.DustOptions(Color.PURPLE, 1.5f));
         attacker.playSound(attacker.getLocation(), Sound.BLOCK_PORTAL_TRIGGER, 0.5f, 2.0f);
         incrementStat(uuid, "pulls");
-        attacker.sendMessage(ChatColor.DARK_PURPLE + "Gravity Well pulls " + target.getName() + "!");
+        attacker.sendMessage(MM.parse("<dark_purple>Gravity Well pulls " + target.getName() + "!"));
     }
 
     @Override

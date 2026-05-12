@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -50,7 +50,7 @@ public class PhoenixDownPerk extends Perk {
             victim.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 60, 4, false, true));
             victim.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, victim.getLocation().add(0, 1, 0), 50, 1, 1, 1, 0.2);
             victim.playSound(victim.getLocation(), Sound.ITEM_TOTEM_USE, 1.0f, 1.0f);
-            victim.sendMessage(ChatColor.GOLD + "Phoenix Down activated! You were saved from death!");
+            victim.sendMessage(MM.parse("<gold>Phoenix Down activated! You were saved from death!"));
         }
     }
 }

@@ -5,7 +5,9 @@ import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.VampireZPlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -53,10 +55,10 @@ public class BardPerk extends Perk {
         ItemStack healingAura = new ItemStack(Material.GLISTERING_MELON_SLICE);
         ItemMeta healMeta = healingAura.getItemMeta();
         if (healMeta != null) {
-            healMeta.setDisplayName(ChatColor.GREEN + "Healing Aura");
-            healMeta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Hold in main hand to grant",
-                    ChatColor.GRAY + "Regeneration I to nearby allies"
+            healMeta.displayName(Component.text("Healing Aura").color(NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+            healMeta.lore(Arrays.asList(
+                    Component.text("Hold in main hand to grant").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("Regeneration I to nearby allies").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
             ));
             healingAura.setItemMeta(healMeta);
         }
@@ -64,10 +66,10 @@ public class BardPerk extends Perk {
         ItemStack damageAura = new ItemStack(Material.BLAZE_ROD);
         ItemMeta dmgMeta = damageAura.getItemMeta();
         if (dmgMeta != null) {
-            dmgMeta.setDisplayName(ChatColor.RED + "Damage Aura");
-            dmgMeta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Hold in main hand to grant",
-                    ChatColor.GRAY + "Strength I to nearby allies"
+            dmgMeta.displayName(Component.text("Damage Aura").color(NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+            dmgMeta.lore(Arrays.asList(
+                    Component.text("Hold in main hand to grant").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("Strength I to nearby allies").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
             ));
             damageAura.setItemMeta(dmgMeta);
         }
@@ -75,11 +77,11 @@ public class BardPerk extends Perk {
         ItemStack escapeItem = new ItemStack(Material.IRON_NUGGET);
         ItemMeta escMeta = escapeItem.getItemMeta();
         if (escMeta != null) {
-            escMeta.setDisplayName(ChatColor.AQUA + "Wind Runner");
-            escMeta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Hold in main hand for",
-                    ChatColor.GRAY + "Jump Boost IV + Speed II (self only)",
-                    ChatColor.YELLOW + "Use to escape dangerous situations!"
+            escMeta.displayName(Component.text("Wind Runner").color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+            escMeta.lore(Arrays.asList(
+                    Component.text("Hold in main hand for").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("Jump Boost IV + Speed II (self only)").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("Use to escape dangerous situations!").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)
             ));
             escapeItem.setItemMeta(escMeta);
         }

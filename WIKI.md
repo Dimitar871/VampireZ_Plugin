@@ -462,7 +462,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/cobweb.png" width="24"> | 🔴 | Spider Climb | Wall climbing ability |
 | <img src="images/perks/fermented_spider_eye.png" width="24"> | 🔴 | Plague Carrier | Spread poison to nearby enemies over time |
 
-### Prismatic Tier (45 perks · 400 g)
+### Prismatic Tier (46 perks · 400 g)
 
 
 | Icon | Team | Perk | Effect |
@@ -476,6 +476,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/soul_lantern.png" width="24"> | ⚪ | Death's Gambit | Fatal: 50/50 survive at 1 HP or take 50 % more |
 | <img src="images/perks/brewing_stand.png" width="24"> | ⚪ | Plague Doctor | Immune to all negative potion effects |
 | <img src="images/perks/armor_stand.png" width="24"> | ⚪ | Decoy | Spawn a decoy of yourself |
+| <img src="images/perks/totem_of_undying.png" width="24"> | ⚪ | Ankh of Rebirth | On death: save location. On respawn: teleport to death location at 60 % HP |
 | <img src="images/perks/sunflower.png" width="24"> | ⚪ | Lucky Roll (Prismatic) | Replaces itself with 2 random Prismatic perks |
 | <img src="images/perks/bow.png" width="24"> | ⚪ | Galeforce | 4-tier upgradable bow; max tier = dash + regen |
 | <img src="images/perks/shield.png" width="24"> | 🔵 | Courage of the Colossus | Hit a player → 2 absorption ♥ (30 s cd) |

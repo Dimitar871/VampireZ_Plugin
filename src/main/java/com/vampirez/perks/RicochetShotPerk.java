@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -75,8 +75,8 @@ public class RicochetShotPerk extends Perk {
             bounceTarget.damage(bounceDamage);
             bounceTarget.getWorld().spawnParticle(Particle.CRIT, bounceTarget.getLocation().add(0, 1, 0), 10, 0.3, 0.3, 0.3, 0.1);
             attacker.playSound(attacker.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.7f, 1.8f);
-            attacker.sendMessage(ChatColor.YELLOW + "Ricochet! Arrow bounced to " + bounceTarget.getName() + "!");
-            bounceTarget.sendMessage(ChatColor.YELLOW + "A ricochet arrow hits you!");
+            attacker.sendMessage(MM.parse("<yellow>Ricochet! Arrow bounced to " + bounceTarget.getName() + "!"));
+            bounceTarget.sendMessage(MM.parse("<yellow>A ricochet arrow hits you!"));
             addStat(attacker.getUniqueId(), "ricochet_damage", bounceDamage);
             incrementStat(attacker.getUniqueId(), "ricochets");
         }

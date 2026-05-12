@@ -1,8 +1,8 @@
 package com.vampirez.perks;
 
 import com.vampirez.*;
+import com.vampirez.MM;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -57,13 +57,13 @@ public class FightOrBeForgottenPerk extends Perk {
 
             victim.getWorld().spawnParticle(Particle.FLAME, victim.getLocation().add(0, 1, 0), 40, 0.5, 1, 0.5, 0.05);
             victim.playSound(victim.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.8f, 1.2f);
-            victim.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "FIGHT OR BE FORGOTTEN! 30 seconds to live!");
+            victim.sendMessage(MM.parse("<red><bold>FIGHT OR BE FORGOTTEN! 30 seconds to live!"));
 
             VampireZPlugin fobfPlugin = (VampireZPlugin) getPlugin();
             if (fobfPlugin.getGameManager() != null) {
                 for (Player p : fobfPlugin.getGameManager().getJoinedOnlinePlayers()) {
                     if (!p.equals(victim)) {
-                        p.sendMessage(ChatColor.RED + victim.getName() + " enters their last stand!");
+                        p.sendMessage(MM.parse("<red>" + victim.getName() + " enters their last stand!"));
                     }
                 }
             }
@@ -83,7 +83,7 @@ public class FightOrBeForgottenPerk extends Perk {
                 victim.removePotionEffect(PotionEffectType.SPEED);
 
                 // Convert to vampire
-                victim.sendMessage(ChatColor.DARK_RED + "Your time is up... you rise as a Vampire!");
+                victim.sendMessage(MM.parse("<dark_red>Your time is up... you rise as a Vampire!"));
                 victim.playSound(victim.getLocation(), Sound.ENTITY_ZOMBIE_VILLAGER_CONVERTED, 1.0f, 0.8f);
                 victim.getWorld().spawnParticle(Particle.LARGE_SMOKE, victim.getLocation().add(0, 1, 0), 30, 0.5, 1, 0.5, 0.02);
 

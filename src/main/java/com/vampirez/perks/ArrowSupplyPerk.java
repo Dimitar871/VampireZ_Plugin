@@ -3,7 +3,9 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -27,7 +29,7 @@ public class ArrowSupplyPerk extends Perk {
         PotionMeta poisonMeta = (PotionMeta) poisonArrows.getItemMeta();
         if (poisonMeta != null) {
             poisonMeta.setBasePotionData(new PotionData(PotionType.POISON, false, false));
-            poisonMeta.setDisplayName(ChatColor.GREEN + "Poison Arrow");
+            poisonMeta.displayName(Component.text("Poison Arrow").color(NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
             poisonArrows.setItemMeta(poisonMeta);
         }
         player.getInventory().addItem(poisonArrows);
@@ -37,7 +39,7 @@ public class ArrowSupplyPerk extends Perk {
         PotionMeta slowMeta = (PotionMeta) slowArrows.getItemMeta();
         if (slowMeta != null) {
             slowMeta.setBasePotionData(new PotionData(PotionType.SLOWNESS, false, false));
-            slowMeta.setDisplayName(ChatColor.AQUA + "Slowness Arrow");
+            slowMeta.displayName(Component.text("Slowness Arrow").color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
             slowArrows.setItemMeta(slowMeta);
         }
         player.getInventory().addItem(slowArrows);
@@ -49,7 +51,7 @@ public class ArrowSupplyPerk extends Perk {
             blindMeta.setBasePotionData(new PotionData(PotionType.MUNDANE, false, false));
             blindMeta.addCustomEffect(new org.bukkit.potion.PotionEffect(
                     org.bukkit.potion.PotionEffectType.BLINDNESS, 60, 0, false, true), true);
-            blindMeta.setDisplayName(ChatColor.DARK_GRAY + "Blindness Arrow");
+            blindMeta.displayName(Component.text("Blindness Arrow").color(NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
             blindArrows.setItemMeta(blindMeta);
         }
         player.getInventory().addItem(blindArrows);

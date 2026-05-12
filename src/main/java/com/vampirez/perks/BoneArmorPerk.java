@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -47,7 +47,7 @@ public class BoneArmorPerk extends Perk {
             victim.getWorld().spawnParticle(Particle.BLOCK, victim.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0,
                     Material.BONE_BLOCK.createBlockData());
             victim.playSound(victim.getLocation(), Sound.BLOCK_BONE_BLOCK_BREAK, 1.0f, 1.0f);
-            victim.sendMessage(ChatColor.WHITE + "Bone Armor absorbed 50% damage!");
+            victim.sendMessage(MM.parse("<white>Bone Armor absorbed 50% damage!"));
             incrementStat(uuid, "hits_absorbed");
         }
     }

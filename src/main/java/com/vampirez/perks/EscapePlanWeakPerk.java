@@ -21,7 +21,7 @@ public class EscapePlanWeakPerk extends Perk {
     private static final long COOLDOWN_MS = 30000;
 
     public EscapePlanWeakPerk() {
-        super("escape_plan_weak", "Escape Plan", PerkTier.SILVER, PerkTeam.BOTH,
+        super("escape_plan_weak", "Escape Plan (Weak)", PerkTier.SILVER, PerkTeam.BOTH,
                 Material.LEATHER_BOOTS,
                 "Below 4 hearts: gain Speed I + Absorption I",
                 "for 3 seconds. 30s cooldown.");

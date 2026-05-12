@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -56,7 +56,7 @@ public class DeathsGambitPerk extends Perk {
             victim.getWorld().spawnParticle(Particle.DUST, victim.getLocation().add(0, 1, 0), 40, 0.5, 0.5, 0.5, 0,
                     new Particle.DustOptions(org.bukkit.Color.LIME, 1.5f));
             victim.playSound(victim.getLocation(), Sound.ITEM_TOTEM_USE, 1.0f, 0.5f);
-            victim.sendMessage(ChatColor.GREEN + "Death's Gambit: LUCKY! You cheat death!");
+            victim.sendMessage(MM.parse("<green>Death's Gambit: LUCKY! You cheat death!"));
             incrementStat(uuid, "lucky");
         } else {
             // Unlucky - extra damage
@@ -65,7 +65,7 @@ public class DeathsGambitPerk extends Perk {
             victim.getWorld().spawnParticle(Particle.DUST, victim.getLocation().add(0, 1, 0), 40, 0.5, 0.5, 0.5, 0,
                     new Particle.DustOptions(org.bukkit.Color.RED, 1.5f));
             victim.playSound(victim.getLocation(), Sound.ENTITY_WITHER_HURT, 1.0f, 0.5f);
-            victim.sendMessage(ChatColor.RED + "Death's Gambit: UNLUCKY! Extra damage!");
+            victim.sendMessage(MM.parse("<red>Death's Gambit: UNLUCKY! Extra damage!"));
             incrementStat(uuid, "unlucky");
         }
     }

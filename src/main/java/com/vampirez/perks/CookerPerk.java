@@ -5,7 +5,7 @@ import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.VampireZPlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -54,7 +54,7 @@ public class CookerPerk extends Perk {
                     float newSat = Math.min(human.getSaturation() + 4.0f, 20.0f); // 2 bars = 4 saturation points
                     human.setSaturation(newSat);
                     human.getWorld().spawnParticle(Particle.HEART, human.getLocation().add(0, 2.2, 0), 3, 0.3, 0.2, 0.3, 0);
-                    human.sendMessage(ChatColor.GREEN + "You feel well-fed! (Cooker)");
+                    human.sendMessage(MM.parse("<green>You feel well-fed! (Cooker)"));
                     fed++;
                 }
             }
@@ -63,7 +63,7 @@ public class CookerPerk extends Perk {
         if (fed > 0) {
             addStat(uuid, "teammates_fed", fed);
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_BURP, 0.7f, 1.2f);
-            player.sendMessage(ChatColor.GREEN + "Cooker: Fed " + fed + " nearby teammate" + (fed > 1 ? "s" : "") + "!");
+            player.sendMessage(MM.parse("<green>Cooker: Fed " + fed + " nearby teammate" + (fed > 1 ? "s" : "") + "!"));
         }
     }
 

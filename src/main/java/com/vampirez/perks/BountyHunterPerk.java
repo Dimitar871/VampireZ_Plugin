@@ -5,7 +5,7 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.VampireZPlugin;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -33,7 +33,7 @@ public class BountyHunterPerk extends Perk {
         EconomyManager econ = ((VampireZPlugin) getPlugin()).getGameManager().getEconomyManager();
         econ.addGold(killer.getUniqueId(), 15);
         killer.playSound(killer.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-        killer.sendMessage(ChatColor.GOLD + "+15 bonus gold (Bounty Hunter)!");
+        killer.sendMessage(MM.parse("<gold>+15 bonus gold (Bounty Hunter)!"));
         addStat(killer.getUniqueId(), "bonus_gold", 15);
     }
 

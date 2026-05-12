@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -64,7 +67,7 @@ public class WarHorsePerk extends Perk {
 
             // Tag for cleanup — store owner UUID for buff purposes
             horse.setMetadata("vampirez_war_horse", new FixedMetadataValue(getPlugin(), uuid.toString()));
-            horse.setCustomName(ChatColor.GOLD + player.getName() + "'s War Horse");
+            horse.customName(Component.text(player.getName() + "'s War Horse").color(NamedTextColor.GOLD));
             horse.setCustomNameVisible(true);
 
             horses.add(horse);
@@ -75,7 +78,7 @@ public class WarHorsePerk extends Perk {
         // Give Horse Whistle item
         giveWhistle(player);
 
-        player.sendMessage(ChatColor.GOLD + "Your War Horses have arrived! Anyone can ride them.");
+        player.sendMessage(MM.parse("<gold>Your War Horses have arrived! Anyone can ride them."));
         player.playSound(player.getLocation(), Sound.ENTITY_HORSE_AMBIENT, 1.0f, 1.0f);
     }
 
@@ -83,10 +86,10 @@ public class WarHorsePerk extends Perk {
         ItemStack whistle = new ItemStack(Material.GOAT_HORN);
         ItemMeta meta = whistle.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.GOLD + "Horse Whistle " + ChatColor.GRAY + "(Right-Click)");
-            meta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Call your war horses to you",
-                    ChatColor.YELLOW + "Won't call horses with riders"
+            meta.displayName(Component.text("Horse Whistle (Right-Click)").color(NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(
+                    Component.text("Call your war horses to you").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("Won't call horses with riders").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)
             ));
             whistle.setItemMeta(meta);
         }
@@ -106,7 +109,7 @@ public class WarHorsePerk extends Perk {
         UUID uuid = player.getUniqueId();
         List<Horse> horses = playerHorses.get(uuid);
         if (horses == null || horses.isEmpty()) {
-            player.sendMessage(ChatColor.RED + "You have no living war horses!");
+            player.sendMessage(MM.parse("<red>You have no living war horses!"));
             return;
         }
 
@@ -128,13 +131,13 @@ public class WarHorsePerk extends Perk {
         }
 
         if (called > 0) {
-            player.sendMessage(ChatColor.GOLD + "Called " + called + " war horse" + (called > 1 ? "s" : "") + " to you!");
+            player.sendMessage(MM.parse("<gold>Called " + called + " war horse" + (called > 1 ? "s" : "") + " to you!"));
             player.playSound(player.getLocation(), Sound.ENTITY_HORSE_AMBIENT, 1.0f, 1.2f);
             player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0, 1, 0), 10, 1, 0.5, 1, 0);
         } else if (ridden > 0) {
-            player.sendMessage(ChatColor.RED + "All your horses are being ridden!");
+            player.sendMessage(MM.parse("<red>All your horses are being ridden!"));
         } else {
-            player.sendMessage(ChatColor.RED + "You have no living war horses!");
+            player.sendMessage(MM.parse("<red>You have no living war horses!"));
         }
     }
 

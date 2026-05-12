@@ -22,7 +22,7 @@ public class EscapePlanStrongPerk extends Perk {
     private static final long COOLDOWN_MS = 45000;
 
     public EscapePlanStrongPerk() {
-        super("escape_plan_strong", "Escape Plan", PerkTier.PRISMATIC, PerkTeam.HUMAN,
+        super("escape_plan_strong", "Escape Plan (Strong)", PerkTier.PRISMATIC, PerkTeam.HUMAN,
                 Material.ENDER_PEARL,
                 "Below 4 hearts: Absorption III + Speed II for 5s",
                 "45s cooldown.");

@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
@@ -76,6 +76,6 @@ public class SoulEaterPerk extends Perk {
         // Soul rising from victim
         victim.getWorld().spawnParticle(Particle.SOUL, victim.getLocation().add(0, 1, 0), 30, 0.3, 1.5, 0.3, 0.1);
         killer.playSound(killer.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 0.5f, 1.5f);
-        killer.sendMessage(ChatColor.DARK_PURPLE + "Soul consumed! Damage +" + (stacks * 10) + "%");
+        killer.sendMessage(MM.parse("<dark_purple>Soul consumed! Damage +" + (stacks * 10) + "%"));
     }
 }

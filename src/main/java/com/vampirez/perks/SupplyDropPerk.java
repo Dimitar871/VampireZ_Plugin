@@ -4,7 +4,7 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -61,7 +61,7 @@ public class SupplyDropPerk extends Perk {
             // Try one block up
             block = loc.add(0, 1, 0).getBlock();
             if (block.getType() != Material.AIR && block.getType() != Material.CAVE_AIR) {
-                player.sendMessage(ChatColor.YELLOW + "Supply Drop: No space for chest!");
+                player.sendMessage(MM.parse("<yellow>Supply Drop: No space for chest!"));
                 return;
             }
         }
@@ -76,7 +76,7 @@ public class SupplyDropPerk extends Perk {
 
         player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, block.getLocation().add(0.5, 1, 0.5), 15, 0.5, 0.5, 0.5, 0);
         player.playSound(block.getLocation(), Sound.BLOCK_CHEST_OPEN, 1.0f, 1.0f);
-        player.sendMessage(ChatColor.GOLD + "Supply Drop arrived!");
+        player.sendMessage(MM.parse("<gold>Supply Drop arrived!"));
         incrementStat(player.getUniqueId(), "drops");
 
         // Auto-remove chest after 15s (300 ticks)

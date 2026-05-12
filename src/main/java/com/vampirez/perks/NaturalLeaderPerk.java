@@ -5,7 +5,7 @@ import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.VampireZPlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -86,7 +86,7 @@ public class NaturalLeaderPerk extends Perk {
                 incrementStat(uuid, "regen_procs");
                 player.getWorld().spawnParticle(Particle.HEART, player.getLocation().add(0, 2.2, 0), 5, 0.5, 0.3, 0.5, 0);
                 player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.5f, 1.5f);
-                player.sendMessage(ChatColor.GREEN + "Natural Leader: Regeneration I granted to nearby humans!");
+                player.sendMessage(MM.parse("<green>Natural Leader: Regeneration I granted to nearby humans!"));
             }
         }
     }

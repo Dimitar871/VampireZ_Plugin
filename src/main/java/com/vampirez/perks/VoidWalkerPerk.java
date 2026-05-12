@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -38,8 +41,8 @@ public class VoidWalkerPerk extends Perk {
         ItemStack item = new ItemStack(Material.ENDER_PEARL);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_PURPLE + "Void Walker" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Teleport to enemy + AoE burst", ChatColor.YELLOW + "Cooldown: 25s"));
+            meta.displayName(Component.text("Void Walker (Right-Click)").color(NamedTextColor.DARK_PURPLE).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Teleport to enemy + AoE burst").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 25s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -68,7 +71,7 @@ public class VoidWalkerPerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Void Walker on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Void Walker on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
 
@@ -81,7 +84,7 @@ public class VoidWalkerPerk extends Perk {
         }
 
         if (enemies.isEmpty()) {
-            player.sendMessage(ChatColor.RED + "No enemies in range!");
+            player.sendMessage(MM.parse("<red>No enemies in range!"));
             return;
         }
 
@@ -122,11 +125,11 @@ public class VoidWalkerPerk extends Perk {
 
             nearby.damage(6.0);
             nearby.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1, false, true), true);
-            nearby.sendMessage(ChatColor.DARK_PURPLE + "Void Walker shockwave!");
+            nearby.sendMessage(MM.parse("<dark_purple>Void Walker shockwave!"));
             hits++;
         }
 
-        player.sendMessage(ChatColor.DARK_PURPLE + "Void Walker! Teleported to " + target.getName() + " - hit " + hits + " enemies!");
+        player.sendMessage(MM.parse("<dark_purple>Void Walker! Teleported to " + target.getName() + " - hit " + hits + " enemies!"));
         incrementStat(uuid, "teleports");
         addStat(uuid, "aoe_hits", hits);
     }

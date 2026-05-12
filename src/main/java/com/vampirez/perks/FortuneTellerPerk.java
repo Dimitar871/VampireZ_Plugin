@@ -3,6 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
+import com.vampirez.MM;
 import com.vampirez.VampireZPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -79,7 +80,7 @@ public class FortuneTellerPerk extends Perk {
                 new Particle.DustOptions(Color.PURPLE, 1.5f));
 
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 0.5f, 1.5f);
-        player.sendMessage(org.bukkit.ChatColor.LIGHT_PURPLE + "Fortune Teller marked the nearest vampire!");
+        player.sendMessage(MM.parse("<light_purple>Fortune Teller marked the nearest vampire!"));
         incrementStat(uuid, "pings");
     }
 

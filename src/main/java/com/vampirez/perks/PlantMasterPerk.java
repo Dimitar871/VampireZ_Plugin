@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -71,21 +74,21 @@ public class PlantMasterPerk extends Perk {
 
     @Override
     public void apply(Player player) {
-        giveFlowerItem(player, Material.POPPY, "&cRed Flower", "Regen I to allies (10 block radius)");
-        giveFlowerItem(player, Material.BLUE_ORCHID, "&9Blue Flower", "Speed I to allies (10 block radius)");
-        giveFlowerItem(player, Material.ALLIUM, "&5Purple Flower", "Weakness I to enemies (15 block radius)");
-        giveFlowerItem(player, Material.WITHER_ROSE, "&8Black Rose", "Random chaos effect to ALL nearby (10 block radius)");
+        giveFlowerItem(player, Material.POPPY, "Red Flower", NamedTextColor.RED, "Regen I to allies (10 block radius)");
+        giveFlowerItem(player, Material.BLUE_ORCHID, "Blue Flower", NamedTextColor.BLUE, "Speed I to allies (10 block radius)");
+        giveFlowerItem(player, Material.ALLIUM, "Purple Flower", NamedTextColor.DARK_PURPLE, "Weakness I to enemies (15 block radius)");
+        giveFlowerItem(player, Material.WITHER_ROSE, "Black Rose", NamedTextColor.DARK_GRAY, "Random chaos effect to ALL nearby (10 block radius)");
     }
 
-    private void giveFlowerItem(Player player, Material mat, String name, String effectDesc) {
+    private void giveFlowerItem(Player player, Material mat, String name, NamedTextColor color, String effectDesc) {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name + " &7(Right-Click)"));
-            meta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Plant anywhere (Right-Click)",
-                    ChatColor.YELLOW + effectDesc,
-                    ChatColor.GRAY + "Duration: 10s | Cooldown: 30s"
+            meta.displayName(Component.text(name + " (Right-Click)").color(color).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(
+                    Component.text("Plant anywhere (Right-Click)").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text(effectDesc).color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false),
+                    Component.text("Duration: 10s | Cooldown: 30s").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
             ));
             item.setItemMeta(meta);
         }
@@ -157,7 +160,7 @@ public class PlantMasterPerk extends Perk {
 
         // Don't replace existing blocks — only place in air
         if (placeBlock.getType() != Material.AIR) {
-            player.sendMessage(ChatColor.RED + "Can't place a flower there — the space is occupied!");
+            player.sendMessage(MM.parse("<red>Can't place a flower there — the space is occupied!"));
             return;
         }
 
@@ -170,7 +173,7 @@ public class PlantMasterPerk extends Perk {
         long effectiveCd = getEffectiveCooldown(player, COOLDOWN_MS);
         if (lastUse != null && (now - lastUse) < effectiveCd) {
             long remaining = (effectiveCd - (now - lastUse)) / 1000 + 1;
-            player.sendMessage(ChatColor.RED + "That flower is on cooldown! " + remaining + "s");
+            player.sendMessage(MM.parse("<red>That flower is on cooldown! " + remaining + "s"));
             return;
         }
 
@@ -195,12 +198,18 @@ public class PlantMasterPerk extends Perk {
         incrementStat(uuid, "plants_placed");
 
         String flowerName = switch (flowerType) {
-            case RED -> ChatColor.RED + "Red Flower";
-            case BLUE -> ChatColor.BLUE + "Blue Flower";
-            case PURPLE -> ChatColor.DARK_PURPLE + "Purple Flower";
-            case BLACK -> ChatColor.DARK_GRAY + "Black Rose";
+            case RED -> "Red Flower";
+            case BLUE -> "Blue Flower";
+            case PURPLE -> "Purple Flower";
+            case BLACK -> "Black Rose";
         };
-        player.sendMessage(ChatColor.GREEN + "Planted " + flowerName + ChatColor.GREEN + "! (10s duration)");
+        String flowerColor = switch (flowerType) {
+            case RED -> "<red>";
+            case BLUE -> "<blue>";
+            case PURPLE -> "<dark_purple>";
+            case BLACK -> "<dark_gray>";
+        };
+        player.sendMessage(MM.parse("<green>Planted " + flowerColor + flowerName + "<green>! (10s duration)"));
     }
 
     @Override

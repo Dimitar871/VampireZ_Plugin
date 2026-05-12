@@ -4,7 +4,7 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
@@ -131,7 +131,7 @@ public class DecoyPerk extends Perk {
         // Effects
         victim.getWorld().spawnParticle(Particle.CLOUD, victim.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.1);
         victim.playSound(victim.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 1.0f);
-        victim.sendMessage(ChatColor.LIGHT_PURPLE + "4 Decoys deployed! You're fully invisible for 2s!");
+        victim.sendMessage(MM.parse("<light_purple>4 Decoys deployed! You're fully invisible for 2s!"));
 
         // Restore armor + remove attribute modifiers after 2 seconds (40 ticks)
         Bukkit.getScheduler().runTaskLater(getPlugin(), () -> {

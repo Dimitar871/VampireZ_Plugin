@@ -1,22 +1,24 @@
 package com.vampirez;
 
 import com.vampirez.api.event.DayPhaseChangeEvent;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import com.vampirez.config.PluginConfig;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.UUID;
+import java.util.function.Supplier;
 
 public class DayNightManager {
 
-    private final JavaPlugin plugin;
-    private GameManager gameManager;
+    private final VampireZPlugin plugin;
+    /** Lazy reference — GameManager is constructed after this. Resolved on first use. */
+    private final Supplier<GameManager> gameManagerSupplier;
     private BukkitTask cycleTask;
     private boolean isNight = false;
     private int ticksInPhase = 0;
@@ -25,21 +27,21 @@ public class DayNightManager {
     private int dayDurationTicks;
     private int nightDurationTicks;
 
-    public DayNightManager(JavaPlugin plugin) {
+    public DayNightManager(VampireZPlugin plugin, Supplier<GameManager> gameManagerSupplier) {
         this.plugin = plugin;
+        this.gameManagerSupplier = gameManagerSupplier;
         loadConfig();
     }
+
+    private GameManager gameManager() { return gameManagerSupplier.get(); }
 
     public void reloadConfig() { loadConfig(); }
 
     private void loadConfig() {
-        enabled = plugin.getConfig().getBoolean("day-night.enabled", true);
-        dayDurationTicks = plugin.getConfig().getInt("day-night.day-duration-ticks", 7200);
-        nightDurationTicks = plugin.getConfig().getInt("day-night.night-duration-ticks", 4800);
-    }
-
-    public void setGameManager(GameManager gameManager) {
-        this.gameManager = gameManager;
+        PluginConfig.DayNightSection cfg = plugin.getPluginConfig().dayNight;
+        enabled = cfg.enabled;
+        dayDurationTicks = cfg.dayDurationTicks;
+        nightDurationTicks = cfg.nightDurationTicks;
     }
 
     public void startCycle() {
@@ -51,7 +53,7 @@ public class DayNightManager {
         setWorldTime(1000);
 
         cycleTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (gameManager == null || gameManager.getState() != GameState.ACTIVE) return;
+            if (gameManager() == null || gameManager().getState() != GameState.ACTIVE) return;
 
             ticksInPhase++;
 
@@ -81,11 +83,10 @@ public class DayNightManager {
     }
 
     private void onNightFall() {
-        String msg = ChatColor.translateAlternateColorCodes('&',
-                plugin.getConfig().getString("messages.night-fall", "&4&lNight has fallen! Vampires grow stronger..."));
+        Component msg = MM.legacy(plugin.getPluginConfig().messages.nightFall);
 
-        if (gameManager != null) {
-            for (Player player : gameManager.getJoinedOnlinePlayers()) {
+        if (gameManager() != null) {
+            for (Player player : gameManager().getJoinedOnlinePlayers()) {
                 player.sendMessage(msg);
                 player.playSound(player.getLocation(), Sound.ENTITY_WOLF_GROWL, 1.0f, 0.5f);
             }
@@ -96,11 +97,10 @@ public class DayNightManager {
     }
 
     private void onDayBreak() {
-        String msg = ChatColor.translateAlternateColorCodes('&',
-                plugin.getConfig().getString("messages.day-break", "&e&lThe sun rises! Vampires are weakened..."));
+        Component msg = MM.legacy(plugin.getPluginConfig().messages.dayBreak);
 
-        if (gameManager != null) {
-            for (Player player : gameManager.getJoinedOnlinePlayers()) {
+        if (gameManager() != null) {
+            for (Player player : gameManager().getJoinedOnlinePlayers()) {
                 player.sendMessage(msg);
                 player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_AMBIENT, 1.0f, 1.0f);
             }
@@ -137,8 +137,8 @@ public class DayNightManager {
     }
 
     private void applyNightEffects() {
-        if (gameManager == null) return;
-        for (UUID uuid : gameManager.getVampireTeam()) {
+        if (gameManager() == null) return;
+        for (UUID uuid : gameManager().getVampireTeam()) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline()) {
                 // Remove day debuffs
@@ -150,8 +150,8 @@ public class DayNightManager {
     }
 
     private void applyDayEffects() {
-        if (gameManager == null) return;
-        for (UUID uuid : gameManager.getVampireTeam()) {
+        if (gameManager() == null) return;
+        for (UUID uuid : gameManager().getVampireTeam()) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline()) {
                 // Remove night buffs
@@ -164,8 +164,8 @@ public class DayNightManager {
 
     public void applyEffectsToPlayer(Player player) {
         if (!enabled) return;
-        if (gameManager == null) return;
-        if (!gameManager.getVampireTeam().contains(player.getUniqueId())) return;
+        if (gameManager() == null) return;
+        if (!gameManager().getVampireTeam().contains(player.getUniqueId())) return;
 
         if (isNight) {
             player.removePotionEffect(PotionEffectType.SLOWNESS);
@@ -177,8 +177,8 @@ public class DayNightManager {
     }
 
     private void removeAllEffects() {
-        if (gameManager == null) return;
-        for (UUID uuid : gameManager.getVampireTeam()) {
+        if (gameManager() == null) return;
+        for (UUID uuid : gameManager().getVampireTeam()) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline()) {
                 player.removePotionEffect(PotionEffectType.SPEED);
@@ -190,8 +190,8 @@ public class DayNightManager {
 
     private void setWorldTime(long time) {
         // Only change time in the arena world, not survival worlds
-        if (gameManager != null && gameManager.getHumanSpawn() != null) {
-            gameManager.getHumanSpawn().getWorld().setTime(time);
+        if (gameManager() != null && gameManager().getHumanSpawn() != null) {
+            gameManager().getHumanSpawn().getWorld().setTime(time);
         }
     }
 

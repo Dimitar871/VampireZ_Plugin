@@ -1,7 +1,6 @@
 package com.vampirez;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -11,7 +10,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.block.Action;
 import org.bukkit.Material;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
@@ -21,14 +19,17 @@ import java.util.UUID;
 
 public class VampireLeapListener implements Listener {
 
-    private final JavaPlugin plugin;
+    private final VampireZPlugin plugin;
     private final GameManager gameManager;
     private final Map<UUID, Long> cooldowns = new HashMap<>();
-    private static final long COOLDOWN_MS = 8000;
 
-    public VampireLeapListener(JavaPlugin plugin, GameManager gameManager) {
+    public VampireLeapListener(VampireZPlugin plugin, GameManager gameManager) {
         this.plugin = plugin;
         this.gameManager = gameManager;
+    }
+
+    private long cooldownMs() {
+        return plugin.getPluginConfig().timings.vampireLeapCooldownSeconds * 1000L;
     }
 
     @EventHandler
@@ -50,10 +51,10 @@ public class VampireLeapListener implements Listener {
         // Check cooldown
         long now = System.currentTimeMillis();
         Long lastUsed = cooldowns.get(player.getUniqueId());
-        long effectiveCooldown = Perk.getEffectiveCooldown(player, COOLDOWN_MS);
+        long effectiveCooldown = Perk.getEffectiveCooldown(player, cooldownMs());
         if (lastUsed != null && (now - lastUsed) < effectiveCooldown) {
             long remaining = (effectiveCooldown - (now - lastUsed)) / 1000 + 1;
-            player.sendMessage(ChatColor.RED + "Leap on cooldown! " + remaining + "s remaining");
+            player.sendMessage(MM.parse("<red>Leap on cooldown! " + remaining + "s remaining"));
             return;
         }
 

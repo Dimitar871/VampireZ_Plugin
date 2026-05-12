@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -35,7 +38,7 @@ public class StrengthPotionsPerk extends Perk {
         if (meta != null) {
             meta.setBasePotionData(new PotionData(PotionType.WATER));
             meta.addCustomEffect(new PotionEffect(PotionEffectType.STRENGTH, 600, 0), true); // 30 seconds
-            meta.setDisplayName(ChatColor.RED + "Splash Potion of Strength");
+            meta.displayName(Component.text("Splash Potion of Strength").color(NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
             meta.setColor(org.bukkit.Color.fromRGB(147, 36, 35));
             potion.setItemMeta(meta);
         }
@@ -63,7 +66,7 @@ public class StrengthPotionsPerk extends Perk {
         if ((now - last) >= REGEN_INTERVAL_MS) {
             lastRegen.put(uuid, now);
             player.getInventory().addItem(createPotion());
-            player.sendMessage(ChatColor.LIGHT_PURPLE + "A strength potion has regenerated!");
+            player.sendMessage(MM.parse("<light_purple>A strength potion has regenerated!"));
         }
     }
 }

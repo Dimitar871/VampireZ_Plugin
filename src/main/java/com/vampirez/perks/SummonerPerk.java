@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -38,8 +41,8 @@ public class SummonerPerk extends Perk {
         ItemStack item = new ItemStack(Material.BONE);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.RED + "Summon Wolves" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Summon 2 tamed wolves", ChatColor.YELLOW + "Cooldown: 45s"));
+            meta.displayName(Component.text("Summon Wolves (Right-Click)").color(NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Summon 2 tamed wolves").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 45s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -68,7 +71,7 @@ public class SummonerPerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Summon on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Summon on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
         cooldowns.put(uuid, now);
@@ -80,13 +83,13 @@ public class SummonerPerk extends Perk {
             wolf.setTamed(true);
             wolf.setOwner(player);
             wolf.setAngry(true);
-            wolf.setCustomName(ChatColor.RED + player.getName() + "'s Wolf");
+            wolf.customName(Component.text(player.getName() + "'s Wolf").color(NamedTextColor.RED));
             wolf.setCustomNameVisible(true);
             wolf.setMetadata("vampirez_team", new FixedMetadataValue(getPlugin(), "VAMPIRE"));
         }
 
         player.getWorld().spawnParticle(Particle.LARGE_SMOKE, player.getLocation().add(0, 0.5, 0), 20, 1, 0.5, 1, 0.02);
         player.playSound(player.getLocation(), Sound.ENTITY_WOLF_GROWL, 1.0f, 1.0f);
-        player.sendMessage(ChatColor.RED + "You summoned 2 wolves!");
+        player.sendMessage(MM.parse("<red>You summoned 2 wolves!"));
     }
 }

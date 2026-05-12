@@ -1,7 +1,9 @@
 package com.vampirez;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -21,8 +23,8 @@ import java.util.*;
 
 public class StatAnvilManager implements Listener {
 
-    public static final String ANVIL_GUI_TITLE = ChatColor.DARK_PURPLE + "Stat Anvil";
     public static final int ANVIL_COST = 75;
+    private static final Component ANVIL_GUI_TITLE = MM.parse("<dark_purple>Stat Anvil");
 
     private final EconomyManager economyManager;
 
@@ -78,7 +80,7 @@ public class StatAnvilManager implements Listener {
         ItemStack cancel = new ItemStack(Material.BARRIER);
         ItemMeta cancelMeta = cancel.getItemMeta();
         if (cancelMeta != null) {
-            cancelMeta.setDisplayName(ChatColor.RED + "Cancel");
+            cancelMeta.displayName(Component.text("Cancel").color(NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
             cancel.setItemMeta(cancelMeta);
         }
         inv.setItem(22, cancel);
@@ -87,11 +89,13 @@ public class StatAnvilManager implements Listener {
         ItemStack info = new ItemStack(Material.ANVIL);
         ItemMeta infoMeta = info.getItemMeta();
         if (infoMeta != null) {
-            infoMeta.setDisplayName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Stat Anvil");
-            infoMeta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Purchase permanent stat boosts!",
-                    ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + ANVIL_COST + " gold each",
-                    ChatColor.GRAY + "Does not use perk slots."
+            infoMeta.displayName(Component.text("Stat Anvil").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD).decoration(TextDecoration.ITALIC, false));
+            infoMeta.lore(List.of(
+                    Component.text("Purchase permanent stat boosts!").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.empty().decoration(TextDecoration.ITALIC, false)
+                            .append(Component.text("Cost: ").color(NamedTextColor.YELLOW))
+                            .append(Component.text(ANVIL_COST + " gold each").color(NamedTextColor.GREEN)),
+                    Component.text("Does not use perk slots.").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
             ));
             info.setItemMeta(infoMeta);
         }
@@ -106,19 +110,21 @@ public class StatAnvilManager implements Listener {
         ItemStack item = new ItemStack(canAfford ? buff.icon : Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.LIGHT_PURPLE + buff.displayName);
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + buff.description);
-            lore.add("");
-            lore.add(ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + ANVIL_COST + " gold");
-            lore.add(ChatColor.GRAY + "Owned: " + ChatColor.WHITE + ownedCount);
-            lore.add("");
-            if (!canAfford) {
-                lore.add(ChatColor.RED + "Not enough gold!");
-            } else {
-                lore.add(ChatColor.GREEN + "Click to purchase!");
-            }
-            meta.setLore(lore);
+            meta.displayName(Component.text(buff.displayName).color(NamedTextColor.LIGHT_PURPLE).decoration(TextDecoration.ITALIC, false));
+            List<Component> lore = new ArrayList<>();
+            lore.add(Component.text(buff.description).color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            lore.add(Component.empty());
+            lore.add(Component.empty().decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text("Cost: ").color(NamedTextColor.YELLOW))
+                    .append(Component.text(ANVIL_COST + " gold").color(NamedTextColor.GREEN)));
+            lore.add(Component.empty().decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text("Owned: ").color(NamedTextColor.GRAY))
+                    .append(Component.text(String.valueOf(ownedCount)).color(NamedTextColor.WHITE)));
+            lore.add(Component.empty());
+            lore.add(canAfford
+                    ? Component.text("Click to purchase!").color(NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false)
+                    : Component.text("Not enough gold!").color(NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+            meta.lore(lore);
             item.setItemMeta(meta);
         }
         return item;
@@ -127,7 +133,7 @@ public class StatAnvilManager implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!event.getView().getTitle().equals(ANVIL_GUI_TITLE)) return;
+        if (!event.getView().title().equals(ANVIL_GUI_TITLE)) return;
 
         event.setCancelled(true);
 
@@ -154,7 +160,7 @@ public class StatAnvilManager implements Listener {
         StatBuff selected = options.get(buffIndex);
 
         if (!economyManager.removeGold(uuid, ANVIL_COST)) {
-            player.sendMessage(ChatColor.RED + "Not enough gold! Need " + ANVIL_COST + ".");
+            player.sendMessage(MM.parse("<red>Not enough gold! Need " + ANVIL_COST + "."));
             return;
         }
 
@@ -162,7 +168,7 @@ public class StatAnvilManager implements Listener {
         addBuff(uuid, selected);
         applyBuffToPlayer(player, selected);
 
-        player.sendMessage(ChatColor.LIGHT_PURPLE + "Stat Anvil: " + ChatColor.WHITE + selected.displayName + ChatColor.GREEN + " acquired!");
+        player.sendMessage(MM.parse("<light_purple>Stat Anvil: <white>" + selected.displayName + "<green> acquired!"));
         player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 1.0f, 1.2f);
         player.getWorld().spawnParticle(Particle.ENCHANT, player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.5);
 
@@ -271,14 +277,15 @@ public class StatAnvilManager implements Listener {
     /**
      * Get summary of player's buffs for display.
      */
-    public List<String> getBuffSummary(UUID uuid) {
+    public List<Component> getBuffSummary(UUID uuid) {
         Map<StatBuff, Integer> buffs = playerBuffs.get(uuid);
         if (buffs == null || buffs.isEmpty()) return Collections.emptyList();
 
-        List<String> lines = new ArrayList<>();
+        List<Component> lines = new ArrayList<>();
         for (Map.Entry<StatBuff, Integer> entry : buffs.entrySet()) {
             if (entry.getValue() > 0) {
-                lines.add(ChatColor.LIGHT_PURPLE + entry.getKey().displayName + " x" + entry.getValue());
+                lines.add(Component.text(entry.getKey().displayName + " x" + entry.getValue())
+                        .color(NamedTextColor.LIGHT_PURPLE).decoration(TextDecoration.ITALIC, false));
             }
         }
         return lines;

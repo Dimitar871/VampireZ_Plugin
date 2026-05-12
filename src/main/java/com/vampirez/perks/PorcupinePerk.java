@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -90,8 +90,8 @@ public class PorcupinePerk extends Perk {
         victim.getWorld().spawnParticle(Particle.DUST, victim.getLocation().add(0, 1, 0),
                 15, 0.5, 0.5, 0.5, 0, new Particle.DustOptions(Color.fromRGB(0, 180, 0), 1.5f));
         victim.playSound(victim.getLocation(), Sound.ENTITY_GUARDIAN_HURT, 1.0f, 1.5f);
-        attackerPlayer.sendMessage(ChatColor.GREEN + "Porcupine thorns hit you!");
-        victim.sendMessage(ChatColor.GREEN + "Porcupine! Reflected damage!");
+        attackerPlayer.sendMessage(MM.parse("<green>Porcupine thorns hit you!"));
+        victim.sendMessage(MM.parse("<green>Porcupine! Reflected damage!"));
         incrementStat(uuid, "procs");
     }
 

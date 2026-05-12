@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -68,7 +68,7 @@ public class PlagueCarrierPerk extends Perk {
         if (spread) {
             target.getWorld().spawnParticle(Particle.WITCH, target.getLocation().add(0, 1, 0), 15, 1.5, 0.5, 1.5, 0);
             attacker.playSound(attacker.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.5f, 1.5f);
-            attacker.sendMessage(ChatColor.DARK_GREEN + "Plague spreads from your target!");
+            attacker.sendMessage(MM.parse("<dark_green>Plague spreads from your target!"));
             incrementStat(attacker.getUniqueId(), "spreads");
         }
     }

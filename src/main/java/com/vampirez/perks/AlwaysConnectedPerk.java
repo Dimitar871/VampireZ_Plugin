@@ -5,7 +5,10 @@ import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.VampireZPlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -38,13 +41,13 @@ public class AlwaysConnectedPerk extends Perk {
         ItemStack compass = new ItemStack(Material.RECOVERY_COMPASS);
         ItemMeta meta = compass.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.AQUA + "Always Connected" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(
-                    "",
-                    ChatColor.ITALIC + "" + ChatColor.GRAY + "\"No matter where you are,",
-                    ChatColor.ITALIC + "" + ChatColor.GRAY + " everyone is always connected.\"",
-                    "",
-                    ChatColor.YELLOW + "Cooldown: 45s"
+            meta.displayName(Component.text("Always Connected (Right-Click)").color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(
+                    Component.text(""),
+                    Component.text("\"No matter where you are,").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, true),
+                    Component.text(" everyone is always connected.\"").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, true),
+                    Component.text(""),
+                    Component.text("Cooldown: 45s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)
             ));
             compass.setItemMeta(meta);
         }
@@ -75,7 +78,7 @@ public class AlwaysConnectedPerk extends Perk {
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
             long remaining = (getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1;
-            player.sendMessage(ChatColor.RED + "Always Connected on cooldown! " + remaining + "s");
+            player.sendMessage(MM.parse("<red>Always Connected on cooldown! " + remaining + "s"));
             return;
         }
         cooldowns.put(uuid, now);
@@ -115,9 +118,9 @@ public class AlwaysConnectedPerk extends Perk {
             Player human = Bukkit.getPlayer(humanUUID);
             if (human == null || !human.isOnline()) continue;
             if (human.getUniqueId().equals(uuid)) {
-                human.sendMessage(ChatColor.AQUA + "Always Connected! All humans revealed and healed!");
+                human.sendMessage(MM.parse("<aqua>Always Connected! All humans revealed and healed!"));
             } else {
-                human.sendMessage(ChatColor.AQUA + player.getName() + " activated Always Connected! Humans revealed!");
+                human.sendMessage(MM.parse("<aqua>" + player.getName() + " activated Always Connected! Humans revealed!"));
             }
         }
 

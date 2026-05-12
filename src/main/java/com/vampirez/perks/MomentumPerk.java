@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -60,7 +60,7 @@ public class MomentumPerk extends Perk {
         addStat(uuid, "bonus_damage", bonus);
 
         if (currentStacks > 1) {
-            attacker.sendMessage(ChatColor.GOLD + "Momentum x" + currentStacks + "! (+" + (int)(currentStacks * DAMAGE_PER_STACK * 100) + "% damage)");
+            attacker.sendMessage(MM.parse("<gold>Momentum x" + currentStacks + "! (+" + (int)(currentStacks * DAMAGE_PER_STACK * 100) + "% damage)"));
         }
 
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.5f, 1.5f);

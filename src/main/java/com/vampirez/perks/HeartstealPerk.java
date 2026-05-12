@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.Particle;
@@ -113,7 +113,7 @@ public class HeartstealPerk extends Perk {
         // Particles and feedback
         attacker.getWorld().spawnParticle(Particle.HEART, attacker.getLocation().add(0, 2, 0), 8, 0.4, 0.4, 0.4, 0);
         attacker.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, attacker.getLocation().add(0, 1, 0), 15, 0.3, 0.5, 0.3, 0);
-        attacker.sendMessage(ChatColor.GREEN + "Heartsteal! Gained +0.5 hearts max HP from " + target.getName());
+        attacker.sendMessage(MM.parse("<green>Heartsteal! Gained +0.5 hearts max HP from " + target.getName()));
 
         incrementStat(attackerUUID, "hearts_gained");
     }

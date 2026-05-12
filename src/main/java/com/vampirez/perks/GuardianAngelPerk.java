@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -56,7 +56,7 @@ public class GuardianAngelPerk extends Perk {
             victim.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 60, 1, false, true));
             victim.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, victim.getLocation().add(0, 1, 0), 60, 1, 1.5, 1, 0.3);
             victim.playSound(victim.getLocation(), Sound.ITEM_TOTEM_USE, 1.0f, 1.2f);
-            victim.sendMessage(ChatColor.GOLD + "Guardian Angel saved you! (3m cooldown)");
+            victim.sendMessage(MM.parse("<gold>Guardian Angel saved you! (3m cooldown)"));
         }
     }
 }

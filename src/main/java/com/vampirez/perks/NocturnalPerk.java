@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -73,10 +73,10 @@ public class NocturnalPerk extends Perk {
         // Apply new state
         if (isNight) {
             current += 4.0; // +2 hearts
-            player.sendMessage(ChatColor.DARK_PURPLE + "Nocturnal: Night falls! +2 hearts, +15% damage!");
+            player.sendMessage(MM.parse("<dark_purple>Nocturnal: Night falls! +2 hearts, +15% damage!"));
         } else {
             current -= 2.0; // -1 heart
-            player.sendMessage(ChatColor.GRAY + "Nocturnal: Daylight weakens you... -1 heart");
+            player.sendMessage(MM.parse("<gray>Nocturnal: Daylight weakens you... -1 heart"));
         }
 
         current = Math.max(current, 2.0); // Minimum 1 heart

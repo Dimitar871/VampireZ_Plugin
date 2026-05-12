@@ -1,7 +1,7 @@
 package com.vampirez.engine.action;
 
+import com.vampirez.MM;
 import com.vampirez.engine.HookContext;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
@@ -49,12 +49,10 @@ public class GiveItemAction implements Action {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             if (displayName != null) {
-                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', displayName));
+                meta.displayName(MM.legacy(displayName));
             }
             if (lore != null && !lore.isEmpty()) {
-                meta.setLore(lore.stream()
-                        .map(s -> ChatColor.translateAlternateColorCodes('&', s))
-                        .toList());
+                meta.lore(lore.stream().map(MM::legacy).toList());
             }
             if (enchants != null) {
                 for (Map<?, ?> ench : enchants) {

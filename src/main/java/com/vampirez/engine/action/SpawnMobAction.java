@@ -1,8 +1,9 @@
 package com.vampirez.engine.action;
 
 import com.vampirez.engine.HookContext;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
@@ -28,7 +29,7 @@ public class SpawnMobAction implements Action {
     private final int count;
     private final long lifetimeTicks;
     private final String customName;
-    private final ChatColor nameColor;
+    private final NamedTextColor nameColor;
     private final String team;
     private final boolean noBaby;
     private final boolean angry;
@@ -38,7 +39,7 @@ public class SpawnMobAction implements Action {
     private final double spreadX;
 
     public SpawnMobAction(EntityType entityType, int count, long lifetimeTicks,
-                          String customName, ChatColor nameColor, String team,
+                          String customName, NamedTextColor nameColor, String team,
                           boolean noBaby, boolean angry, boolean tamed,
                           Material equipmentMainHand, Material equipmentHelmet, double spreadX) {
         this.entityType = entityType;
@@ -70,8 +71,9 @@ public class SpawnMobAction implements Action {
             LivingEntity entity = (LivingEntity) spawned;
 
             if (customName != null) {
-                entity.setCustomName((nameColor != null ? nameColor.toString() : "")
-                        + owner.getName() + "'s " + customName);
+                Component name = Component.text(owner.getName() + "'s " + customName)
+                        .color(nameColor != null ? nameColor : NamedTextColor.WHITE);
+                entity.customName(name);
                 entity.setCustomNameVisible(true);
             }
             if (team != null) {

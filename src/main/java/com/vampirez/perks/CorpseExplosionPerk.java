@@ -4,7 +4,7 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -51,7 +51,7 @@ public class CorpseExplosionPerk extends Perk {
                 if (killerPlayer != null && isSameTeam(killerPlayer, target)) continue;
 
                 target.damage(6.0); // 3 hearts
-                target.sendMessage(ChatColor.RED + "Corpse Explosion!");
+                target.sendMessage(MM.parse("<red>Corpse Explosion!"));
                 playersHit++;
             }
             if (playersHit > 0) {

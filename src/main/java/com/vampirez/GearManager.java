@@ -1,7 +1,9 @@
 package com.vampirez;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -99,9 +101,13 @@ public class GearManager {
         ItemStack emerald = new ItemStack(Material.EMERALD);
         ItemMeta meta = emerald.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.GREEN + "Perk Shop" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(java.util.Arrays.asList(
-                ChatColor.GRAY + "Right-click to open the perk shop"
+            meta.displayName(Component.empty()
+                    .decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text("Perk Shop").color(NamedTextColor.GREEN))
+                    .append(Component.text(" (Right-Click)").color(NamedTextColor.GRAY)));
+            meta.lore(java.util.List.of(
+                Component.text("Right-click to open the perk shop")
+                        .color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
             ));
             emerald.setItemMeta(meta);
         }
@@ -133,7 +139,7 @@ public class GearManager {
             }
             profile.setTextures(textures);
             skullMeta.setOwnerProfile(profile);
-            skullMeta.setDisplayName(ChatColor.DARK_RED + "Vampire");
+            skullMeta.displayName(Component.text("Vampire").color(NamedTextColor.DARK_RED).decoration(TextDecoration.ITALIC, false));
             skullMeta.setUnbreakable(true);
             skull.setItemMeta(skullMeta);
         }
@@ -144,10 +150,16 @@ public class GearManager {
         ItemStack ghastTear = new ItemStack(Material.GHAST_TEAR);
         ItemMeta meta = ghastTear.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_PURPLE + "Vampire Leap" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(java.util.Arrays.asList(
-                ChatColor.GRAY + "Launch forward in the direction you're looking",
-                ChatColor.YELLOW + "Cooldown: " + ChatColor.WHITE + "8 seconds"
+            meta.displayName(Component.empty()
+                    .decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text("Vampire Leap").color(NamedTextColor.DARK_PURPLE))
+                    .append(Component.text(" (Right-Click)").color(NamedTextColor.GRAY)));
+            meta.lore(java.util.List.of(
+                Component.text("Launch forward in the direction you're looking")
+                        .color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                Component.empty().decoration(TextDecoration.ITALIC, false)
+                        .append(Component.text("Cooldown: ").color(NamedTextColor.YELLOW))
+                        .append(Component.text("8 seconds").color(NamedTextColor.WHITE))
             ));
             ghastTear.setItemMeta(meta);
         }

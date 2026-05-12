@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.Particle;
@@ -52,7 +52,7 @@ public class BloodlustPerk extends Perk {
                 new Particle.DustOptions(org.bukkit.Color.fromRGB(139, 0, 0), 2.0f));
         killer.playSound(killer.getLocation(), Sound.ENTITY_WITHER_HURT, 0.7f, 1.2f);
         incrementStat(uuid, "kills");
-        killer.sendMessage(ChatColor.DARK_RED + "Bloodlust: +" + stacks + " hearts!");
+        killer.sendMessage(MM.parse("<dark_red>Bloodlust: +" + stacks + " hearts!"));
     }
 
     @Override

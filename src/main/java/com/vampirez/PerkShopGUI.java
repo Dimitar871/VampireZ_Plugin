@@ -1,30 +1,36 @@
 package com.vampirez;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import dev.triumphteam.gui.guis.Gui;
+import dev.triumphteam.gui.guis.GuiItem;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-public class PerkShopGUI implements Listener {
-
-    private static final String TIER_GUI_TITLE = ChatColor.GOLD + "Perk Shop";
-    private static final String OPTION_GUI_TITLE = ChatColor.GOLD + "Choose a Perk";
+/**
+ * Two-screen perk shop using triumph-gui:
+ *   1. Tier selection (Silver / Gold / Prismatic) + Repair Armor + Stat Anvil + owned perks
+ *   2. Random perk options (3 per roll) + cancel
+ *
+ * <p>Click handlers are bound directly to {@link GuiItem}s, eliminating string-title routing,
+ * magic slot numbers, and the per-player {@code shopStates} map (state lives in the click
+ * lambda's closure now).
+ */
+public class PerkShopGUI {
 
     private final PerkManager perkManager;
     private final EconomyManager economyManager;
     private final GameManager gameManager;
     private final StatAnvilManager statAnvilManager;
-
-    private final Map<UUID, ShopState> shopStates = new HashMap<>();
 
     public PerkShopGUI(PerkManager perkManager, EconomyManager economyManager, GameManager gameManager, StatAnvilManager statAnvilManager) {
         this.perkManager = perkManager;
@@ -33,315 +39,247 @@ public class PerkShopGUI implements Listener {
         this.statAnvilManager = statAnvilManager;
     }
 
-    private static class ShopState {
-        PerkTier selectedTier;
-        PerkTeam playerTeam;
-        List<Perk> offeredPerks;
-    }
-
     public void openTierSelection(Player player, PerkTeam team) {
         UUID uuid = player.getUniqueId();
-        int perkCount = perkManager.getPlayerPerkCount(uuid);
         int gold = economyManager.getGold(uuid);
+        int perkCount = perkManager.getPlayerPerkCount(uuid);
 
-        Inventory inv = Bukkit.createInventory(null, 54, TIER_GUI_TITLE);
+        Gui gui = Gui.gui()
+                .title(Component.text("Perk Shop").color(NamedTextColor.GOLD))
+                .rows(6)
+                .disableAllInteractions()
+                .create();
 
-        // Row 1-3: Tier selection (slots 0-26)
-        // Silver - slot 11
-        inv.setItem(11, createTierItem(PerkTier.SILVER, gold, perkCount));
-        // Gold - slot 13
-        inv.setItem(13, createTierItem(PerkTier.GOLD, gold, perkCount));
-        // Prismatic - slot 15
-        inv.setItem(15, createTierItem(PerkTier.PRISMATIC, gold, perkCount));
+        // Row 1-3: Tier buttons at slots 11, 13, 15
+        gui.setItem(11, tierItem(PerkTier.SILVER, gold, perkCount, player, team));
+        gui.setItem(13, tierItem(PerkTier.GOLD, gold, perkCount, player, team));
+        gui.setItem(15, tierItem(PerkTier.PRISMATIC, gold, perkCount, player, team));
 
-        // Row 4: Separator (slots 27-35)
-        ItemStack separator = new ItemStack(Material.GREEN_STAINED_GLASS_PANE);
-        ItemMeta sepMeta = separator.getItemMeta();
-        if (sepMeta != null) {
-            sepMeta.setDisplayName(ChatColor.GREEN + "");
-            separator.setItemMeta(sepMeta);
-        }
-        for (int i = 27; i <= 35; i++) {
-            inv.setItem(i, separator);
-        }
-        // Center label at slot 31
-        ItemStack label = new ItemStack(Material.GREEN_STAINED_GLASS_PANE);
-        ItemMeta labelMeta = label.getItemMeta();
-        if (labelMeta != null) {
-            labelMeta.setDisplayName(ChatColor.GREEN + "" + ChatColor.BOLD + "Your Active Perks");
-            label.setItemMeta(labelMeta);
-        }
-        inv.setItem(31, label);
+        // Row 4 (slots 27-35): Separator + label, with Repair (29), label (31), Stat Anvil (33)
+        ItemStack pane = paneItem();
+        for (int i = 27; i <= 35; i++) gui.setItem(i, new GuiItem(pane));
+        gui.setItem(29, repairItem(player));
+        gui.setItem(31, labelItem());
+        gui.setItem(33, statAnvilItem(player));
 
-        // Repair Armor button at slot 29
-        ItemStack repairItem = new ItemStack(Material.ANVIL);
-        ItemMeta repairMeta = repairItem.getItemMeta();
-        if (repairMeta != null) {
-            repairMeta.setDisplayName(ChatColor.AQUA + "Repair Armor");
-            repairMeta.setLore(java.util.Arrays.asList(
-                ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + "25 gold",
-                ChatColor.GRAY + "Fully repairs all armor pieces"
-            ));
-            repairItem.setItemMeta(repairMeta);
-        }
-        inv.setItem(29, repairItem);
-
-        // Stat Anvil button at slot 33
-        ItemStack anvilItem = new ItemStack(Material.DAMAGED_ANVIL);
-        ItemMeta anvilMeta = anvilItem.getItemMeta();
-        if (anvilMeta != null) {
-            anvilMeta.setDisplayName(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "Stat Anvil");
-            List<String> anvilLore = new ArrayList<>();
-            anvilLore.add(ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + StatAnvilManager.ANVIL_COST + " gold each");
-            anvilLore.add(ChatColor.GRAY + "Buy permanent stat boosts!");
-            anvilLore.add(ChatColor.GRAY + "(Does not use perk slots)");
-            // Show owned buffs
-            List<String> buffSummary = statAnvilManager.getBuffSummary(uuid);
-            if (!buffSummary.isEmpty()) {
-                anvilLore.add("");
-                anvilLore.add(ChatColor.YELLOW + "Your buffs:");
-                anvilLore.addAll(buffSummary);
-            }
-            anvilMeta.setLore(anvilLore);
-            anvilItem.setItemMeta(anvilMeta);
-        }
-        inv.setItem(33, anvilItem);
-
-        // Row 5-6 (slots 36-53): Owned perks with stats
-        List<Perk> owned = perkManager.getPlayerPerks(uuid);
+        // Row 5-6 (slots 36-53): owned perks display
         int slot = 36;
-        for (Perk perk : owned) {
+        for (Perk perk : perkManager.getPlayerPerks(uuid)) {
             if (slot > 53) break;
-            inv.setItem(slot, createOwnedPerkItem(perk, uuid));
+            gui.setItem(slot, new GuiItem(ownedPerkItem(perk, uuid)));
             slot++;
         }
 
-        ShopState state = new ShopState();
-        state.playerTeam = team;
-        shopStates.put(uuid, state);
-
-        player.openInventory(inv);
+        gui.open(player);
     }
 
-    private ItemStack createOwnedPerkItem(Perk perk, UUID playerUUID) {
-        ItemStack item = new ItemStack(perk.getIcon());
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(perk.getTier().getColor() + perk.getDisplayName());
-            List<String> lore = new ArrayList<>();
+    private GuiItem tierItem(PerkTier tier, int gold, int perkCount, Player player, PerkTeam team) {
+        boolean canAfford = gold >= tier.getCost();
+        boolean maxed = perkCount >= perkManager.getMaxPerks();
 
-            // Perk description
-            for (String line : perk.getDescription()) {
-                lore.add(ChatColor.GRAY + line);
-            }
-
-            lore.add("");
-            lore.add(ChatColor.YELLOW + "--- Stats ---");
-
-            // Stats
-            Map<String, String> statLabels = perk.getStatLabels();
-            Map<String, Double> stats = perk.getPlayerStats(playerUUID);
-
-            if (statLabels.isEmpty()) {
-                lore.add(ChatColor.GREEN + "Active");
-            } else {
-                for (Map.Entry<String, String> entry : statLabels.entrySet()) {
-                    double value = stats.getOrDefault(entry.getKey(), 0.0);
-                    String formatted;
-                    if (value == Math.floor(value)) {
-                        formatted = String.valueOf((int) value);
-                    } else {
-                        formatted = String.format("%.1f", value);
-                    }
-                    lore.add(ChatColor.GRAY + entry.getValue() + ": " + ChatColor.WHITE + formatted);
-                }
-            }
-
-            meta.setLore(lore);
-            item.setItemMeta(meta);
-        }
-        return item;
-    }
-
-    private ItemStack createTierItem(PerkTier tier, int playerGold, int perkCount) {
-        boolean canAfford = playerGold >= tier.getCost();
-        boolean maxPerks = perkCount >= perkManager.getMaxPerks();
-
-        Material mat;
-        if (maxPerks || !canAfford) {
-            mat = Material.GRAY_STAINED_GLASS_PANE;
-        } else {
-            mat = switch (tier) {
-                case SILVER -> Material.IRON_INGOT;
-                case GOLD -> Material.GOLD_INGOT;
-                case PRISMATIC -> Material.DIAMOND;
-            };
-        }
+        Material mat = (maxed || !canAfford) ? Material.GRAY_STAINED_GLASS_PANE : switch (tier) {
+            case SILVER -> Material.IRON_INGOT;
+            case GOLD -> Material.GOLD_INGOT;
+            case PRISMATIC -> Material.DIAMOND;
+        };
 
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(tier.getColor() + tier.getDisplayName() + " Perk");
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.YELLOW + "Cost: " + ChatColor.GREEN + tier.getCost() + " gold");
-            lore.add(ChatColor.GRAY + "Your Gold: " + ChatColor.WHITE + playerGold);
-            lore.add("");
-            if (maxPerks) {
-                lore.add(ChatColor.RED + "Max perks reached! (" + perkCount + "/" + perkManager.getMaxPerks() + ")");
+            meta.displayName(Component.text(tier.getDisplayName() + " Perk")
+                    .color(tier.getTextColor()).decoration(TextDecoration.ITALIC, false));
+            List<Component> lore = new ArrayList<>();
+            lore.add(Component.empty().decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text("Cost: ").color(NamedTextColor.YELLOW))
+                    .append(Component.text(tier.getCost() + " gold").color(NamedTextColor.GREEN)));
+            lore.add(Component.empty().decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text("Your Gold: ").color(NamedTextColor.GRAY))
+                    .append(Component.text(String.valueOf(gold)).color(NamedTextColor.WHITE)));
+            lore.add(Component.empty());
+            if (maxed) {
+                lore.add(Component.text("Max perks reached! (" + perkCount + "/" + perkManager.getMaxPerks() + ")")
+                        .color(NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
             } else if (!canAfford) {
-                lore.add(ChatColor.RED + "Not enough gold!");
+                lore.add(Component.text("Not enough gold!").color(NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
             } else {
-                lore.add(ChatColor.GREEN + "Click to browse " + tier.getDisplayName() + " perks!");
+                lore.add(Component.text("Click to browse " + tier.getDisplayName() + " perks!")
+                        .color(NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
             }
-            meta.setLore(lore);
+            meta.lore(lore);
+            item.setItemMeta(meta);
+        }
+
+        return new GuiItem(item, event -> {
+            if (maxed) {
+                player.sendMessage(MM.parse("<red>You already have the maximum number of perks!"));
+                player.closeInventory();
+                return;
+            }
+            if (!canAfford) {
+                player.sendMessage(MM.parse("<red>Not enough gold! Need " + tier.getCost() + ", you have " + gold));
+                return;
+            }
+            openPerkOptions(player, tier, team);
+        });
+    }
+
+    private GuiItem repairItem(Player player) {
+        ItemStack item = new ItemStack(Material.ANVIL);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text("Repair Armor").color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+            meta.lore(List.of(
+                    Component.empty().decoration(TextDecoration.ITALIC, false)
+                            .append(Component.text("Cost: ").color(NamedTextColor.YELLOW))
+                            .append(Component.text("25 gold").color(NamedTextColor.GREEN)),
+                    Component.text("Fully repairs all armor pieces").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+            ));
+            item.setItemMeta(meta);
+        }
+        return new GuiItem(item, event -> {
+            UUID uuid = player.getUniqueId();
+            if (!economyManager.removeGold(uuid, 25)) {
+                player.sendMessage(MM.parse("<red>Not enough gold! Need 25, you have " + economyManager.getGold(uuid)));
+                return;
+            }
+            for (ItemStack armor : player.getInventory().getArmorContents()) {
+                if (armor != null && armor.getType() != Material.AIR) armor.setDurability((short) 0);
+            }
+            player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 1.0f, 1.0f);
+            player.sendMessage(MM.parse("<green>Armor repaired!"));
+            player.closeInventory();
+        });
+    }
+
+    private GuiItem statAnvilItem(Player player) {
+        UUID uuid = player.getUniqueId();
+        ItemStack item = new ItemStack(Material.DAMAGED_ANVIL);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text("Stat Anvil").color(NamedTextColor.LIGHT_PURPLE)
+                    .decorate(TextDecoration.BOLD).decoration(TextDecoration.ITALIC, false));
+            List<Component> lore = new ArrayList<>();
+            lore.add(Component.empty().decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text("Cost: ").color(NamedTextColor.YELLOW))
+                    .append(Component.text(StatAnvilManager.ANVIL_COST + " gold each").color(NamedTextColor.GREEN)));
+            lore.add(Component.text("Buy permanent stat boosts!").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            lore.add(Component.text("(Does not use perk slots)").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            List<Component> buffs = statAnvilManager.getBuffSummary(uuid);
+            if (!buffs.isEmpty()) {
+                lore.add(Component.empty());
+                lore.add(Component.text("Your buffs:").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+                lore.addAll(buffs);
+            }
+            meta.lore(lore);
+            item.setItemMeta(meta);
+        }
+        return new GuiItem(item, event -> {
+            player.closeInventory();
+            statAnvilManager.openAnvilGUI(player);
+        });
+    }
+
+    private GuiItem labelItem() {
+        ItemStack item = new ItemStack(Material.GREEN_STAINED_GLASS_PANE);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text("Your Active Perks").color(NamedTextColor.GREEN)
+                    .decorate(TextDecoration.BOLD).decoration(TextDecoration.ITALIC, false));
+            item.setItemMeta(meta);
+        }
+        return new GuiItem(item);
+    }
+
+    private ItemStack paneItem() {
+        ItemStack pane = new ItemStack(Material.GREEN_STAINED_GLASS_PANE);
+        ItemMeta meta = pane.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.empty().decoration(TextDecoration.ITALIC, false));
+            pane.setItemMeta(meta);
+        }
+        return pane;
+    }
+
+    private ItemStack ownedPerkItem(Perk perk, UUID playerUUID) {
+        ItemStack item = new ItemStack(perk.getIcon());
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text(perk.getDisplayName())
+                    .color(perk.getTier().getTextColor()).decoration(TextDecoration.ITALIC, false));
+            List<Component> lore = new ArrayList<>();
+            for (String line : perk.getDescription()) {
+                lore.add(Component.text(line).color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            }
+            lore.add(Component.empty());
+            lore.add(Component.text("--- Stats ---").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+            Map<String, String> labels = perk.getStatLabels();
+            Map<String, Double> stats = perk.getPlayerStats(playerUUID);
+            if (labels.isEmpty()) {
+                lore.add(Component.text("Active").color(NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+            } else {
+                for (Map.Entry<String, String> e : labels.entrySet()) {
+                    double v = stats.getOrDefault(e.getKey(), 0.0);
+                    String formatted = (v == Math.floor(v)) ? String.valueOf((int) v) : String.format("%.1f", v);
+                    lore.add(Component.empty().decoration(TextDecoration.ITALIC, false)
+                            .append(Component.text(e.getValue() + ": ").color(NamedTextColor.GRAY))
+                            .append(Component.text(formatted).color(NamedTextColor.WHITE)));
+                }
+            }
+            meta.lore(lore);
             item.setItemMeta(meta);
         }
         return item;
     }
 
-    private void openPerkOptions(Player player, PerkTier tier) {
+    private void openPerkOptions(Player player, PerkTier tier, PerkTeam team) {
         UUID uuid = player.getUniqueId();
-        ShopState state = shopStates.get(uuid);
-        if (state == null) return;
-
-        state.selectedTier = tier;
-        state.offeredPerks = perkManager.getRandomPerks(tier, state.playerTeam, 3, uuid);
-
-        if (state.offeredPerks.isEmpty()) {
-            player.sendMessage(ChatColor.RED + "No perks available in this tier!");
+        List<Perk> options = perkManager.getRandomPerks(tier, team, 3, uuid);
+        if (options.isEmpty()) {
+            player.sendMessage(MM.parse("<red>No perks available in this tier!"));
             player.closeInventory();
             return;
         }
 
-        Inventory inv = Bukkit.createInventory(null, 27, OPTION_GUI_TITLE);
+        Gui gui = Gui.gui()
+                .title(Component.text("Choose a Perk").color(NamedTextColor.GOLD))
+                .rows(3)
+                .disableAllInteractions()
+                .create();
 
-        // Place perk options at slots 11, 13, 15
         int[] slots = {11, 13, 15};
-        for (int i = 0; i < state.offeredPerks.size() && i < 3; i++) {
-            inv.setItem(slots[i], state.offeredPerks.get(i).createDisplayItem());
+        for (int i = 0; i < options.size() && i < 3; i++) {
+            Perk option = options.get(i);
+            gui.setItem(slots[i], new GuiItem(option.createDisplayItem(), event -> buyPerk(player, option, tier)));
         }
-
-        // Cancel button at slot 22
-        ItemStack cancel = new ItemStack(Material.BARRIER);
-        ItemMeta cancelMeta = cancel.getItemMeta();
-        if (cancelMeta != null) {
-            cancelMeta.setDisplayName(ChatColor.RED + "Cancel");
-            cancel.setItemMeta(cancelMeta);
-        }
-        inv.setItem(22, cancel);
-
-        player.openInventory(inv);
-    }
-
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-
-        String title = event.getView().getTitle();
-
-        if (title.equals(TIER_GUI_TITLE)) {
-            event.setCancelled(true);
-            handleTierClick(player, event.getSlot());
-        } else if (title.equals(OPTION_GUI_TITLE)) {
-            event.setCancelled(true);
-            handleOptionClick(player, event.getSlot());
-        }
-    }
-
-    private void handleTierClick(Player player, int slot) {
-        UUID uuid = player.getUniqueId();
-        int gold = economyManager.getGold(uuid);
-        int perkCount = perkManager.getPlayerPerkCount(uuid);
-
-        // Stat Anvil button
-        if (slot == 33) {
-            player.closeInventory();
-            statAnvilManager.openAnvilGUI(player);
-            return;
-        }
-
-        // Repair armor button
-        if (slot == 29) {
-            if (!economyManager.removeGold(uuid, 25)) {
-                player.sendMessage(ChatColor.RED + "Not enough gold! Need 25, you have " + gold);
-                return;
-            }
-            for (ItemStack armor : player.getInventory().getArmorContents()) {
-                if (armor != null && armor.getType() != Material.AIR) {
-                    armor.setDurability((short) 0);
-                }
-            }
-            player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 1.0f, 1.0f);
-            player.sendMessage(ChatColor.GREEN + "Armor repaired!");
-            player.closeInventory();
-            return;
-        }
-
-        if (perkCount >= perkManager.getMaxPerks()) {
-            player.sendMessage(ChatColor.RED + "You already have the maximum number of perks!");
-            player.closeInventory();
-            return;
-        }
-
-        PerkTier tier = switch (slot) {
-            case 11 -> PerkTier.SILVER;
-            case 13 -> PerkTier.GOLD;
-            case 15 -> PerkTier.PRISMATIC;
-            default -> null;
-        };
-
-        if (tier == null) return;
-
-        if (gold < tier.getCost()) {
-            player.sendMessage(ChatColor.RED + "Not enough gold! Need " + tier.getCost() + ", you have " + gold);
-            return;
-        }
-
-        openPerkOptions(player, tier);
-    }
-
-    private void handleOptionClick(Player player, int slot) {
-        UUID uuid = player.getUniqueId();
-        ShopState state = shopStates.get(uuid);
-        if (state == null) return;
 
         // Cancel button
-        if (slot == 22) {
+        ItemStack cancel = new ItemStack(Material.BARRIER);
+        ItemMeta cm = cancel.getItemMeta();
+        if (cm != null) {
+            cm.displayName(Component.text("Cancel").color(NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+            cancel.setItemMeta(cm);
+        }
+        gui.setItem(22, new GuiItem(cancel, event -> player.closeInventory()));
+
+        gui.open(player);
+    }
+
+    private void buyPerk(Player player, Perk perk, PerkTier tier) {
+        UUID uuid = player.getUniqueId();
+        if (!economyManager.removeGold(uuid, tier.getCost())) {
+            player.sendMessage(MM.parse("<red>Not enough gold!"));
             player.closeInventory();
-            shopStates.remove(uuid);
             return;
         }
-
-        int perkIndex = switch (slot) {
-            case 11 -> 0;
-            case 13 -> 1;
-            case 15 -> 2;
-            default -> -1;
-        };
-
-        if (perkIndex < 0 || perkIndex >= state.offeredPerks.size()) return;
-
-        Perk selectedPerk = state.offeredPerks.get(perkIndex);
-
-        // Verify player can still afford it
-        if (!economyManager.removeGold(uuid, state.selectedTier.getCost())) {
-            player.sendMessage(ChatColor.RED + "Not enough gold!");
-            player.closeInventory();
-            shopStates.remove(uuid);
-            return;
-        }
-
-        // Add perk
-        if (perkManager.addPerkToPlayer(uuid, selectedPerk, com.vampirez.api.event.PlayerPerkGainedEvent.Source.SHOP)) {
-            player.sendMessage(ChatColor.GREEN + "Perk acquired: " + selectedPerk.getTier().getColor() + selectedPerk.getDisplayName());
+        if (perkManager.addPerkToPlayer(uuid, perk, com.vampirez.api.event.PlayerPerkGainedEvent.Source.SHOP)) {
+            player.sendMessage(Component.empty()
+                    .append(MM.parse("<green>Perk acquired: "))
+                    .append(Component.text(perk.getDisplayName()).color(perk.getTier().getTextColor())));
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
         } else {
-            // Refund if can't add (shouldn't happen but safety)
-            economyManager.addGold(uuid, state.selectedTier.getCost());
-            player.sendMessage(ChatColor.RED + "Could not add perk!");
+            economyManager.addGold(uuid, tier.getCost()); // refund
+            player.sendMessage(MM.parse("<red>Could not add perk!"));
         }
-
         player.closeInventory();
-        shopStates.remove(uuid);
     }
 }

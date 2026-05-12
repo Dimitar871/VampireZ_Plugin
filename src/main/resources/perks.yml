@@ -261,7 +261,7 @@ fire_aspect:
   name: "Fire Aspect"
   tier: SILVER
   team: HUMAN
-  icon: FLINT_AND_STEEL
+  icon: BLAZE_POWDER
   description:
     - "Sword gets Fire Aspect I"
   hooks:
@@ -278,7 +278,7 @@ flame_arrows:
   name: "Flame Arrows"
   tier: SILVER
   team: BOTH
-  icon: BOW
+  icon: SPECTRAL_ARROW
   description:
     - "Bow gets Flame I"
   hooks:

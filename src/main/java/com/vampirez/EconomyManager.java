@@ -1,9 +1,8 @@
 package com.vampirez;
 
+import com.vampirez.config.PluginConfig;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
@@ -12,7 +11,7 @@ import java.util.UUID;
 
 public class EconomyManager {
 
-    private final JavaPlugin plugin;
+    private final VampireZPlugin plugin;
     private final Map<UUID, Integer> gold = new HashMap<>();
     private final Map<UUID, Map<UUID, Long>> recentDamage = new HashMap<>(); // victim -> (attacker -> timestamp)
     private BukkitTask incomeTask;
@@ -23,7 +22,7 @@ public class EconomyManager {
     private int assistReward;
     private long assistTimeWindowMs;
 
-    public EconomyManager(JavaPlugin plugin) {
+    public EconomyManager(VampireZPlugin plugin) {
         this.plugin = plugin;
         loadConfig();
     }
@@ -31,11 +30,12 @@ public class EconomyManager {
     public void reloadConfig() { loadConfig(); }
 
     private void loadConfig() {
-        passiveIncomeAmount = plugin.getConfig().getInt("economy.passive-income-amount", 2);
-        passiveIncomeIntervalTicks = plugin.getConfig().getInt("economy.passive-income-interval-ticks", 200);
-        killReward = plugin.getConfig().getInt("economy.kill-reward", 15);
-        assistReward = plugin.getConfig().getInt("economy.assist-reward", 5);
-        assistTimeWindowMs = plugin.getConfig().getLong("economy.assist-time-window-ms", 10000);
+        PluginConfig.EconomySection cfg = plugin.getPluginConfig().economy;
+        passiveIncomeAmount = cfg.passiveIncomeAmount;
+        passiveIncomeIntervalTicks = cfg.passiveIncomeIntervalTicks;
+        killReward = cfg.killReward;
+        assistReward = cfg.assistReward;
+        assistTimeWindowMs = cfg.assistTimeWindowMs;
     }
 
     public void startPassiveIncome(GameManager gameManager) {
@@ -62,7 +62,7 @@ public class EconomyManager {
         addGold(killer, killReward);
         Player killerPlayer = Bukkit.getPlayer(killer);
         if (killerPlayer != null) {
-            killerPlayer.sendMessage(ChatColor.GOLD + "+" + killReward + " gold " + ChatColor.GRAY + "(kill)");
+            killerPlayer.sendMessage(MM.parse("<gold>+" + killReward + " gold <gray>(kill)"));
         }
 
         // Award assists
@@ -75,7 +75,7 @@ public class EconomyManager {
                     addGold(assisterId, assistReward);
                     Player assister = Bukkit.getPlayer(assisterId);
                     if (assister != null) {
-                        assister.sendMessage(ChatColor.GOLD + "+" + assistReward + " gold " + ChatColor.GRAY + "(assist)");
+                        assister.sendMessage(MM.parse("<gold>+" + assistReward + " gold <gray>(assist)"));
                     }
                 }
             }

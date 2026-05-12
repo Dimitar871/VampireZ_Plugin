@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -52,7 +52,7 @@ public class GoreDrinkerPerk extends Perk {
         long effectiveCd = getEffectiveCooldown(player, COOLDOWN_MS);
         if (last != null && (now - last) < effectiveCd) {
             long remaining = (effectiveCd - (now - last)) / 1000 + 1;
-            player.sendMessage(ChatColor.RED + "Gore Drinker on cooldown! " + remaining + "s");
+            player.sendMessage(MM.parse("<red>Gore Drinker on cooldown! " + remaining + "s"));
             return;
         }
         cooldowns.put(uuid, now);
@@ -86,7 +86,7 @@ public class GoreDrinkerPerk extends Perk {
         incrementStat(uuid, "activations");
         addStat(uuid, "hits", hits);
         addStat(uuid, "healing", hits * HEAL_PER_HIT);
-        player.sendMessage(ChatColor.DARK_RED + "Gore Drinker! Hit " + hits + " enemies, healed " + String.format("%.1f", hits * HEAL_PER_HIT / 2.0) + " hearts!");
+        player.sendMessage(MM.parse("<dark_red>Gore Drinker! Hit " + hits + " enemies, healed " + String.format("%.1f", hits * HEAL_PER_HIT / 2.0) + " hearts!"));
     }
 
     @Override

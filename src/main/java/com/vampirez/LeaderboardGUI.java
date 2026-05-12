@@ -1,27 +1,29 @@
 package com.vampirez;
 
+import dev.triumphteam.gui.guis.Gui;
+import dev.triumphteam.gui.guis.GuiItem;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-public class LeaderboardGUI implements Listener {
+/**
+ * Leaderboard browser with three sort modes (kills / wins / win-rate). Built on triumph-gui.
+ * Per-player sort preference is remembered between opens via {@link #playerModes}.
+ */
+public class LeaderboardGUI {
 
     private enum SortMode { KILLS, WINS, WIN_RATE }
-
-    private static final String TITLE_KILLS    = ChatColor.DARK_RED + "★ " + ChatColor.GOLD + "Leaderboard — Kills";
-    private static final String TITLE_WINS     = ChatColor.DARK_RED + "★ " + ChatColor.GOLD + "Leaderboard — Wins";
-    private static final String TITLE_WIN_RATE = ChatColor.DARK_RED + "★ " + ChatColor.GOLD + "Leaderboard — Win Rate";
-    private static final Set<String> ALL_TITLES = Set.of(TITLE_KILLS, TITLE_WINS, TITLE_WIN_RATE);
 
     private final PlayerStatsManager statsManager;
     private final Map<UUID, SortMode> playerModes = new HashMap<>();
@@ -37,13 +39,14 @@ public class LeaderboardGUI implements Listener {
     private void openWith(Player player, SortMode mode) {
         playerModes.put(player.getUniqueId(), mode);
 
-        String title = switch (mode) {
-            case KILLS    -> TITLE_KILLS;
-            case WINS     -> TITLE_WINS;
-            case WIN_RATE -> TITLE_WIN_RATE;
-        };
+        Component title = Component.text("★ ").color(NamedTextColor.DARK_RED)
+                .append(Component.text("Leaderboard — " + label(mode)).color(NamedTextColor.GOLD));
 
-        Inventory inv = Bukkit.createInventory(null, 54, title);
+        Gui gui = Gui.gui()
+                .title(title)
+                .rows(6)
+                .disableAllInteractions()
+                .create();
 
         List<Map.Entry<UUID, PlayerStatsManager.PlayerStats>> entries = switch (mode) {
             case KILLS    -> statsManager.getTopByKills(45);
@@ -55,79 +58,96 @@ public class LeaderboardGUI implements Listener {
             UUID uuid = entries.get(i).getKey();
             PlayerStatsManager.PlayerStats s = entries.get(i).getValue();
             String name = s.name != null ? s.name : uuid.toString().substring(0, 8) + "…";
-
-            ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
-            SkullMeta meta = (SkullMeta) skull.getItemMeta();
-            if (meta != null) {
-                meta.setOwningPlayer(Bukkit.getOfflinePlayer(uuid));
-                meta.setDisplayName(ChatColor.GOLD + "#" + (i + 1) + "  " + ChatColor.WHITE + name);
-                int played = s.getGamesPlayed();
-                String rateStr = played == 0 ? "N/A" : String.format("%.1f%%", s.getWinRate() * 100);
-                meta.setLore(Arrays.asList(
-                        ChatColor.DARK_GRAY + "─────────────────",
-                        ChatColor.YELLOW + "Kills:    " + ChatColor.WHITE + s.kills,
-                        ChatColor.YELLOW + "Wins:     " + ChatColor.WHITE + s.wins,
-                        ChatColor.YELLOW + "Losses:   " + ChatColor.WHITE + s.losses,
-                        ChatColor.YELLOW + "Win Rate: " + ChatColor.WHITE + rateStr
-                ));
-                skull.setItemMeta(meta);
-            }
-            inv.setItem(i, skull);
+            gui.setItem(i, new GuiItem(skullFor(uuid, name, i + 1, s)));
         }
 
         if (entries.isEmpty()) {
-            ItemStack none = new ItemStack(Material.BARRIER);
-            ItemMeta m = none.getItemMeta();
-            if (m != null) {
-                m.setDisplayName(ChatColor.RED + "No data yet");
-                m.setLore(Collections.singletonList(ChatColor.GRAY + "Stats are recorded when games end."));
-                none.setItemMeta(m);
-            }
-            inv.setItem(22, none);
+            gui.setItem(22, new GuiItem(emptyMarker()));
         }
 
         // Bottom row
         ItemStack filler = fillerPane();
-        for (int slot = 45; slot < 54; slot++) inv.setItem(slot, filler);
+        for (int slot = 45; slot < 54; slot++) gui.setItem(slot, new GuiItem(filler));
+        gui.setItem(46, sortButton(Material.IRON_SWORD,      "Kills",    mode == SortMode.KILLS,    () -> openWith(player, SortMode.KILLS)));
+        gui.setItem(49, sortButton(Material.TOTEM_OF_UNDYING, "Wins",     mode == SortMode.WINS,     () -> openWith(player, SortMode.WINS)));
+        gui.setItem(52, sortButton(Material.NETHER_STAR,      "Win Rate", mode == SortMode.WIN_RATE, () -> openWith(player, SortMode.WIN_RATE)));
 
-        inv.setItem(46, sortButton(Material.IRON_SWORD,      ChatColor.YELLOW + "Kills",    mode == SortMode.KILLS));
-        inv.setItem(49, sortButton(Material.TOTEM_OF_UNDYING, ChatColor.YELLOW + "Wins",     mode == SortMode.WINS));
-        inv.setItem(52, sortButton(Material.NETHER_STAR,      ChatColor.YELLOW + "Win Rate", mode == SortMode.WIN_RATE));
-
-        player.openInventory(inv);
+        gui.open(player);
     }
 
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!ALL_TITLES.contains(event.getView().getTitle())) return;
-        event.setCancelled(true);
-        int slot = event.getRawSlot();
-        if (slot == 46) openWith(player, SortMode.KILLS);
-        else if (slot == 49) openWith(player, SortMode.WINS);
-        else if (slot == 52) openWith(player, SortMode.WIN_RATE);
+    private static String label(SortMode mode) {
+        return switch (mode) {
+            case KILLS -> "Kills";
+            case WINS -> "Wins";
+            case WIN_RATE -> "Win Rate";
+        };
     }
 
-    private ItemStack sortButton(Material mat, String label, boolean active) {
+    private ItemStack skullFor(UUID uuid, String name, int rank, PlayerStatsManager.PlayerStats s) {
+        ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
+        SkullMeta meta = (SkullMeta) skull.getItemMeta();
+        if (meta != null) {
+            meta.setOwningPlayer(Bukkit.getOfflinePlayer(uuid));
+            meta.displayName(Component.empty().decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text("#" + rank + "  ").color(NamedTextColor.GOLD))
+                    .append(Component.text(name).color(NamedTextColor.WHITE)));
+            int played = s.getGamesPlayed();
+            String rateStr = played == 0 ? "N/A" : String.format("%.1f%%", s.getWinRate() * 100);
+            meta.lore(List.of(
+                    Component.text("─────────────────").color(NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false),
+                    stat("Kills:    ", String.valueOf(s.kills)),
+                    stat("Wins:     ", String.valueOf(s.wins)),
+                    stat("Losses:   ", String.valueOf(s.losses)),
+                    stat("Win Rate: ", rateStr)
+            ));
+            skull.setItemMeta(meta);
+        }
+        return skull;
+    }
+
+    private ItemStack emptyMarker() {
+        ItemStack item = new ItemStack(Material.BARRIER);
+        ItemMeta m = item.getItemMeta();
+        if (m != null) {
+            m.displayName(Component.text("No data yet").color(NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+            m.lore(List.of(Component.text("Stats are recorded when games end.").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
+            item.setItemMeta(m);
+        }
+        return item;
+    }
+
+    private GuiItem sortButton(Material mat, String label, boolean active, Runnable onClick) {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.GOLD + "Sort: " + label);
-            meta.setLore(Collections.singletonList(
-                    active ? ChatColor.GREEN + "▶ Currently selected" : ChatColor.GRAY + "Click to sort"));
+            meta.displayName(Component.empty().decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text("Sort: ").color(NamedTextColor.GOLD))
+                    .append(Component.text(label).color(NamedTextColor.YELLOW)));
+            meta.lore(List.of(active
+                    ? Component.text("▶ Currently selected").color(NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false)
+                    : Component.text("Click to sort").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
             if (active) {
                 meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
                 meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
             }
             item.setItemMeta(meta);
         }
-        return item;
+        return new GuiItem(item, event -> onClick.run());
     }
 
     private ItemStack fillerPane() {
         ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta meta = pane.getItemMeta();
-        if (meta != null) { meta.setDisplayName(" "); pane.setItemMeta(meta); }
+        if (meta != null) {
+            meta.displayName(Component.empty().decoration(TextDecoration.ITALIC, false));
+            pane.setItemMeta(meta);
+        }
         return pane;
+    }
+
+    private static Component stat(String label, String value) {
+        return Component.empty().decoration(TextDecoration.ITALIC, false)
+                .append(Component.text(label).color(NamedTextColor.YELLOW))
+                .append(Component.text(value).color(NamedTextColor.WHITE));
     }
 }

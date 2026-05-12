@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -40,8 +43,8 @@ public class CitadelPerk extends Perk {
         ItemStack item = new ItemStack(Material.NETHER_STAR);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.LIGHT_PURPLE + "Citadel" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Create a protective zone", ChatColor.YELLOW + "Cooldown: 60s"));
+            meta.displayName(Component.text("Citadel (Right-Click)").color(NamedTextColor.LIGHT_PURPLE).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Create a protective zone").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 60s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -73,7 +76,7 @@ public class CitadelPerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Citadel on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Citadel on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
         cooldowns.put(uuid, now);
@@ -85,7 +88,7 @@ public class CitadelPerk extends Perk {
         player.getWorld().playSound(loc, Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.0f);
         player.getWorld().spawnParticle(Particle.END_ROD, loc.clone().add(0, 1, 0), 60, 2, 0.5, 2, 0.05);
         incrementStat(uuid, "activations");
-        player.sendMessage(ChatColor.LIGHT_PURPLE + "Citadel activated!");
+        player.sendMessage(MM.parse("<light_purple>Citadel activated!"));
     }
 
     @Override

@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.Particle;
@@ -59,7 +59,7 @@ public class BlackCleaverPerk extends Perk {
         incrementStat(attacker.getUniqueId(), "stacks_applied");
 
         if (stacks[0] == MAX_STACKS) {
-            target.sendMessage(ChatColor.DARK_RED + "Black Cleaver! Your armor is fully shredded (25%)!");
+            target.sendMessage(MM.parse("<dark_red>Black Cleaver! Your armor is fully shredded (25%)!"));
         }
     }
 

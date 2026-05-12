@@ -5,7 +5,7 @@ import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.VampireZPlugin;
 import com.vampirez.GameManager;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
@@ -62,7 +62,7 @@ public class ScalingPerk extends Perk {
             reachedTier1.add(uuid);
             applyProtectionLevel(player, 1);
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
-            player.sendMessage(ChatColor.GREEN + "Scaling" + ChatColor.GRAY + " upgraded! Armor gained " + ChatColor.WHITE + "Protection I");
+            player.sendMessage(MM.parse("<green>Scaling <gray>upgraded! Armor gained <white>Protection I"));
             incrementStat(uuid, "upgrades");
         }
 
@@ -71,7 +71,7 @@ public class ScalingPerk extends Perk {
             reachedTier2.add(uuid);
             applyProtectionLevel(player, 3);
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
-            player.sendMessage(ChatColor.GREEN + "Scaling" + ChatColor.GRAY + " upgraded! Armor gained " + ChatColor.WHITE + "Protection III");
+            player.sendMessage(MM.parse("<green>Scaling <gray>upgraded! Armor gained <white>Protection III"));
             incrementStat(uuid, "upgrades");
         }
 
@@ -82,7 +82,7 @@ public class ScalingPerk extends Perk {
             player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(currentMax * 2);
             player.setHealth(Math.min(player.getHealth() + currentMax, currentMax * 2));
             player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 0.6f, 1.5f);
-            player.sendMessage(ChatColor.GREEN + "Scaling" + ChatColor.GRAY + " upgraded! " + ChatColor.RED + "Max hearts doubled!");
+            player.sendMessage(MM.parse("<green>Scaling <gray>upgraded! <red>Max hearts doubled!"));
             incrementStat(uuid, "upgrades");
         }
     }

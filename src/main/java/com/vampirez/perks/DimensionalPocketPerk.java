@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -40,10 +43,10 @@ public class DimensionalPocketPerk extends Perk {
         ItemStack eye = new ItemStack(Material.ENDER_EYE);
         ItemMeta meta = eye.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_PURPLE + "Dimensional Pocket" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Store your HP, then swap back",
-                    ChatColor.YELLOW + "Cooldown: 45s"
+            meta.displayName(Component.text("Dimensional Pocket (Right-Click)").color(NamedTextColor.DARK_PURPLE).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(
+                    Component.text("Store your HP, then swap back").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("Cooldown: 45s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)
             ));
             eye.setItemMeta(meta);
         }
@@ -79,7 +82,7 @@ public class DimensionalPocketPerk extends Perk {
         Long lastUse = cooldowns.get(uuid);
         if (lastUse != null && (now - lastUse) < getEffectiveCooldown(player, COOLDOWN_MS)) {
             long remaining = (getEffectiveCooldown(player, COOLDOWN_MS) - (now - lastUse)) / 1000 + 1;
-            player.sendMessage(ChatColor.RED + "Dimensional Pocket on cooldown! " + remaining + "s");
+            player.sendMessage(MM.parse("<red>Dimensional Pocket on cooldown! " + remaining + "s"));
             return;
         }
 
@@ -93,7 +96,7 @@ public class DimensionalPocketPerk extends Perk {
             storeTime.put(uuid, now);
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.5f);
             player.getWorld().spawnParticle(Particle.PORTAL, player.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.5);
-            player.sendMessage(ChatColor.DARK_PURPLE + "HP stored! (" + String.format("%.1f", currentHP / 2) + " hearts) Click again within 30s to swap.");
+            player.sendMessage(MM.parse("<dark_purple>HP stored! (" + String.format("%.1f", currentHP / 2) + " hearts) Click again within 30s to swap."));
         } else if (storedTime != null && (now - storedTime) <= STORE_DURATION_MS) {
             // Swap HP
             double currentHP = player.getHealth();
@@ -108,20 +111,20 @@ public class DimensionalPocketPerk extends Perk {
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.8f);
             player.getWorld().spawnParticle(Particle.PORTAL, player.getLocation().add(0, 1, 0), 50, 0.5, 1, 0.5, 0.5);
             player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0.05);
-            player.sendMessage(ChatColor.DARK_PURPLE + "HP swapped! " + String.format("%.1f", currentHP / 2) + " -> " + String.format("%.1f", swapHP / 2) + " hearts.");
+            player.sendMessage(MM.parse("<dark_purple>HP swapped! " + String.format("%.1f", currentHP / 2) + " -> " + String.format("%.1f", swapHP / 2) + " hearts."));
             incrementStat(uuid, "swaps");
         } else {
             // Expired
             storedHP.remove(uuid);
             storeTime.remove(uuid);
-            player.sendMessage(ChatColor.RED + "Stored HP expired! Storing new HP...");
+            player.sendMessage(MM.parse("<red>Stored HP expired! Storing new HP..."));
             // Store fresh
             double currentHP = player.getHealth();
             storedHP.put(uuid, currentHP);
             storeTime.put(uuid, now);
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.5f);
             player.getWorld().spawnParticle(Particle.PORTAL, player.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.5);
-            player.sendMessage(ChatColor.DARK_PURPLE + "HP stored! (" + String.format("%.1f", currentHP / 2) + " hearts) Click again within 30s to swap.");
+            player.sendMessage(MM.parse("<dark_purple>HP stored! (" + String.format("%.1f", currentHP / 2) + " hearts) Click again within 30s to swap."));
         }
     }
 

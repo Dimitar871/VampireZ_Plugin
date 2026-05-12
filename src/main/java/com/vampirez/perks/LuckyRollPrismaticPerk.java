@@ -2,7 +2,8 @@ package com.vampirez.perks;
 
 import com.vampirez.*;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -13,10 +14,10 @@ import java.util.List;
 public class LuckyRollPrismaticPerk extends Perk {
 
     public LuckyRollPrismaticPerk() {
-        super("lucky_roll_prismatic", "Lucky Roll", PerkTier.PRISMATIC, PerkTeam.BOTH,
+        super("lucky_roll_prismatic", "Lucky Roll (Prismatic)", PerkTier.PRISMATIC, PerkTeam.BOTH,
                 Material.SUNFLOWER,
                 "Replaces itself with",
-                ChatColor.LIGHT_PURPLE + "2 random Prismatic" + ChatColor.GRAY + " perks!");
+                "2 random Prismatic perks!");
     }
 
     @Override
@@ -31,7 +32,7 @@ public class LuckyRollPrismaticPerk extends Perk {
 
             List<Perk> options = pm.getRandomPerks(PerkTier.PRISMATIC, playerTeam, 2, uuid);
             if (options.isEmpty()) {
-                player.sendMessage(ChatColor.RED + "No Prismatic perks available! Lucky Roll refunded.");
+                player.sendMessage(MM.parse("<red>No Prismatic perks available! Lucky Roll refunded."));
                 return;
             }
 
@@ -39,18 +40,18 @@ public class LuckyRollPrismaticPerk extends Perk {
             pm.removePerk(uuid, this);
 
             // Force-add both perks (bypasses max check since this is a special perk)
-            StringBuilder msg = new StringBuilder();
+            Component msgComponent = Component.empty();
             for (int i = 0; i < options.size(); i++) {
                 Perk perk = options.get(i);
                 pm.forceAddPerkToPlayer(uuid, perk);
-                if (i > 0) msg.append(ChatColor.GREEN + " + ");
-                msg.append(perk.getTier().getColor()).append(perk.getDisplayName());
+                if (i > 0) msgComponent = msgComponent.append(MM.parse("<green> + "));
+                msgComponent = msgComponent.append(net.kyori.adventure.text.Component.text(perk.getDisplayName()).color(perk.getTier().getTextColor()));
             }
 
             player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.2f);
             player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0, 1.5, 0), 30, 0.5, 0.5, 0.5, 0);
             player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 2, 0), 15, 0.3, 0.3, 0.3, 0.05);
-            player.sendMessage(ChatColor.GREEN + "Lucky Roll! " + ChatColor.LIGHT_PURPLE + "You received: " + msg);
+            player.sendMessage(MM.parse("<green>Lucky Roll! <light_purple>You received: ").append(msgComponent));
         }, 1L);
     }
 

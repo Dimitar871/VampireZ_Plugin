@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -35,8 +38,8 @@ public class TemporalShieldPerk extends Perk {
         ItemStack item = new ItemStack(Material.CLOCK);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.AQUA + "Temporal Shield" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Freeze nearby enemies", ChatColor.YELLOW + "Cooldown: 45s"));
+            meta.displayName(Component.text("Temporal Shield (Right-Click)").color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Freeze nearby enemies").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 45s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -65,7 +68,7 @@ public class TemporalShieldPerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Temporal Shield on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Temporal Shield on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
         cooldowns.put(uuid, now);
@@ -83,13 +86,13 @@ public class TemporalShieldPerk extends Perk {
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 254, false, true), true);
             target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 254, false, true), true);
             target.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 40, 200, false, true), true);
-            target.sendMessage(ChatColor.AQUA + "You've been frozen by Temporal Shield!");
+            target.sendMessage(MM.parse("<aqua>You've been frozen by Temporal Shield!"));
             frozen++;
         }
 
         incrementStat(uuid, "activations");
         addStat(uuid, "enemies_frozen", frozen);
-        player.sendMessage(ChatColor.AQUA + "Temporal Shield! Froze " + frozen + " enemies!");
+        player.sendMessage(MM.parse("<aqua>Temporal Shield! Froze " + frozen + " enemies!"));
     }
 
     @Override

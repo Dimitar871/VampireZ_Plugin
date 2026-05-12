@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -50,7 +50,7 @@ public class RipostePerk extends Perk {
             event.setDamage(event.getDamage() * 1.4);
             attacker.getWorld().spawnParticle(Particle.ENCHANTED_HIT, victim.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3, 0.1);
             attacker.playSound(attacker.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.5f);
-            attacker.sendMessage(ChatColor.WHITE + "Riposte! +40% damage!");
+            attacker.sendMessage(MM.parse("<white>Riposte! +40% damage!"));
             incrementStat(uuid, "ripostes");
         }
     }

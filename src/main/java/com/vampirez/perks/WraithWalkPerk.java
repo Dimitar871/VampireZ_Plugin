@@ -4,7 +4,10 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -41,8 +44,8 @@ public class WraithWalkPerk extends Perk {
         ItemStack item = new ItemStack(Material.ECHO_SHARD);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_GRAY + "Wraith Walk" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Ghost form for 4s", ChatColor.YELLOW + "Cooldown: 35s"));
+            meta.displayName(Component.text("Wraith Walk (Right-Click)").color(NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Ghost form for 4s").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 35s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -77,7 +80,7 @@ public class WraithWalkPerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Wraith Walk on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Wraith Walk on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
         cooldowns.put(uuid, now);
@@ -93,7 +96,7 @@ public class WraithWalkPerk extends Perk {
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 40, 0.5, 1, 0.5, 0,
                 new Particle.DustOptions(Color.GRAY, 1.5f));
         player.playSound(player.getLocation(), Sound.ENTITY_VEX_AMBIENT, 1.0f, 0.5f);
-        player.sendMessage(ChatColor.DARK_GRAY + "Wraith Walk! You become a ghost...");
+        player.sendMessage(MM.parse("<dark_gray>Wraith Walk! You become a ghost..."));
 
         incrementStat(uuid, "activations");
 
@@ -127,11 +130,11 @@ public class WraithWalkPerk extends Perk {
 
                 target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 0, false, true));
                 target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 0, false, true));
-                target.sendMessage(ChatColor.DARK_GRAY + "A wraith haunts you!");
+                target.sendMessage(MM.parse("<dark_gray>A wraith haunts you!"));
                 enemiesHit++;
             }
             addStat(uuid, "enemies_debuffed", enemiesHit);
-            p.sendMessage(ChatColor.DARK_GRAY + "Wraith Walk expires with a chilling blast!");
+            p.sendMessage(MM.parse("<dark_gray>Wraith Walk expires with a chilling blast!"));
         }, GHOST_DURATION_TICKS);
     }
 
@@ -146,7 +149,7 @@ public class WraithWalkPerk extends Perk {
     public void onDamageDealt(Player attacker, Entity victim, EntityDamageByEntityEvent event) {
         if (ghostPlayers.contains(attacker.getUniqueId())) {
             event.setCancelled(true);
-            attacker.sendMessage(ChatColor.GRAY + "You can't attack in ghost form!");
+            attacker.sendMessage(MM.parse("<gray>You can't attack in ghost form!"));
         }
     }
 

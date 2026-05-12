@@ -4,7 +4,10 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -50,7 +53,7 @@ public class NetherBladePerk extends Perk {
     private static final String[] REQ_TYPE = {"hits", "hits", "kills", "hits", "kills"};
     private static final int[] REQ_AMOUNT = {25, 75, 5, 150, 20};
 
-    private static final String SWORD_TAG = ChatColor.DARK_RED + "Nether Blade";
+    private static final String SWORD_TAG = "Nether Blade";
 
     public NetherBladePerk() {
         super("nether_blade", "Nether Blade", PerkTier.GOLD, PerkTeam.BOTH,
@@ -95,7 +98,7 @@ public class NetherBladePerk extends Perk {
         ItemStack sword = new ItemStack(Material.WOODEN_SWORD);
         ItemMeta meta = sword.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(SWORD_TAG + getTierSuffix(tier));
+            meta.displayName(getSwordDisplayName(tier));
             meta.setUnbreakable(true);
 
             // Add sharpness for visual glow (actual damage handled via onDamageDealt)
@@ -103,7 +106,7 @@ public class NetherBladePerk extends Perk {
                 meta.addEnchant(Enchantment.SHARPNESS, tier, true);
             }
 
-            meta.setLore(buildLore(tier, progress));
+            meta.lore(buildLore(tier, progress));
             sword.setItemMeta(meta);
         }
         player.getInventory().addItem(sword);
@@ -128,20 +131,25 @@ public class NetherBladePerk extends Perk {
             if (isNetherBlade(item)) {
                 ItemMeta meta = item.getItemMeta();
                 if (meta != null) {
-                    meta.setDisplayName(SWORD_TAG + getTierSuffix(tier));
+                    meta.displayName(getSwordDisplayName(tier));
                     if (tier > 0) {
                         meta.addEnchant(Enchantment.SHARPNESS, tier, true);
                     }
-                    meta.setLore(buildLore(tier, progress));
+                    meta.lore(buildLore(tier, progress));
                     item.setItemMeta(meta);
                 }
             }
         }
     }
 
-    private String getTierSuffix(int tier) {
-        if (tier == 0) return "";
-        return " " + ChatColor.GRAY + "[" + ChatColor.RED + tierToRoman(tier) + ChatColor.GRAY + "]";
+    private Component getSwordDisplayName(int tier) {
+        if (tier == 0) {
+            return Component.text(SWORD_TAG).color(NamedTextColor.DARK_RED).decoration(TextDecoration.ITALIC, false);
+        }
+        return Component.text(SWORD_TAG + " ").color(NamedTextColor.DARK_RED).decoration(TextDecoration.ITALIC, false)
+                .append(Component.text("[").color(NamedTextColor.GRAY))
+                .append(Component.text(tierToRoman(tier)).color(NamedTextColor.RED))
+                .append(Component.text("]").color(NamedTextColor.GRAY));
     }
 
     private String tierToRoman(int tier) {
@@ -155,35 +163,38 @@ public class NetherBladePerk extends Perk {
         };
     }
 
-    private List<String> buildLore(int tier, int progress) {
-        List<String> lore = new ArrayList<>();
-        lore.add("");
-        lore.add(ChatColor.DARK_RED + "Tier " + (tier) + "/5");
+    private List<Component> buildLore(int tier, int progress) {
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.add(Component.text("Tier " + tier + "/5").color(NamedTextColor.DARK_RED).decoration(TextDecoration.ITALIC, false));
 
         // Damage indicator
         int dmgPercent = (int) (DAMAGE_MULT[tier] * 100);
-        lore.add(ChatColor.GRAY + "Damage: " + ChatColor.WHITE + dmgPercent + "%");
+        lore.add(Component.text("Damage: ").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+                .append(Component.text(dmgPercent + "%").color(NamedTextColor.WHITE)));
 
-        lore.add("");
+        lore.add(Component.empty());
 
         if (tier >= 5) {
-            lore.add(ChatColor.GREEN + "\u2714 MAX TIER");
-            lore.add(ChatColor.AQUA + "Right-click: Nether Dash");
-            lore.add(ChatColor.GRAY + "Dash forward + heal 50% max HP");
-            lore.add(ChatColor.GRAY + "Cooldown: 30s");
+            lore.add(Component.text("\u2714 MAX TIER").color(NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+            lore.add(Component.text("Right-click: Nether Dash").color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+            lore.add(Component.text("Dash forward + heal 50% max HP").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            lore.add(Component.text("Cooldown: 30s").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         } else {
             // Show progress to next tier
             String reqType = REQ_TYPE[tier];
             int reqAmount = REQ_AMOUNT[tier];
             String label = reqType.equals("hits") ? "Hits" : "Kills";
-            ChatColor progressColor = progress >= reqAmount ? ChatColor.GREEN : ChatColor.YELLOW;
-            lore.add(ChatColor.GRAY + "Next tier: " + progressColor + progress + "/" + reqAmount + " " + label);
+            NamedTextColor progressColor = progress >= reqAmount ? NamedTextColor.GREEN : NamedTextColor.YELLOW;
+            lore.add(Component.text("Next tier: ").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text(progress + "/" + reqAmount + " " + label).color(progressColor)));
 
             // Preview next tier bonus
             int nextDmgPercent = (int) (DAMAGE_MULT[tier + 1] * 100);
-            lore.add(ChatColor.GRAY + "Next tier damage: " + ChatColor.WHITE + nextDmgPercent + "%");
+            lore.add(Component.text("Next tier damage: ").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text(nextDmgPercent + "%").color(NamedTextColor.WHITE)));
             if (tier == 4) {
-                lore.add(ChatColor.DARK_PURPLE + "Tier V unlocks Nether Dash!");
+                lore.add(Component.text("Tier V unlocks Nether Dash!").color(NamedTextColor.DARK_PURPLE).decoration(TextDecoration.ITALIC, false));
             }
         }
 
@@ -223,10 +234,7 @@ public class NetherBladePerk extends Perk {
             } else {
                 updateSwordInHand(attacker);
                 // Show progress in action bar
-                attacker.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                        new net.md_5.bungee.api.chat.TextComponent(
-                                ChatColor.DARK_RED + "Nether Blade: " + ChatColor.YELLOW +
-                                        progress + "/" + REQ_AMOUNT[tier] + " Hits"));
+                attacker.sendActionBar(MM.parse("<dark_red>Nether Blade: <yellow>" + progress + "/" + REQ_AMOUNT[tier] + " Hits"));
             }
         }
 
@@ -253,10 +261,7 @@ public class NetherBladePerk extends Perk {
             upgradeTier(killer);
         } else {
             updateSwordInHand(killer);
-            killer.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
-                    new net.md_5.bungee.api.chat.TextComponent(
-                            ChatColor.DARK_RED + "Nether Blade: " + ChatColor.YELLOW +
-                                    progress + "/" + REQ_AMOUNT[tier] + " Kills"));
+            killer.sendActionBar(MM.parse("<dark_red>Nether Blade: <yellow>" + progress + "/" + REQ_AMOUNT[tier] + " Kills"));
         }
 
         incrementStat(uuid, "kills");
@@ -277,13 +282,10 @@ public class NetherBladePerk extends Perk {
         player.getWorld().spawnParticle(Particle.LAVA, player.getLocation().add(0, 1.5, 0), 10, 0.3, 0.3, 0.3, 0);
 
         int dmgPercent = (int) (DAMAGE_MULT[newTier] * 100);
-        player.sendMessage(ChatColor.DARK_RED + "" + ChatColor.BOLD + "NETHER BLADE UPGRADED!" +
-                ChatColor.RESET + ChatColor.GOLD + " Tier " + tierToRoman(newTier) +
-                ChatColor.GRAY + " (" + dmgPercent + "% damage)");
+        player.sendMessage(MM.parse("<dark_red><bold>NETHER BLADE UPGRADED!</bold> <gold>Tier " + tierToRoman(newTier) + " <gray>(" + dmgPercent + "% damage)"));
 
         if (newTier == 5) {
-            player.sendMessage(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "NETHER DASH UNLOCKED! " +
-                    ChatColor.RESET + ChatColor.GRAY + "Right-click to dash + heal!");
+            player.sendMessage(MM.parse("<dark_purple><bold>NETHER DASH UNLOCKED! </bold><gray>Right-click to dash + heal!"));
             player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
         }
 
@@ -307,7 +309,7 @@ public class NetherBladePerk extends Perk {
         Long last = dashCooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, DASH_COOLDOWN_MS)) {
             long remaining = (getEffectiveCooldown(player, DASH_COOLDOWN_MS) - (now - last)) / 1000 + 1;
-            player.sendMessage(ChatColor.RED + "Nether Dash on cooldown! " + remaining + "s");
+            player.sendMessage(MM.parse("<red>Nether Dash on cooldown! " + remaining + "s"));
             return;
         }
         dashCooldowns.put(uuid, now);
@@ -343,8 +345,7 @@ public class NetherBladePerk extends Perk {
             }
         }.runTaskTimer(getPlugin(), 1L, 1L);
 
-        player.sendMessage(ChatColor.DARK_RED + "Nether Dash! " + ChatColor.GREEN + "Healed " +
-                String.format("%.1f", healAmount / 2.0) + " hearts!");
+        player.sendMessage(MM.parse("<dark_red>Nether Dash! <green>Healed " + String.format("%.1f", healAmount / 2.0) + " hearts!"));
         incrementStat(uuid, "dashes");
     }
 

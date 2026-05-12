@@ -7,6 +7,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +21,8 @@ import java.util.*;
  * States are persisted to disk (YAML files) so a server crash mid-game won't lose inventories.
  */
 public class PlayerStateManager {
+
+    private static final Logger log = LoggerFactory.getLogger(PlayerStateManager.class);
 
     private final JavaPlugin plugin;
     private final File dataFolder;
@@ -86,7 +90,7 @@ public class PlayerStateManager {
         try {
             cfg.save(file);
         } catch (IOException e) {
-            plugin.getLogger().severe("Failed to save player state for " + player.getName() + ": " + e.getMessage());
+            log.error("Failed to save player state for " + player.getName() + ": " + e.getMessage());
             return;
         }
 
@@ -105,7 +109,7 @@ public class PlayerStateManager {
         }
         player.setGameMode(GameMode.SURVIVAL);
 
-        plugin.getLogger().info("Saved state for " + player.getName());
+        log.info("Saved state for " + player.getName());
     }
 
     /**
@@ -116,7 +120,7 @@ public class PlayerStateManager {
         UUID uuid = player.getUniqueId();
         File file = new File(dataFolder, uuid + ".yml");
         if (!file.exists()) {
-            plugin.getLogger().warning("No saved state for " + player.getName() + " — nothing to restore.");
+            log.warn("No saved state for " + player.getName() + " — nothing to restore.");
             return;
         }
 
@@ -232,7 +236,7 @@ public class PlayerStateManager {
 
         // --- Step 3: Delete saved file (successful restore) ---
         file.delete();
-        plugin.getLogger().info("Restored state for " + player.getName());
+        log.info("Restored state for " + player.getName());
     }
 
     /**
@@ -251,7 +255,7 @@ public class PlayerStateManager {
         File file = new File(dataFolder, uuid + ".yml");
         if (file.exists()) {
             file.delete();
-            plugin.getLogger().info("Cleared saved state for " + uuid);
+            log.info("Cleared saved state for " + uuid);
         }
     }
 
@@ -266,7 +270,7 @@ public class PlayerStateManager {
                 file.delete();
             }
             if (files.length > 0) {
-                plugin.getLogger().info("Cleared " + files.length + " saved player state(s).");
+                log.info("Cleared " + files.length + " saved player state(s).");
             }
         }
     }

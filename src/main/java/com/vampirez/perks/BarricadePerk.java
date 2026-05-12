@@ -4,7 +4,10 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -35,8 +38,8 @@ public class BarricadePerk extends Perk {
         ItemStack item = new ItemStack(Material.SUGAR_CANE);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.AQUA + "Barricade" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Place a glass wall", ChatColor.YELLOW + "Cooldown: 25s"));
+            meta.displayName(Component.text("Barricade (Right-Click)").color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Place a glass wall").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 25s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -58,14 +61,14 @@ public class BarricadePerk extends Perk {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType() != Material.SUGAR_CANE || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Barricade")) return;
+        if (!item.getItemMeta().hasDisplayName() || !net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(item.getItemMeta().displayName()).contains("Barricade")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Barricade on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Barricade on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
         cooldowns.put(uuid, now);
@@ -89,7 +92,7 @@ public class BarricadePerk extends Perk {
         }
 
         player.playSound(player.getLocation(), Sound.BLOCK_GLASS_PLACE, 1.0f, 1.0f);
-        player.sendMessage(ChatColor.AQUA + "Barricade placed!");
+        player.sendMessage(MM.parse("<aqua>Barricade placed!"));
         incrementStat(uuid, "walls_placed");
 
         Bukkit.getScheduler().runTaskLater(getPlugin(), () -> {

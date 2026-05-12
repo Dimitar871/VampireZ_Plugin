@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -34,8 +37,8 @@ public class WhirlwindPerk extends Perk {
         ItemStack item = new ItemStack(Material.BLAZE_ROD);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.YELLOW + "Whirlwind" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "AoE damage sweep", ChatColor.YELLOW + "Cooldown: 12s"));
+            meta.displayName(Component.text("Whirlwind (Right-Click)").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("AoE damage sweep").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 12s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -64,7 +67,7 @@ public class WhirlwindPerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Whirlwind on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Whirlwind on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
         cooldowns.put(uuid, now);
@@ -97,7 +100,7 @@ public class WhirlwindPerk extends Perk {
 
         incrementStat(uuid, "activations");
         addStat(uuid, "hits", hits);
-        player.sendMessage(ChatColor.YELLOW + "Whirlwind! Hit " + hits + " enemies!");
+        player.sendMessage(MM.parse("<yellow>Whirlwind! Hit " + hits + " enemies!"));
     }
 
     @Override

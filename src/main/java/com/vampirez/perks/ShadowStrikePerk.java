@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -36,8 +39,8 @@ public class ShadowStrikePerk extends Perk {
         ItemStack item = new ItemStack(Material.CHORUS_FRUIT);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_PURPLE + "Shadow Strike" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Teleport behind nearest enemy", ChatColor.YELLOW + "Cooldown: 15s"));
+            meta.displayName(Component.text("Shadow Strike (Right-Click)").color(NamedTextColor.DARK_PURPLE).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Teleport behind nearest enemy").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 15s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -66,7 +69,7 @@ public class ShadowStrikePerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Shadow Strike on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Shadow Strike on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
 
@@ -84,7 +87,7 @@ public class ShadowStrikePerk extends Perk {
         }
 
         if (target == null) {
-            player.sendMessage(ChatColor.RED + "No enemies nearby!");
+            player.sendMessage(MM.parse("<red>No enemies nearby!"));
             return;
         }
 

@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -44,8 +44,8 @@ public class HeadhunterPerk extends Perk {
             event.setDamage(event.getDamage() * 2.0);
             target.getWorld().spawnParticle(Particle.CRIT, target.getLocation().add(0, 2, 0), 20, 0.3, 0.3, 0.3, 0.1);
             attacker.playSound(attacker.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1.0f, 2.0f);
-            attacker.sendMessage(ChatColor.RED + "HEADSHOT! 2x damage!");
-            target.sendMessage(ChatColor.RED + "You were headshot!");
+            attacker.sendMessage(MM.parse("<red>HEADSHOT! 2x damage!"));
+            target.sendMessage(MM.parse("<red>You were headshot!"));
             incrementStat(attacker.getUniqueId(), "headshots");
         }
     }

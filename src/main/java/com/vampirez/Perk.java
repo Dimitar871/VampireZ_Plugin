@@ -1,5 +1,8 @@
 package com.vampirez;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
@@ -128,16 +131,27 @@ public abstract class Perk {
         ItemStack item = new ItemStack(icon);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(tier.getColor() + displayName);
-            List<String> lore = new ArrayList<>();
-            lore.add("");
+            meta.displayName(Component.text(displayName)
+                    .color(tier.getTextColor())
+                    .decoration(TextDecoration.ITALIC, false));
+
+            List<Component> lore = new ArrayList<>();
+            lore.add(Component.empty());
             for (String line : description) {
-                lore.add(org.bukkit.ChatColor.GRAY + line);
+                lore.add(Component.text(line)
+                        .color(NamedTextColor.GRAY)
+                        .decoration(TextDecoration.ITALIC, false));
             }
-            lore.add("");
-            lore.add(org.bukkit.ChatColor.YELLOW + "Tier: " + tier.getColor() + tier.getDisplayName());
-            lore.add(org.bukkit.ChatColor.YELLOW + "Cost: " + org.bukkit.ChatColor.GREEN + tier.getCost() + " gold");
-            meta.setLore(lore);
+            lore.add(Component.empty());
+            lore.add(Component.empty()
+                    .decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text("Tier: ").color(NamedTextColor.YELLOW))
+                    .append(Component.text(tier.getDisplayName()).color(tier.getTextColor())));
+            lore.add(Component.empty()
+                    .decoration(TextDecoration.ITALIC, false)
+                    .append(Component.text("Cost: ").color(NamedTextColor.YELLOW))
+                    .append(Component.text(tier.getCost() + " gold").color(NamedTextColor.GREEN)));
+            meta.lore(lore);
             item.setItemMeta(meta);
         }
         return item;

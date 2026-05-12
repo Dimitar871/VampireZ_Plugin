@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -53,7 +53,7 @@ public class AnkhOfRebirthPerk extends Perk {
 
             player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, deathLoc.clone().add(0, 1, 0), 40, 0.5, 1, 0.5, 0.1);
             player.playSound(deathLoc, Sound.ITEM_TOTEM_USE, 0.8f, 1.2f);
-            player.sendMessage(ChatColor.LIGHT_PURPLE + "Ankh of Rebirth! Returned to your death location!");
+            player.sendMessage(MM.parse("<light_purple>Ankh of Rebirth! Returned to your death location!"));
             incrementStat(uuid, "rebirths");
         }
     }

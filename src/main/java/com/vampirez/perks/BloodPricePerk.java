@@ -4,7 +4,10 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -36,8 +39,8 @@ public class BloodPricePerk extends Perk {
         ItemStack item = new ItemStack(Material.WITHER_ROSE);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_RED + "Blood Price" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Sacrifice 3 hearts for power", ChatColor.YELLOW + "Cooldown: 20s"));
+            meta.displayName(Component.text("Blood Price (Right-Click)").color(NamedTextColor.DARK_RED).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Sacrifice 3 hearts for power").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 20s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -68,12 +71,12 @@ public class BloodPricePerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Blood Price on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Blood Price on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
 
         if (player.getHealth() <= 6.0) {
-            player.sendMessage(ChatColor.RED + "Not enough health to sacrifice!");
+            player.sendMessage(MM.parse("<red>Not enough health to sacrifice!"));
             return;
         }
 
@@ -84,13 +87,13 @@ public class BloodPricePerk extends Perk {
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0,
                 new Particle.DustOptions(org.bukkit.Color.RED, 1.5f));
         player.playSound(player.getLocation(), Sound.ENTITY_WITHER_HURT, 0.5f, 1.5f);
-        player.sendMessage(ChatColor.DARK_RED + "Blood Price! Next hit deals double damage!");
+        player.sendMessage(MM.parse("<dark_red>Blood Price! Next hit deals double damage!"));
 
         // Remove empowerment after 8s if not used
         Bukkit.getScheduler().runTaskLater(getPlugin(), () -> {
             if (empowered.remove(uuid)) {
                 Player p = Bukkit.getPlayer(uuid);
-                if (p != null) p.sendMessage(ChatColor.GRAY + "Blood Price expired.");
+                if (p != null) p.sendMessage(MM.parse("<gray>Blood Price expired."));
             }
         }, 160L);
     }
@@ -102,7 +105,7 @@ public class BloodPricePerk extends Perk {
             attacker.getWorld().spawnParticle(Particle.DUST, victim.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0,
                     new Particle.DustOptions(org.bukkit.Color.RED, 2.0f));
             attacker.playSound(attacker.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 0.8f);
-            attacker.sendMessage(ChatColor.DARK_RED + "Blood Price empowered hit!");
+            attacker.sendMessage(MM.parse("<dark_red>Blood Price empowered hit!"));
             incrementStat(attacker.getUniqueId(), "empowered_hits");
         }
     }

@@ -2,7 +2,8 @@ package com.vampirez.perks;
 
 import com.vampirez.*;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -13,10 +14,10 @@ import java.util.List;
 public class LuckyRollSilverPerk extends Perk {
 
     public LuckyRollSilverPerk() {
-        super("lucky_roll_silver", "Lucky Roll", PerkTier.SILVER, PerkTeam.BOTH,
+        super("lucky_roll_silver", "Lucky Roll (Silver)", PerkTier.SILVER, PerkTeam.BOTH,
                 Material.SUNFLOWER,
                 "Replaces itself with a random",
-                ChatColor.GOLD + "Gold" + ChatColor.GRAY + " tier perk!");
+                "Gold tier perk!");
     }
 
     @Override
@@ -34,7 +35,7 @@ public class LuckyRollSilverPerk extends Perk {
             // Get a random Gold perk
             List<Perk> options = pm.getRandomPerks(PerkTier.GOLD, playerTeam, 1, uuid);
             if (options.isEmpty()) {
-                player.sendMessage(ChatColor.RED + "No Gold perks available! Lucky Roll refunded.");
+                player.sendMessage(MM.parse("<red>No Gold perks available! Lucky Roll refunded."));
                 return;
             }
 
@@ -45,8 +46,8 @@ public class LuckyRollSilverPerk extends Perk {
             // Effects
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
             player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0, 1.5, 0), 20, 0.5, 0.5, 0.5, 0);
-            player.sendMessage(ChatColor.GREEN + "Lucky Roll! " + ChatColor.GOLD + "You received: " +
-                    options.get(0).getTier().getColor() + options.get(0).getDisplayName());
+            player.sendMessage(MM.parse("<green>Lucky Roll! <gold>You received: ").append(
+                    Component.text(options.get(0).getDisplayName()).color(options.get(0).getTier().getTextColor())));
         }, 1L);
     }
 

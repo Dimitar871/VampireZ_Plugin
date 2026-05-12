@@ -1,12 +1,12 @@
 package com.vampirez;
 
 import com.vampirez.api.VampireZAPI;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -24,16 +24,16 @@ public class GameCommands implements CommandExecutor, TabCompleter {
     private final PerkShopGUI perkShopGUI;
     private final PerkTestGUI perkTestGUI;
     private final VampireZAPI api;
-    private LeaderboardGUI leaderboardGUI;
+    private final LeaderboardGUI leaderboardGUI;
 
-    public GameCommands(GameManager gameManager, PerkShopGUI perkShopGUI, PerkTestGUI perkTestGUI, VampireZAPI api) {
+    public GameCommands(GameManager gameManager, PerkShopGUI perkShopGUI, PerkTestGUI perkTestGUI,
+                        VampireZAPI api, LeaderboardGUI leaderboardGUI) {
         this.gameManager = gameManager;
         this.perkShopGUI = perkShopGUI;
         this.perkTestGUI = perkTestGUI;
         this.api = api;
+        this.leaderboardGUI = leaderboardGUI;
     }
-
-    public void setLeaderboardGUI(LeaderboardGUI gui) { this.leaderboardGUI = gui; }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -78,44 +78,42 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             case "leaderboard", "lb" -> handleLeaderboard(player);
             case "disableperk" -> handleDisablePerk(player, args);
             case "enableperk" -> handleEnablePerk(player, args);
-            default -> {
-                player.sendMessage(ChatColor.RED + "Unknown subcommand. Use /vz help");
-            }
+            default -> player.sendMessage(MM.parse("<red>Unknown subcommand. Use /vz help"));
         }
         return true;
     }
 
-    private void sendHelp(Player player) {
-        player.sendMessage(ChatColor.DARK_RED + "=== VampireZ Commands ===");
-        player.sendMessage(ChatColor.GOLD + "/vz join" + ChatColor.GRAY + " - Join the VampireZ game");
-        player.sendMessage(ChatColor.GOLD + "/vz leave" + ChatColor.GRAY + " - Leave and restore inventory");
-        player.sendMessage(ChatColor.GOLD + "/vz shop" + ChatColor.GRAY + " - Open the perk shop");
-        player.sendMessage(ChatColor.GOLD + "/vz perks [player]" + ChatColor.GRAY + " - List your perks (admins: any player's perks)");
-        player.sendMessage(ChatColor.GOLD + "/vz gold" + ChatColor.GRAY + " - Show your gold");
-        player.sendMessage(ChatColor.GOLD + "/vz status" + ChatColor.GRAY + " - Show game status");
-        player.sendMessage(ChatColor.GOLD + "/vz leaderboard" + ChatColor.GRAY + " - Open the player leaderboard");
+    void sendHelp(Player player) {
+        player.sendMessage(MM.parse("<dark_red>=== VampireZ Commands ==="));
+        player.sendMessage(MM.parse("<gold>/vz join<gray> - Join the VampireZ game"));
+        player.sendMessage(MM.parse("<gold>/vz leave<gray> - Leave and restore inventory"));
+        player.sendMessage(MM.parse("<gold>/vz shop<gray> - Open the perk shop"));
+        player.sendMessage(MM.parse("<gold>/vz perks [player]<gray> - List your perks (admins: any player's perks)"));
+        player.sendMessage(MM.parse("<gold>/vz gold<gray> - Show your gold"));
+        player.sendMessage(MM.parse("<gold>/vz status<gray> - Show game status"));
+        player.sendMessage(MM.parse("<gold>/vz leaderboard<gray> - Open the player leaderboard"));
         if (player.hasPermission("vampirez.admin")) {
-            player.sendMessage(ChatColor.RED + "/vz start" + ChatColor.GRAY + " - Start the game");
-            player.sendMessage(ChatColor.RED + "/vz forcestart" + ChatColor.GRAY + " - Force start");
-            player.sendMessage(ChatColor.RED + "/vz stop" + ChatColor.GRAY + " - Stop the game");
-            player.sendMessage(ChatColor.RED + "/vz setlobby" + ChatColor.GRAY + " - Set lobby spawn");
-            player.sendMessage(ChatColor.RED + "/vz sethumanspawn" + ChatColor.GRAY + " - Set human spawn");
-            player.sendMessage(ChatColor.RED + "/vz setvampspawn" + ChatColor.GRAY + " - Set vampire spawn");
-            player.sendMessage(ChatColor.RED + "/vz announce" + ChatColor.GRAY + " - Announce event to server");
-            player.sendMessage(ChatColor.RED + "/vz test" + ChatColor.GRAY + " - Open perk test menu");
-            player.sendMessage(ChatColor.RED + "/vz tools" + ChatColor.GRAY + " - Get debug-dummy books");
-            player.sendMessage(ChatColor.RED + "/vz debugdmg" + ChatColor.GRAY + " - Toggle per-hit damage readout");
-            player.sendMessage(ChatColor.RED + "/vz reload" + ChatColor.GRAY + " - Reload config");
-            player.sendMessage(ChatColor.RED + "/vz giveperk <player> <perkId>" + ChatColor.GRAY + " - Grant a perk");
-            player.sendMessage(ChatColor.RED + "/vz removeperk <player> <perkId>" + ChatColor.GRAY + " - Remove a perk");
-            player.sendMessage(ChatColor.RED + "/vz forceconvert <player>" + ChatColor.GRAY + " - Force-convert a human");
-            player.sendMessage(ChatColor.RED + "/vz settime <seconds>" + ChatColor.GRAY + " - Override game timer");
-            player.sendMessage(ChatColor.RED + "/vz setphase day|night" + ChatColor.GRAY + " - Force day/night");
-            player.sendMessage(ChatColor.RED + "/vz setgold <player> <amount>" + ChatColor.GRAY + " - Set gold");
-            player.sendMessage(ChatColor.RED + "/vz addgold <player> <amount>" + ChatColor.GRAY + " - Add gold");
-            player.sendMessage(ChatColor.RED + "/vz apitest" + ChatColor.GRAY + " - Run API self-test");
-            player.sendMessage(ChatColor.RED + "/vz disableperk <perkId>" + ChatColor.GRAY + " - Disable a perk (saves to config)");
-            player.sendMessage(ChatColor.RED + "/vz enableperk <perkId>" + ChatColor.GRAY + " - Enable a disabled perk (saves to config)");
+            player.sendMessage(MM.parse("<red>/vz start<gray> - Start the game"));
+            player.sendMessage(MM.parse("<red>/vz forcestart<gray> - Force start"));
+            player.sendMessage(MM.parse("<red>/vz stop<gray> - Stop the game"));
+            player.sendMessage(MM.parse("<red>/vz setlobby<gray> - Set lobby spawn"));
+            player.sendMessage(MM.parse("<red>/vz sethumanspawn<gray> - Set human spawn"));
+            player.sendMessage(MM.parse("<red>/vz setvampspawn<gray> - Set vampire spawn"));
+            player.sendMessage(MM.parse("<red>/vz announce<gray> - Announce event to server"));
+            player.sendMessage(MM.parse("<red>/vz test<gray> - Open perk test menu"));
+            player.sendMessage(MM.parse("<red>/vz tools<gray> - Get debug-dummy books"));
+            player.sendMessage(MM.parse("<red>/vz debugdmg<gray> - Toggle per-hit damage readout"));
+            player.sendMessage(MM.parse("<red>/vz reload<gray> - Reload config"));
+            player.sendMessage(MM.parse("<red>/vz giveperk <player> <perkId><gray> - Grant a perk"));
+            player.sendMessage(MM.parse("<red>/vz removeperk <player> <perkId><gray> - Remove a perk"));
+            player.sendMessage(MM.parse("<red>/vz forceconvert <player><gray> - Force-convert a human"));
+            player.sendMessage(MM.parse("<red>/vz settime <seconds><gray> - Override game timer"));
+            player.sendMessage(MM.parse("<red>/vz setphase day|night<gray> - Force day/night"));
+            player.sendMessage(MM.parse("<red>/vz setgold <player> <amount><gray> - Set gold"));
+            player.sendMessage(MM.parse("<red>/vz addgold <player> <amount><gray> - Add gold"));
+            player.sendMessage(MM.parse("<red>/vz apitest<gray> - Run API self-test"));
+            player.sendMessage(MM.parse("<red>/vz disableperk <perkId><gray> - Disable a perk (saves to config)"));
+            player.sendMessage(MM.parse("<red>/vz enableperk <perkId><gray> - Enable a disabled perk (saves to config)"));
         }
     }
 
@@ -123,7 +121,7 @@ public class GameCommands implements CommandExecutor, TabCompleter {
 
     private boolean checkAdmin(Player player) {
         if (!player.hasPermission("vampirez.admin")) {
-            player.sendMessage(ChatColor.RED + "No permission!");
+            player.sendMessage(MM.parse("<red>No permission!"));
             return false;
         }
         return true;
@@ -132,116 +130,116 @@ public class GameCommands implements CommandExecutor, TabCompleter {
     private Player resolvePlayer(Player sender, String name) {
         Player target = Bukkit.getPlayerExact(name);
         if (target == null) {
-            sender.sendMessage(ChatColor.RED + "Player not found: " + name);
+            sender.sendMessage(MM.parse("<red>Player not found: " + name));
             return null;
         }
         return target;
     }
 
-    private void handleGivePerk(Player player, String[] args) {
+    void handleGivePerk(Player player, String[] args) {
         if (!checkAdmin(player)) return;
-        if (args.length < 3) { player.sendMessage(ChatColor.RED + "Usage: /vz giveperk <player> <perkId>"); return; }
+        if (args.length < 3) { player.sendMessage(MM.parse("<red>Usage: /vz giveperk <player> <perkId>")); return; }
         Player target = resolvePlayer(player, args[1]);
         if (target == null) return;
         String perkId = args[2];
         if (!api.getAvailablePerkIds().contains(perkId)) {
-            player.sendMessage(ChatColor.RED + "Unknown perk id: " + perkId);
+            player.sendMessage(MM.parse("<red>Unknown perk id: " + perkId));
             return;
         }
         boolean ok = api.givePerk(target.getUniqueId(), perkId);
         player.sendMessage(ok
-                ? ChatColor.GREEN + "Gave perk " + perkId + " to " + target.getName()
-                : ChatColor.RED + "Failed to give perk (max reached, cancelled, or unknown id)");
+                ? MM.parse("<green>Gave perk " + perkId + " to " + target.getName())
+                : MM.parse("<red>Failed to give perk (max reached, cancelled, or unknown id)"));
     }
 
-    private void handleRemovePerk(Player player, String[] args) {
+    void handleRemovePerk(Player player, String[] args) {
         if (!checkAdmin(player)) return;
-        if (args.length < 3) { player.sendMessage(ChatColor.RED + "Usage: /vz removeperk <player> <perkId>"); return; }
+        if (args.length < 3) { player.sendMessage(MM.parse("<red>Usage: /vz removeperk <player> <perkId>")); return; }
         Player target = resolvePlayer(player, args[1]);
         if (target == null) return;
         String perkId = args[2];
         boolean ok = api.removePerk(target.getUniqueId(), perkId);
         player.sendMessage(ok
-                ? ChatColor.GREEN + "Removed perk " + perkId + " from " + target.getName()
-                : ChatColor.RED + "Player did not have that perk");
+                ? MM.parse("<green>Removed perk " + perkId + " from " + target.getName())
+                : MM.parse("<red>Player did not have that perk"));
     }
 
-    private void handleForceConvert(Player player, String[] args) {
+    void handleForceConvert(Player player, String[] args) {
         if (!checkAdmin(player)) return;
-        if (args.length < 2) { player.sendMessage(ChatColor.RED + "Usage: /vz forceconvert <player>"); return; }
+        if (args.length < 2) { player.sendMessage(MM.parse("<red>Usage: /vz forceconvert <player>")); return; }
         Player target = resolvePlayer(player, args[1]);
         if (target == null) return;
         boolean ok = api.forceConvert(target.getUniqueId());
         player.sendMessage(ok
-                ? ChatColor.GREEN + "Converted " + target.getName() + " to vampire"
-                : ChatColor.RED + target.getName() + " is not a human");
+                ? MM.parse("<green>Converted " + target.getName() + " to vampire")
+                : MM.parse("<red>" + target.getName() + " is not a human"));
     }
 
-    private void handleSetTime(Player player, String[] args) {
+    void handleSetTime(Player player, String[] args) {
         if (!checkAdmin(player)) return;
-        if (args.length < 2) { player.sendMessage(ChatColor.RED + "Usage: /vz settime <seconds>"); return; }
-        if (api.getState() != GameState.ACTIVE) { player.sendMessage(ChatColor.RED + "Game is not active!"); return; }
+        if (args.length < 2) { player.sendMessage(MM.parse("<red>Usage: /vz settime <seconds>")); return; }
+        if (api.getState() != GameState.ACTIVE) { player.sendMessage(MM.parse("<red>Game is not active!")); return; }
         try {
             int seconds = Integer.parseInt(args[1]);
             api.setRemainingSeconds(seconds);
-            player.sendMessage(ChatColor.GREEN + "Game time set to " + api.getRemainingSeconds() + "s");
+            player.sendMessage(MM.parse("<green>Game time set to " + api.getRemainingSeconds() + "s"));
         } catch (NumberFormatException e) {
-            player.sendMessage(ChatColor.RED + "Not a number: " + args[1]);
+            player.sendMessage(MM.parse("<red>Not a number: " + args[1]));
         }
     }
 
-    private void handleSetPhase(Player player, String[] args) {
+    void handleSetPhase(Player player, String[] args) {
         if (!checkAdmin(player)) return;
-        if (args.length < 2) { player.sendMessage(ChatColor.RED + "Usage: /vz setphase day|night"); return; }
+        if (args.length < 2) { player.sendMessage(MM.parse("<red>Usage: /vz setphase day|night")); return; }
         switch (args[1].toLowerCase()) {
-            case "day" -> { api.forceDay(); player.sendMessage(ChatColor.GREEN + "Forced day phase"); }
-            case "night" -> { api.forceNight(); player.sendMessage(ChatColor.GREEN + "Forced night phase"); }
-            default -> player.sendMessage(ChatColor.RED + "Phase must be 'day' or 'night'");
+            case "day" -> { api.forceDay(); player.sendMessage(MM.parse("<green>Forced day phase")); }
+            case "night" -> { api.forceNight(); player.sendMessage(MM.parse("<green>Forced night phase")); }
+            default -> player.sendMessage(MM.parse("<red>Phase must be 'day' or 'night'"));
         }
     }
 
-    private void handleSetGold(Player player, String[] args) {
+    void handleSetGold(Player player, String[] args) {
         if (!checkAdmin(player)) return;
-        if (args.length < 3) { player.sendMessage(ChatColor.RED + "Usage: /vz setgold <player> <amount>"); return; }
+        if (args.length < 3) { player.sendMessage(MM.parse("<red>Usage: /vz setgold <player> <amount>")); return; }
         Player target = resolvePlayer(player, args[1]);
         if (target == null) return;
         try {
             int amount = Integer.parseInt(args[2]);
             api.setGold(target.getUniqueId(), amount);
-            player.sendMessage(ChatColor.GREEN + "Set " + target.getName() + "'s gold to " + api.getGold(target.getUniqueId()));
+            player.sendMessage(MM.parse("<green>Set " + target.getName() + "'s gold to " + api.getGold(target.getUniqueId())));
         } catch (NumberFormatException e) {
-            player.sendMessage(ChatColor.RED + "Not a number: " + args[2]);
+            player.sendMessage(MM.parse("<red>Not a number: " + args[2]));
         }
     }
 
-    private void handleAddGold(Player player, String[] args) {
+    void handleAddGold(Player player, String[] args) {
         if (!checkAdmin(player)) return;
-        if (args.length < 3) { player.sendMessage(ChatColor.RED + "Usage: /vz addgold <player> <amount>"); return; }
+        if (args.length < 3) { player.sendMessage(MM.parse("<red>Usage: /vz addgold <player> <amount>")); return; }
         Player target = resolvePlayer(player, args[1]);
         if (target == null) return;
         try {
             int amount = Integer.parseInt(args[2]);
             api.addGold(target.getUniqueId(), amount);
-            player.sendMessage(ChatColor.GREEN + "Added " + amount + " gold to " + target.getName() + " (total: " + api.getGold(target.getUniqueId()) + ")");
+            player.sendMessage(MM.parse("<green>Added " + amount + " gold to " + target.getName() + " (total: " + api.getGold(target.getUniqueId()) + ")"));
         } catch (NumberFormatException e) {
-            player.sendMessage(ChatColor.RED + "Not a number: " + args[2]);
+            player.sendMessage(MM.parse("<red>Not a number: " + args[2]));
         }
     }
 
-    private void handleApiTest(Player player) {
+    void handleApiTest(Player player) {
         if (!checkAdmin(player)) return;
-        player.sendMessage(ChatColor.GOLD + "=== VampireZAPI self-test ===");
+        player.sendMessage(MM.parse("<gold>=== VampireZAPI self-test ==="));
 
         Object reg = Bukkit.getServicesManager().getRegistration(VampireZAPI.class);
         boolean svcRegistered = reg != null;
-        player.sendMessage(ChatColor.GRAY + "ServicesManager registration: " + (svcRegistered ? ChatColor.GREEN + "OK" : ChatColor.RED + "MISSING"));
+        player.sendMessage(MM.parse("<gray>ServicesManager registration: " + (svcRegistered ? "<green>OK" : "<red>MISSING")));
 
         boolean staticOk = VampireZPlugin.getAPI() != null;
-        player.sendMessage(ChatColor.GRAY + "Static accessor: " + (staticOk ? ChatColor.GREEN + "OK" : ChatColor.RED + "NULL"));
+        player.sendMessage(MM.parse("<gray>Static accessor: " + (staticOk ? "<green>OK" : "<red>NULL")));
 
-        player.sendMessage(ChatColor.GRAY + "State: " + ChatColor.WHITE + api.getState());
-        player.sendMessage(ChatColor.GRAY + "Available perks: " + ChatColor.WHITE + api.getAvailablePerkIds().size());
-        player.sendMessage(ChatColor.GRAY + "Day/night enabled: " + ChatColor.WHITE + api.isDayNightEnabled() + ", isNight: " + api.isNight());
+        player.sendMessage(MM.parse("<gray>State: <white>" + api.getState()));
+        player.sendMessage(MM.parse("<gray>Available perks: <white>" + api.getAvailablePerkIds().size()));
+        player.sendMessage(MM.parse("<gray>Day/night enabled: <white>" + api.isDayNightEnabled() + ", isNight: " + api.isNight()));
 
         UUID uuid = player.getUniqueId();
         if (api.getState() == GameState.ACTIVE && api.isInGame(uuid)) {
@@ -249,13 +247,13 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             if (!hadDeft) {
                 boolean given = api.givePerk(uuid, "deft");
                 boolean nowHas = api.hasPerk(uuid, "deft");
-                player.sendMessage(ChatColor.GRAY + "givePerk(deft): " + (given && nowHas ? ChatColor.GREEN + "OK" : ChatColor.RED + "FAILED"));
+                player.sendMessage(MM.parse("<gray>givePerk(deft): " + (given && nowHas ? "<green>OK" : "<red>FAILED")));
                 if (given) api.removePerk(uuid, "deft");
             } else {
-                player.sendMessage(ChatColor.GRAY + "Skipped givePerk test (already have deft)");
+                player.sendMessage(MM.parse("<gray>Skipped givePerk test (already have deft)"));
             }
         } else {
-            player.sendMessage(ChatColor.GRAY + "Skipped givePerk test (game not active or sender not playing)");
+            player.sendMessage(MM.parse("<gray>Skipped givePerk test (game not active or sender not playing)"));
         }
 
         getLogger().info("[VampireZ] /vz apitest run by " + player.getName() + " — services=" + svcRegistered + " static=" + staticOk);
@@ -342,65 +340,65 @@ public class GameCommands implements CommandExecutor, TabCompleter {
         return out;
     }
 
-    private void handleStart(Player player, boolean force) {
+    void handleStart(Player player, boolean force) {
         if (!player.hasPermission("vampirez.admin")) {
-            player.sendMessage(ChatColor.RED + "No permission!");
+            player.sendMessage(MM.parse("<red>No permission!"));
             return;
         }
         if (gameManager.getState() != GameState.LOBBY) {
-            player.sendMessage(ChatColor.RED + "A game is already running!");
+            player.sendMessage(MM.parse("<red>A game is already running!"));
             return;
         }
         if (!gameManager.hasSpawnsSet()) {
-            player.sendMessage(ChatColor.RED + "Set human and vampire spawns first!");
+            player.sendMessage(MM.parse("<red>Set human and vampire spawns first!"));
             return;
         }
         if (!force && !gameManager.canStart()) {
-            player.sendMessage(ChatColor.RED + "Not enough players! Need " + gameManager.getMinPlayers() + ". Use /vz forcestart to override.");
+            player.sendMessage(MM.parse("<red>Not enough players! Need " + gameManager.getMinPlayers() + ". Use /vz forcestart to override."));
             return;
         }
         gameManager.startGame(force);
-        player.sendMessage(ChatColor.GREEN + "Game starting!");
+        player.sendMessage(MM.parse("<green>Game starting!"));
     }
 
-    private void handleStop(Player player) {
+    void handleStop(Player player) {
         if (!player.hasPermission("vampirez.admin")) {
-            player.sendMessage(ChatColor.RED + "No permission!");
+            player.sendMessage(MM.parse("<red>No permission!"));
             return;
         }
         if (gameManager.getState() == GameState.LOBBY) {
-            player.sendMessage(ChatColor.RED + "No game is running!");
+            player.sendMessage(MM.parse("<red>No game is running!"));
             return;
         }
         gameManager.stopGame();
-        player.sendMessage(ChatColor.GREEN + "Game stopped!");
+        player.sendMessage(MM.parse("<green>Game stopped!"));
     }
 
-    private void handleShop(Player player) {
+    void handleShop(Player player) {
         if (gameManager.getState() != GameState.ACTIVE) {
-            player.sendMessage(ChatColor.RED + "The shop is only available during an active game!");
+            player.sendMessage(MM.parse("<red>The shop is only available during an active game!"));
             return;
         }
         if (!gameManager.isInGame(player.getUniqueId())) {
-            player.sendMessage(ChatColor.RED + "You are not in the game!");
+            player.sendMessage(MM.parse("<red>You are not in the game!"));
             return;
         }
         PerkTeam team = gameManager.isHuman(player.getUniqueId()) ? PerkTeam.HUMAN : PerkTeam.VAMPIRE;
         perkShopGUI.openTierSelection(player, team);
     }
 
-    private void handlePerks(Player player, String[] args) {
+    void handlePerks(Player player, String[] args) {
         UUID targetUuid = player.getUniqueId();
         String headerName = "Your";
 
         if (args.length >= 2) {
             if (!player.hasPermission("vampirez.admin")) {
-                player.sendMessage(ChatColor.RED + "Only admins can check other players' perks.");
+                player.sendMessage(MM.parse("<red>Only admins can check other players' perks."));
                 return;
             }
             Player target = Bukkit.getPlayerExact(args[1]);
             if (target == null) {
-                player.sendMessage(ChatColor.RED + "Player not found: " + args[1]);
+                player.sendMessage(MM.parse("<red>Player not found: " + args[1]));
                 return;
             }
             targetUuid = target.getUniqueId();
@@ -409,116 +407,105 @@ public class GameCommands implements CommandExecutor, TabCompleter {
 
         List<Perk> perks = gameManager.getPerkManager().getPlayerPerks(targetUuid);
         if (perks.isEmpty()) {
-            player.sendMessage(ChatColor.GRAY + headerName + " has no active perks.");
+            player.sendMessage(MM.parse("<gray>" + headerName + " has no active perks."));
             return;
         }
-        player.sendMessage(ChatColor.GOLD + "=== " + headerName + " Perks ===");
+        player.sendMessage(MM.parse("<gold>=== " + headerName + " Perks ==="));
         for (Perk perk : perks) {
-            player.sendMessage(perk.getTier().getColor() + " - " + perk.getDisplayName()
-                    + ChatColor.GRAY + " (" + perk.getTier().getDisplayName() + ")");
+            player.sendMessage(Component.empty()
+                    .append(Component.text(" - " + perk.getDisplayName()).color(perk.getTier().getTextColor()))
+                    .append(Component.text(" (" + perk.getTier().getDisplayName() + ")").color(NamedTextColor.GRAY)));
         }
     }
 
-    private void handleGold(Player player) {
+    void handleGold(Player player) {
         int gold = gameManager.getEconomyManager().getGold(player.getUniqueId());
-        player.sendMessage(ChatColor.GOLD + "Gold: " + ChatColor.WHITE + gold);
+        player.sendMessage(MM.parse("<gold>Gold: <white>" + gold));
     }
 
-    private void handleStatus(Player player) {
+    void handleStatus(Player player) {
         GameState state = gameManager.getState();
-        player.sendMessage(ChatColor.DARK_RED + "=== VampireZ Status ===");
-        player.sendMessage(ChatColor.GRAY + "State: " + ChatColor.WHITE + state.name());
+        player.sendMessage(MM.parse("<dark_red>=== VampireZ Status ==="));
+        player.sendMessage(MM.parse("<gray>State: <white>" + state.name()));
 
         if (state == GameState.ACTIVE) {
             int mins = gameManager.getRemainingSeconds() / 60;
             int secs = gameManager.getRemainingSeconds() % 60;
-            player.sendMessage(ChatColor.GRAY + "Time Left: " + ChatColor.WHITE + String.format("%02d:%02d", mins, secs));
-            player.sendMessage(ChatColor.BLUE + "Humans: " + ChatColor.WHITE + gameManager.getHumanTeam().size());
-            player.sendMessage(ChatColor.RED + "Vampires: " + ChatColor.WHITE + gameManager.getVampireTeam().size());
+            player.sendMessage(MM.parse("<gray>Time Left: <white>" + String.format("%02d:%02d", mins, secs)));
+            player.sendMessage(MM.parse("<blue>Humans: <white>" + gameManager.getHumanTeam().size()));
+            player.sendMessage(MM.parse("<red>Vampires: <white>" + gameManager.getVampireTeam().size()));
 
             if (gameManager.isHuman(player.getUniqueId())) {
-                player.sendMessage(ChatColor.GRAY + "Team: " + ChatColor.BLUE + "Human");
+                player.sendMessage(MM.parse("<gray>Team: <blue>Human"));
             } else if (gameManager.isVampire(player.getUniqueId())) {
-                player.sendMessage(ChatColor.GRAY + "Team: " + ChatColor.RED + "Vampire");
+                player.sendMessage(MM.parse("<gray>Team: <red>Vampire"));
             } else {
-                player.sendMessage(ChatColor.GRAY + "Team: " + ChatColor.GRAY + "Spectator");
+                player.sendMessage(MM.parse("<gray>Team: Spectator"));
             }
         }
     }
 
-    private void handleSetSpawn(Player player, String type) {
+    void handleSetSpawn(Player player, String type) {
         if (!player.hasPermission("vampirez.admin")) {
-            player.sendMessage(ChatColor.RED + "No permission!");
+            player.sendMessage(MM.parse("<red>No permission!"));
             return;
         }
 
         switch (type) {
             case "lobby" -> {
                 gameManager.setLobbySpawn(player.getLocation());
-                player.sendMessage(ChatColor.GREEN + "Lobby spawn set!");
+                player.sendMessage(MM.parse("<green>Lobby spawn set!"));
             }
             case "human" -> {
                 gameManager.setHumanSpawn(player.getLocation());
-                player.sendMessage(ChatColor.GREEN + "Human spawn set!");
+                player.sendMessage(MM.parse("<green>Human spawn set!"));
             }
             case "vampire" -> {
                 gameManager.setVampireSpawn(player.getLocation());
-                player.sendMessage(ChatColor.GREEN + "Vampire spawn set!");
+                player.sendMessage(MM.parse("<green>Vampire spawn set!"));
             }
         }
     }
 
-    private void handleAnnounce(Player player) {
+    void handleAnnounce(Player player) {
         if (!player.hasPermission("vampirez.admin")) {
-            player.sendMessage(ChatColor.RED + "No permission!");
+            player.sendMessage(MM.parse("<red>No permission!"));
             return;
         }
         if (gameManager.getState() != GameState.LOBBY) {
-            player.sendMessage(ChatColor.RED + "Can only announce during lobby phase!");
+            player.sendMessage(MM.parse("<red>Can only announce during lobby phase!"));
             return;
         }
 
-        // Build clickable chat message
-        TextComponent separator = new TextComponent("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        separator.setColor(net.md_5.bungee.api.ChatColor.DARK_RED);
-
-        TextComponent header = new TextComponent("  VAMPIREZ EVENT STARTING!");
-        header.setColor(net.md_5.bungee.api.ChatColor.DARK_RED);
-        header.setBold(true);
-
-        TextComponent desc = new TextComponent("  Humans vs Vampires - Survive 25 minutes!");
-        desc.setColor(net.md_5.bungee.api.ChatColor.GOLD);
-
-        TextComponent joinButton = new TextComponent("  >>> CLICK HERE TO JOIN <<<");
-        joinButton.setColor(net.md_5.bungee.api.ChatColor.GREEN);
-        joinButton.setBold(true);
-        joinButton.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/vampirez join"));
-        joinButton.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                new Text(net.md_5.bungee.api.ChatColor.YELLOW + "Click to join VampireZ!")));
-
-        TextComponent orType = new TextComponent("  Or type: /vz join");
-        orType.setColor(net.md_5.bungee.api.ChatColor.GRAY);
-        orType.setItalic(true);
+        Component separator = MM.parse("<dark_red>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Component header    = MM.parse("<dark_red><bold>  VAMPIREZ EVENT STARTING!");
+        Component desc      = MM.parse("<gold>  Humans vs Vampires - Survive 25 minutes!");
+        Component joinBtn   = Component.text("  >>> CLICK HERE TO JOIN <<<")
+                .color(NamedTextColor.GREEN)
+                .decorate(TextDecoration.BOLD)
+                .clickEvent(ClickEvent.runCommand("/vampirez join"))
+                .hoverEvent(HoverEvent.showText(MM.parse("<yellow>Click to join VampireZ!")));
+        Component orType    = MM.parse("<gray><italic>  Or type: /vz join");
 
         for (Player p : Bukkit.getOnlinePlayers()) {
-            p.spigot().sendMessage(separator);
-            p.sendMessage("");
-            p.spigot().sendMessage(header);
-            p.spigot().sendMessage(desc);
-            p.sendMessage("");
-            p.spigot().sendMessage(joinButton);
-            p.spigot().sendMessage(orType);
-            p.sendMessage("");
-            p.spigot().sendMessage(separator);
+            p.sendMessage(separator);
+            p.sendMessage(Component.empty());
+            p.sendMessage(header);
+            p.sendMessage(desc);
+            p.sendMessage(Component.empty());
+            p.sendMessage(joinBtn);
+            p.sendMessage(orType);
+            p.sendMessage(Component.empty());
+            p.sendMessage(separator);
             p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 0.5f, 1.0f);
         }
 
-        player.sendMessage(ChatColor.GREEN + "Event announced to all players!");
+        player.sendMessage(MM.parse("<green>Event announced to all players!"));
     }
 
-    private void handleArena(Player player) {
+    void handleArena(Player player) {
         if (!player.hasPermission("vampirez.admin")) {
-            player.sendMessage(ChatColor.RED + "No permission!");
+            player.sendMessage(MM.parse("<red>No permission!"));
             return;
         }
         if (gameManager.getLobbySpawn() != null) {
@@ -527,111 +514,109 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             // First time setup — lobby not set yet, teleport to arena world spawn
             ArenaManager arenaManager = gameManager.getArenaManager();
             if (arenaManager == null || arenaManager.getArenaWorld() == null) {
-                player.sendMessage(ChatColor.RED + "Arena world is not loaded!");
+                player.sendMessage(MM.parse("<red>Arena world is not loaded!"));
                 return;
             }
             player.teleport(arenaManager.getArenaWorld().getSpawnLocation());
         }
         player.setGameMode(org.bukkit.GameMode.ADVENTURE);
-        player.sendMessage(ChatColor.GREEN + "Teleported to the arena.");
-        player.sendMessage(ChatColor.GRAY + "Use /vz setlobby, /vz sethumanspawn, /vz setvampspawn to configure.");
+        player.sendMessage(MM.parse("<green>Teleported to the arena."));
+        player.sendMessage(MM.parse("<gray>Use /vz setlobby, /vz sethumanspawn, /vz setvampspawn to configure."));
     }
 
-    private void handleTest(Player player) {
+    void handleTest(Player player) {
         if (!player.hasPermission("vampirez.admin")) {
-            player.sendMessage(ChatColor.RED + "No permission!");
+            player.sendMessage(MM.parse("<red>No permission!"));
             return;
         }
         perkTestGUI.openTestMenu(player, 0);
     }
 
-    private void handleTools(Player player) {
+    void handleTools(Player player) {
         if (!player.hasPermission("vampirez.admin")) {
-            player.sendMessage(ChatColor.RED + "No permission!");
+            player.sendMessage(MM.parse("<red>No permission!"));
             return;
         }
         int added = DebugBookManager.giveBooks(player);
         if (added == 0) {
-            player.sendMessage(ChatColor.YELLOW + "You already have all debug books.");
+            player.sendMessage(MM.parse("<yellow>You already have all debug books."));
         } else {
-            player.sendMessage(ChatColor.GREEN + "Added " + added + " debug book(s) to your inventory.");
+            player.sendMessage(MM.parse("<green>Added " + added + " debug book(s) to your inventory."));
         }
     }
 
-    private void handleDebugDmg(Player player) {
+    void handleDebugDmg(Player player) {
         if (!player.hasPermission("vampirez.admin")) {
-            player.sendMessage(ChatColor.RED + "No permission!");
+            player.sendMessage(MM.parse("<red>No permission!"));
             return;
         }
         boolean enabled = DebugBookManager.toggleDamageDebug(player);
         if (enabled) {
-            player.sendMessage(ChatColor.GREEN + "Damage readout ON. Every hit you deal will print damage + target HP in your action bar.");
+            player.sendMessage(MM.parse("<green>Damage readout ON. Every hit you deal will print damage + target HP in your action bar."));
         } else {
-            player.sendMessage(ChatColor.YELLOW + "Damage readout OFF.");
+            player.sendMessage(MM.parse("<yellow>Damage readout OFF."));
         }
     }
 
-    private void handleReload(Player player) {
+    void handleReload(Player player) {
         if (!player.hasPermission("vampirez.admin")) {
-            player.sendMessage(ChatColor.RED + "No permission!");
+            player.sendMessage(MM.parse("<red>No permission!"));
             return;
         }
         if (gameManager.getState() != GameState.LOBBY) {
-            player.sendMessage(ChatColor.RED + "Cannot reload during an active game!");
+            player.sendMessage(MM.parse("<red>Cannot reload during an active game!"));
             return;
         }
         gameManager.reloadAllConfig();
-        player.sendMessage(ChatColor.GREEN + "Config reloaded! Updated: game settings, economy, day/night, disabled perks, perk limits.");
+        player.sendMessage(MM.parse("<green>Config reloaded! Updated: game settings, economy, day/night, disabled perks, perk limits."));
     }
 
-    private void handleLeaderboard(Player player) {
+    void handleLeaderboard(Player player) {
         if (leaderboardGUI == null) {
-            player.sendMessage(ChatColor.RED + "Leaderboard is not available.");
+            player.sendMessage(MM.parse("<red>Leaderboard is not available."));
             return;
         }
         leaderboardGUI.open(player);
     }
 
-    private void handleDisablePerk(Player player, String[] args) {
+    void handleDisablePerk(Player player, String[] args) {
         if (!checkAdmin(player)) return;
         if (args.length < 2) {
-            player.sendMessage(ChatColor.RED + "Usage: /vz disableperk <perkId>");
+            player.sendMessage(MM.parse("<red>Usage: /vz disableperk <perkId>"));
             return;
         }
         String perkId = args[1].toLowerCase();
         if (gameManager.getPerkManager().getPerkById(perkId) == null) {
-            player.sendMessage(ChatColor.RED + "Unknown perk: " + perkId);
+            player.sendMessage(MM.parse("<red>Unknown perk: " + perkId));
             return;
         }
         if (gameManager.getPerkManager().isDisabled(perkId)) {
-            player.sendMessage(ChatColor.YELLOW + perkId + " is already disabled.");
+            player.sendMessage(MM.parse("<yellow>" + perkId + " is already disabled."));
             return;
         }
-        // Update config and apply immediately
-        List<String> list = new ArrayList<>(gameManager.getPlugin().getConfig().getStringList("perks.disabled-perks"));
+        // Update typed config and apply immediately
+        List<String> list = gameManager.getPlugin().getPluginConfig().perks.disabledPerks;
         list.add(perkId);
-        gameManager.getPlugin().getConfig().set("perks.disabled-perks", list);
-        gameManager.getPlugin().saveConfig();
+        gameManager.getPlugin().savePluginConfig();
         gameManager.getPerkManager().setDisabledPerks(list);
-        player.sendMessage(ChatColor.RED + "⊘ " + ChatColor.BOLD + perkId + ChatColor.RESET + ChatColor.RED + " disabled. Will not appear in perk selections.");
+        player.sendMessage(MM.parse("<red>⊘ <bold>" + perkId + "</bold> disabled. Will not appear in perk selections."));
     }
 
-    private void handleEnablePerk(Player player, String[] args) {
+    void handleEnablePerk(Player player, String[] args) {
         if (!checkAdmin(player)) return;
         if (args.length < 2) {
-            player.sendMessage(ChatColor.RED + "Usage: /vz enableperk <perkId>");
+            player.sendMessage(MM.parse("<red>Usage: /vz enableperk <perkId>"));
             return;
         }
         String perkId = args[1].toLowerCase();
         if (!gameManager.getPerkManager().isDisabled(perkId)) {
-            player.sendMessage(ChatColor.YELLOW + perkId + " is not currently disabled.");
+            player.sendMessage(MM.parse("<yellow>" + perkId + " is not currently disabled."));
             return;
         }
-        List<String> list = new ArrayList<>(gameManager.getPlugin().getConfig().getStringList("perks.disabled-perks"));
+        List<String> list = gameManager.getPlugin().getPluginConfig().perks.disabledPerks;
         list.remove(perkId);
-        gameManager.getPlugin().getConfig().set("perks.disabled-perks", list);
-        gameManager.getPlugin().saveConfig();
+        gameManager.getPlugin().savePluginConfig();
         gameManager.getPerkManager().setDisabledPerks(list);
-        player.sendMessage(ChatColor.GREEN + "✔ " + ChatColor.BOLD + perkId + ChatColor.RESET + ChatColor.GREEN + " enabled and back in the perk pool.");
+        player.sendMessage(MM.parse("<green>✔ <bold>" + perkId + "</bold> enabled and back in the perk pool."));
     }
 }

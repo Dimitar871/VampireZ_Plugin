@@ -3,7 +3,10 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -35,7 +38,7 @@ public class SpeedPotionsPerk extends Perk {
         if (meta != null) {
             meta.setBasePotionData(new PotionData(PotionType.WATER));
             meta.addCustomEffect(new PotionEffect(PotionEffectType.SPEED, 600, 0), true); // 30 seconds
-            meta.setDisplayName(ChatColor.AQUA + "Splash Potion of Speed");
+            meta.displayName(Component.text("Splash Potion of Speed").color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
             meta.setColor(org.bukkit.Color.fromRGB(124, 175, 198));
             potion.setItemMeta(meta);
         }
@@ -63,7 +66,7 @@ public class SpeedPotionsPerk extends Perk {
         if ((now - last) >= REGEN_INTERVAL_MS) {
             lastRegen.put(uuid, now);
             player.getInventory().addItem(createPotion());
-            player.sendMessage(ChatColor.LIGHT_PURPLE + "A speed potion has regenerated!");
+            player.sendMessage(MM.parse("<light_purple>A speed potion has regenerated!"));
         }
     }
 }

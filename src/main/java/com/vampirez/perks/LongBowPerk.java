@@ -3,7 +3,7 @@ package com.vampirez.perks;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -52,9 +52,8 @@ public class LongBowPerk extends Perk {
 
             target.getWorld().spawnParticle(Particle.EXPLOSION, target.getLocation().add(0, 1, 0), 3, 0.3, 0.3, 0.3, 0);
             attacker.playSound(attacker.getLocation(), Sound.ENTITY_WITHER_BREAK_BLOCK, 0.6f, 1.5f);
-            attacker.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "LONG SHOT! " +
-                    ChatColor.RESET + ChatColor.RED + "Instant kill from " + (int) distance + " blocks!");
-            target.sendMessage(ChatColor.RED + "Sniped from " + (int) distance + " blocks away!");
+            attacker.sendMessage(MM.parse("<gold><bold>LONG SHOT! </bold><red>Instant kill from " + (int) distance + " blocks!"));
+            target.sendMessage(MM.parse("<red>Sniped from " + (int) distance + " blocks away!"));
 
             incrementStat(attacker.getUniqueId(), "executes");
             incrementStat(attacker.getUniqueId(), "hits");
@@ -66,8 +65,7 @@ public class LongBowPerk extends Perk {
         event.setDamage(event.getDamage() * (1.0 + bonus));
 
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.5f, 1.8f);
-        attacker.sendMessage(ChatColor.GOLD + "Long Bow: " + ChatColor.GRAY +
-                (int) distance + " blocks (+" + (int) (bonus * 100) + "% damage)");
+        attacker.sendMessage(MM.parse("<gold>Long Bow: <gray>" + (int) distance + " blocks (+" + (int) (bonus * 100) + "% damage)"));
 
         incrementStat(attacker.getUniqueId(), "hits");
         addStat(attacker.getUniqueId(), "total_bonus", bonus * 100);

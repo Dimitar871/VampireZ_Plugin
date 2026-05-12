@@ -5,7 +5,7 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.VampireZPlugin;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -52,7 +52,7 @@ public class GoldenGuardPerk extends Perk {
                 victim.setHealth(4.0);
                 victim.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, victim.getLocation().add(0, 1, 0), 50, 1, 1, 1, 0.2);
                 victim.playSound(victim.getLocation(), Sound.ITEM_TOTEM_USE, 1.0f, 1.0f);
-                victim.sendMessage(ChatColor.GOLD + "Golden Guard! Spent 30 gold to survive!");
+                victim.sendMessage(MM.parse("<gold>Golden Guard! Spent 30 gold to survive!"));
                 incrementStat(uuid, "saves");
             }
         }

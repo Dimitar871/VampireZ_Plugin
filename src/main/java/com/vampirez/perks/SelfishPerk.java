@@ -5,7 +5,7 @@ import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.VampireZPlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -63,15 +63,10 @@ public class SelfishPerk extends Perk {
         for (Player teammate : inRange) {
             if (!previousNearby.contains(teammate.getUniqueId())) {
                 // New teammate entered range — notify both
-                player.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "SELFISH: " +
-                        ChatColor.RESET + ChatColor.YELLOW + teammate.getName() +
-                        ChatColor.GRAY + " entered your zone! Bonus removed.");
+                player.sendMessage(MM.parse("<red><bold>SELFISH: </bold><yellow>" + teammate.getName() + "<gray> entered your zone! Bonus removed."));
                 player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.4f, 1.5f);
 
-                teammate.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "WARNING: " +
-                        ChatColor.RESET + ChatColor.GRAY + "You entered " +
-                        ChatColor.YELLOW + player.getName() + "'s " +
-                        ChatColor.GOLD + "Selfish" + ChatColor.GRAY + " zone! Stay 25+ blocks away.");
+                teammate.sendMessage(MM.parse("<red><bold>WARNING: </bold><gray>You entered <yellow>" + player.getName() + "'s <gold>Selfish<gray> zone! Stay 25+ blocks away."));
                 teammate.playSound(teammate.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.5f);
             }
             // Glowing effect on nearby teammates so selfish player can see them

@@ -5,7 +5,10 @@ import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.VampireZPlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.vampirez.MM;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -51,8 +54,8 @@ public class BloodBeaconPerk extends Perk {
         ItemStack item = new ItemStack(Material.BONE);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_RED + "Blood Beacon" + ChatColor.GRAY + " (Right-Click)");
-            meta.setLore(Arrays.asList(ChatColor.GRAY + "Place a healing beacon", ChatColor.YELLOW + "Cooldown: 60s"));
+            meta.displayName(Component.text("Blood Beacon (Right-Click)").color(NamedTextColor.DARK_RED).decoration(TextDecoration.ITALIC, false));
+            meta.lore(Arrays.asList(Component.text("Place a healing beacon").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 60s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -86,7 +89,7 @@ public class BloodBeaconPerk extends Perk {
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
         if (last != null && (now - last) < getEffectiveCooldown(player, COOLDOWN_MS)) {
-            player.sendMessage(ChatColor.RED + "Blood Beacon on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s");
+            player.sendMessage(MM.parse("<red>Blood Beacon on cooldown! " + ((getEffectiveCooldown(player, COOLDOWN_MS) - (now - last)) / 1000 + 1) + "s"));
             return;
         }
 
@@ -104,7 +107,7 @@ public class BloodBeaconPerk extends Perk {
         player.getWorld().spawnParticle(Particle.DUST, loc.clone().add(0.5, 1, 0.5), 30, 0.5, 1, 0.5, 0,
                 new Particle.DustOptions(org.bukkit.Color.fromRGB(139, 0, 0), 2.0f));
         player.playSound(loc, Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 0.5f);
-        player.sendMessage(ChatColor.DARK_RED + "Blood Beacon placed! Nearby vampires will regenerate.");
+        player.sendMessage(MM.parse("<dark_red>Blood Beacon placed! Nearby vampires will regenerate."));
         incrementStat(uuid, "activations");
     }
 
@@ -138,7 +141,7 @@ public class BloodBeaconPerk extends Perk {
         if (data.ticksRemaining <= 0) {
             data.location.getBlock().setType(Material.AIR);
             activeBeacons.remove(uuid);
-            player.sendMessage(ChatColor.GRAY + "Your Blood Beacon has expired.");
+            player.sendMessage(MM.parse("<gray>Your Blood Beacon has expired."));
         }
     }
 

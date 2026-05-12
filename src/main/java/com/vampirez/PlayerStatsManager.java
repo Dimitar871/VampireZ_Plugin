@@ -1,6 +1,7 @@
 package com.vampirez;
 
 import com.vampirez.api.event.VampireZGameEndEvent;
+import com.vampirez.db.PlayerStatsRepository;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -9,9 +10,11 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,16 +34,30 @@ public class PlayerStatsManager implements Listener {
         }
     }
 
+    private static final Logger log = LoggerFactory.getLogger(PlayerStatsManager.class);
+
     private final JavaPlugin plugin;
     private final GameManager gameManager;
-    private final File statsFile;
+    private final PlayerStatsRepository repo;
+    /** Legacy YAML file — read once on first run for migration into SQLite. */
+    private final File legacyStatsFile;
     final Map<UUID, PlayerStats> stats = new LinkedHashMap<>();
 
-    public PlayerStatsManager(JavaPlugin plugin, GameManager gameManager) {
+    public PlayerStatsManager(JavaPlugin plugin, GameManager gameManager, PlayerStatsRepository repo) {
         this.plugin = plugin;
         this.gameManager = gameManager;
-        this.statsFile = new File(plugin.getDataFolder(), "player-stats.yml");
+        this.repo = repo;
+        this.legacyStatsFile = new File(plugin.getDataFolder(), "player-stats.yml");
         load();
+    }
+
+    /** Two-arg constructor kept so existing test fixtures that don't need persistence still work. */
+    PlayerStatsManager(JavaPlugin plugin, GameManager gameManager) {
+        this.plugin = plugin;
+        this.gameManager = gameManager;
+        this.repo = null;
+        this.legacyStatsFile = new File(plugin.getDataFolder(), "player-stats.yml");
+        // No load — tests populate stats via record* helpers directly.
     }
 
     // ===== Bukkit event handlers =====
@@ -128,28 +145,51 @@ public class PlayerStatsManager implements Listener {
                 .collect(Collectors.toList());
     }
 
-    // ===== Persistence =====
+    // ===== Persistence (SQLite via PlayerStatsRepository) =====
 
+    /** Persist all stats to disk asynchronously. Snapshot on the main thread, write on a worker. */
     public void save() {
-        YamlConfiguration config = new YamlConfiguration();
-        for (Map.Entry<UUID, PlayerStats> entry : stats.entrySet()) {
-            String key = entry.getKey().toString();
-            PlayerStats s = entry.getValue();
-            if (s.name != null) config.set(key + ".name", s.name);
-            config.set(key + ".kills", s.kills);
-            config.set(key + ".wins", s.wins);
-            config.set(key + ".losses", s.losses);
-        }
+        if (repo == null) return; // test mode
+        // Snapshot on the calling (main) thread to keep the async copy consistent.
+        Map<UUID, PlayerStats> snapshot = new LinkedHashMap<>(stats);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                repo.saveAll(snapshot);
+            } catch (SQLException e) {
+                log.warn("Failed to save player stats", e);
+            }
+        });
+    }
+
+    /** Synchronous save — used on plugin disable when the scheduler is shutting down. */
+    public void saveBlocking() {
+        if (repo == null) return;
         try {
-            config.save(statsFile);
-        } catch (IOException e) {
-            plugin.getLogger().warning("Failed to save player-stats.yml: " + e.getMessage());
+            repo.saveAll(new LinkedHashMap<>(stats));
+        } catch (SQLException e) {
+            log.warn("Failed to flush player stats on shutdown", e);
         }
     }
 
     void load() {
-        if (!statsFile.exists()) return;
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(statsFile);
+        if (repo == null) return;
+        try {
+            stats.putAll(repo.loadAll());
+        } catch (SQLException e) {
+            log.error("Failed to load player stats from DB", e);
+            return;
+        }
+
+        // First-run migration: if DB is empty AND the legacy YAML exists, import it.
+        if (stats.isEmpty() && legacyStatsFile.exists()) {
+            migrateFromYaml();
+        }
+    }
+
+    private void migrateFromYaml() {
+        log.info("Migrating player stats from {} to SQLite...", legacyStatsFile.getName());
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(legacyStatsFile);
+        int migrated = 0;
         for (String key : config.getKeys(false)) {
             try {
                 UUID uuid = UUID.fromString(key);
@@ -159,7 +199,18 @@ public class PlayerStatsManager implements Listener {
                 s.wins   = config.getInt(key + ".wins", 0);
                 s.losses = config.getInt(key + ".losses", 0);
                 stats.put(uuid, s);
+                migrated++;
             } catch (IllegalArgumentException ignored) {}
+        }
+        if (migrated > 0) {
+            saveBlocking(); // synchronous so we don't lose data if next op fails
+            // Rename the YAML so we don't re-migrate on next boot.
+            File backup = new File(plugin.getDataFolder(), "player-stats.yml.migrated");
+            if (legacyStatsFile.renameTo(backup)) {
+                log.info("Migrated {} player records. Old YAML kept as {}", migrated, backup.getName());
+            } else {
+                log.info("Migrated {} player records (could not rename old YAML).", migrated);
+            }
         }
     }
 }
