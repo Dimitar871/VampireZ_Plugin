@@ -6,7 +6,7 @@
 
     <groupId>com.vampirez</groupId>
     <artifactId>VampireZ</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
     <packaging>jar</packaging>
 
     <name>VampireZ</name>
@@ -97,6 +97,19 @@
             <version>4.8.1</version>
         </dependency>
 
+        <!-- Discord bot (JDA, shaded) — voice excluded since we don't use it -->
+        <dependency>
+            <groupId>net.dv8tion</groupId>
+            <artifactId>JDA</artifactId>
+            <version>5.6.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>club.minnced</groupId>
+                    <artifactId>opus-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -140,7 +153,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.6.0</version>
                 <configuration>
                     <relocations>
                         <relocation>
@@ -167,7 +180,43 @@
                             <pattern>de.exlll.configlib</pattern>
                             <shadedPattern>com.vampirez.lib.configlib</shadedPattern>
                         </relocation>
+                        <!-- JDA + transitive deps (relocated to avoid plugin classloader clashes) -->
+                        <relocation>
+                            <pattern>net.dv8tion.jda</pattern>
+                            <shadedPattern>com.vampirez.lib.jda</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.fasterxml.jackson</pattern>
+                            <shadedPattern>com.vampirez.lib.jackson</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>okhttp3</pattern>
+                            <shadedPattern>com.vampirez.lib.okhttp3</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>okio</pattern>
+                            <shadedPattern>com.vampirez.lib.okio</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>gnu.trove</pattern>
+                            <shadedPattern>com.vampirez.lib.trove</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.neovisionaries.ws</pattern>
+                            <shadedPattern>com.vampirez.lib.nv_websocket</shadedPattern>
+                        </relocation>
                     </relocations>
+                    <filters>
+                        <!-- Strip signed-jar fragments (cause SecurityException after relocation) -->
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                 </configuration>
                 <executions>
                     <execution>

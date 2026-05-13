@@ -22,6 +22,7 @@ public class PluginConfig {
     public SpawnsSection spawns = new SpawnsSection();
     public MessagesSection messages = new MessagesSection();
     public TimingsSection timings = new TimingsSection();
+    public DiscordSection discord = new DiscordSection();
 
     @Configuration
     public static class GameSection {
@@ -123,5 +124,33 @@ public class PluginConfig {
         public String humanDeath = "&c{player} has fallen! They rise again as a Vampire!";
         public String nightFall = "&4&lNight has fallen! Vampires grow stronger...";
         public String dayBreak = "&e&lThe sun rises! Vampires are weakened...";
+    }
+
+    @Configuration
+    public static class DiscordSection {
+        @Comment("Master switch — when false the bot is never constructed and zero JDA classes load")
+        public boolean enabled = false;
+        @Comment("Bot token from https://discord.com/developers/applications. KEEP THIS SECRET!")
+        public String token = "";
+        @Comment("Channel ID where the live status embed lives. Right-click channel → Copy ID (Developer Mode required)")
+        public String statusChannelId = "";
+        @Comment("Channel ID where game start/end announcements are posted (may equal statusChannelId)")
+        public String announceChannelId = "";
+        @Comment("Update bot presence (Playing ...) every N seconds. Min 15 to respect rate limits")
+        public int presenceUpdateSeconds = 30;
+        @Comment("Edit the live status embed every N seconds during ACTIVE games. Min 5")
+        public int statusEmbedUpdateSeconds = 10;
+        @Comment("Post an announcement when a human is converted to a vampire (off — spammy)")
+        public boolean announceConversions = false;
+        @Comment("Post an announcement when day↔night flips during a game")
+        public boolean announceDayNight = true;
+        @Comment("Embed color for LOBBY state (hex without #)")
+        public String colorLobby = "5865F2";
+        @Comment("Embed color for STARTING / ACTIVE state (hex without #)")
+        public String colorActive = "C0392B";
+        @Comment("Embed color for ENDING / completed games (hex without #)")
+        public String colorEnded = "2ECC71";
+        @Comment("Persisted message ID for the live status embed — managed by the bot, do NOT edit by hand")
+        public String statusMessageId = "";
     }
 }

@@ -5,6 +5,10 @@ import com.vampirez.api.VampireZAPIImpl;
 import com.vampirez.config.PluginConfig;
 import com.vampirez.db.DatabaseManager;
 import com.vampirez.db.PlayerStatsRepository;
+import com.vampirez.discord.DiscordBot;
+import com.vampirez.discord.DiscordEmbedFactory;
+import com.vampirez.discord.DiscordEventListener;
+import com.vampirez.discord.DiscordStatusUpdater;
 import com.vampirez.engine.DataDrivenPerk;
 import com.vampirez.engine.PerkConfigLoader;
 import com.vampirez.perks.*;
@@ -36,6 +40,8 @@ public class VampireZPlugin extends JavaPlugin {
     private PerkSelectionGUI perkSelectionGUI;
     private PluginConfig pluginConfig;
     private DatabaseManager databaseManager;
+    private DiscordBot discordBot;
+    private DiscordStatusUpdater discordStatusUpdater;
 
     private static final YamlConfigurationProperties CONFIG_PROPERTIES =
             YamlConfigurationProperties.newBuilder()
@@ -123,6 +129,22 @@ public class VampireZPlugin extends JavaPlugin {
         Bukkit.getServicesManager().register(VampireZAPI.class, api, this, ServicePriority.Normal);
         getLogger().info("VampireZAPI registered with ServicesManager");
 
+        // 7b. Optional Discord bot integration (entire block skipped if discord.enabled=false).
+        // Note: reloadPluginConfig() does NOT restart the bot — token/channel changes need a server restart.
+        if (pluginConfig.discord.enabled) {
+            try {
+                DiscordEmbedFactory embeds = new DiscordEmbedFactory(this);
+                discordBot = new DiscordBot(this);
+                discordStatusUpdater = new DiscordStatusUpdater(this, discordBot, gameManager, embeds);
+                getServer().getPluginManager().registerEvents(
+                        new DiscordEventListener(this, discordBot, discordStatusUpdater, embeds, gameManager), this);
+                discordBot.startAsync();
+                discordStatusUpdater.start();
+            } catch (Throwable t) {
+                getLogger().warning("Discord integration failed to initialize: " + t.getMessage());
+            }
+        }
+
         // 8. Leaderboard GUI + commands (Cloud handles dispatch + tab-complete + Brigadier)
         LeaderboardGUI leaderboardGUI = new LeaderboardGUI(playerStatsManager);
         GameCommands gameCommands = new GameCommands(gameManager, perkShopGUI, perkTestGUI, api, leaderboardGUI);
@@ -179,6 +201,9 @@ public class VampireZPlugin extends JavaPlugin {
         // Player stats: synchronous flush since the scheduler is shutting down.
         if (playerStatsManager != null) playerStatsManager.saveBlocking();
         if (databaseManager != null) databaseManager.stop();
+        // Discord: stop the timers first so they can't fire mid-shutdown, then close the JDA connection.
+        if (discordStatusUpdater != null) discordStatusUpdater.stop();
+        if (discordBot != null) discordBot.shutdown();
         Bukkit.getServicesManager().unregisterAll(this);
         api = null;
     }
