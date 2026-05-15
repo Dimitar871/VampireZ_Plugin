@@ -447,7 +447,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/bow.png" width="24"> | 🔵 | Long Bow | +1 % arrow dmg per block (cap +50 %); 75+ blocks = instakill |
 | <img src="images/perks/turtle_helmet.png" width="24"> | 🔵 | Ninja Turtle | Below y=20: Resistance II + Speed II. In water: +Strength I |
 | <img src="images/perks/gold_ingot.png" width="24"> | 🔴 | Blunt Force II | +20 % melee damage (stacks with Silver) |
-| <img src="images/perks/chorus_fruit.png" width="24"> | 🔴 | Shadow Strike | Teleport behind nearest enemy (15 s cd) |
+| <img src="images/perks/chorus_fruit.png" width="24"> | 🔴 | Shadow Strike | Teleport behind nearest enemy. Costs 3 ♥ (40 s cd) |
 | <img src="images/perks/blue_ice.png" width="24"> | 🔴 | Frost Bite | Attacks apply Slowness I + Frost Walker boots |
 | <img src="images/perks/phantom_membrane.png" width="24"> | 🔴 | Phantom Step | After taking damage: 2 s invis + Speed I (15 s cd) |
 | <img src="images/perks/wither_rose.png" width="24"> | 🔴 | Blood Price | Sacrifice 3 ♥, next hit 2× (20 s cd) |

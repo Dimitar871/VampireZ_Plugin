@@ -24,14 +24,16 @@ import java.util.*;
 public class ShadowStrikePerk extends Perk {
 
     private final Map<UUID, Long> cooldowns = new HashMap<>();
-    private static final long COOLDOWN_MS = 15000;
+    private static final long COOLDOWN_MS = 40000;
+    /** Self-damage cost in HP (3 hearts) — pays to skip past defenses with the teleport. */
+    private static final double SELF_DAMAGE_HP = 6.0;
 
     public ShadowStrikePerk() {
         super("shadow_strike", "Shadow Strike", PerkTier.GOLD, PerkTeam.VAMPIRE,
                 Material.CHORUS_FRUIT,
                 "Right-click to teleport behind",
                 "the nearest enemy within 15 blocks",
-                "15 second cooldown");
+                "Costs 3 hearts. 40 second cooldown");
     }
 
     @Override
@@ -40,7 +42,10 @@ public class ShadowStrikePerk extends Perk {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.displayName(Component.text("Shadow Strike (Right-Click)").color(NamedTextColor.DARK_PURPLE).decoration(TextDecoration.ITALIC, false));
-            meta.lore(Arrays.asList(Component.text("Teleport behind nearest enemy").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false), Component.text("Cooldown: 15s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
+            meta.lore(Arrays.asList(
+                    Component.text("Teleport behind nearest enemy").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("Costs 3 ♥").color(NamedTextColor.RED).decoration(TextDecoration.ITALIC, false),
+                    Component.text("Cooldown: 40s").color(NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
             item.setItemMeta(meta);
         }
         player.getInventory().addItem(item);
@@ -121,6 +126,9 @@ public class ShadowStrikePerk extends Perk {
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 25, 0.3, 0.5, 0.3, 0,
                 new Particle.DustOptions(org.bukkit.Color.BLACK, 1.5f));
         com.vampirez.fx.VFX.fx().vortex(player.getLocation(), org.bukkit.Color.fromRGB(40, 0, 60), 30);
+
+        // Self-cost — 3 hearts (forces a tradeoff between mobility and HP)
+        player.damage(SELF_DAMAGE_HP);
 
         incrementStat(uuid, "teleports");
     }
