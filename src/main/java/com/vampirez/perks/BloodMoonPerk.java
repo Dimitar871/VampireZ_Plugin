@@ -82,10 +82,12 @@ public class BloodMoonPerk extends Perk {
         }
         cooldowns.put(uuid, now);
 
-        // Dark red particle burst + flames
+        // Dark red particle burst + flames + persistent atom orbit (8s buff)
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 2, 0), 120, 3, 2, 3,
                 new Particle.DustOptions(org.bukkit.Color.fromRGB(139, 0, 0), 2.5f));
         player.getWorld().spawnParticle(Particle.FLAME, player.getLocation().add(0, 2, 0), 40, 3, 2, 3, 0.05);
+        com.vampirez.fx.VFX.fx().atomAround(player, org.bukkit.Color.fromRGB(180, 0, 0), 160); // 8s
+        com.vampirez.fx.VFX.sound().playSpellCast(player.getLocation());
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.7f, 1.5f);
 
         // Buff self

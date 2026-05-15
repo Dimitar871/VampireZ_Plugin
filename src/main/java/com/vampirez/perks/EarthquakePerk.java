@@ -4,6 +4,8 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.MM;
+import com.vampirez.fx.VFX;
+import org.bukkit.Color;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -73,24 +75,15 @@ public class EarthquakePerk extends Perk {
         }
         cooldowns.put(uuid, now);
 
-        // Massive seismic slam effect
+        // Massive seismic slam — initial dirt + stone burst (kept for the impact frame)
         player.getWorld().spawnParticle(Particle.EXPLOSION, player.getLocation(), 20, 3.5, 0.5, 3.5, 0);
         player.getWorld().spawnParticle(Particle.BLOCK, player.getLocation(), 200, 4, 0.3, 4, 0,
                 Material.DIRT.createBlockData());
         player.getWorld().spawnParticle(Particle.BLOCK, player.getLocation(), 80, 3, 0.2, 3, 0,
                 Material.STONE.createBlockData());
-        player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 0.5, 0), 40, 4, 0.3, 4, 0,
-                new Particle.DustOptions(org.bukkit.Color.fromRGB(139, 90, 43), 2.0f));
-        // Shockwave ring
-        for (int i = 0; i < 16; i++) {
-            double angle = i * (Math.PI * 2 / 16);
-            double radius = 5.0;
-            double px = Math.cos(angle) * radius;
-            double pz = Math.sin(angle) * radius;
-            player.getWorld().spawnParticle(Particle.CLOUD,
-                    player.getLocation().add(px, 0.3, pz), 3, 0.1, 0.05, 0.1, 0.01);
-        }
-        player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.5f);
+        // Animated expanding shockwave + layered boom
+        VFX.fx().shockwave(player.getLocation(), Color.fromRGB(139, 90, 43), 6.0, 30);
+        VFX.sound().playExplosion(player.getLocation());
 
         int playersHit = 0;
         for (Entity entity : player.getNearbyEntities(6, 3, 6)) {

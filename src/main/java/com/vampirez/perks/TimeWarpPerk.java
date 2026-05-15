@@ -81,6 +81,9 @@ public class TimeWarpPerk extends Perk {
         victim.getWorld().spawnParticle(Particle.PORTAL, victim.getLocation().add(0, 1, 0), 80, 0.5, 1, 0.5, 0.5);
         victim.getWorld().spawnParticle(Particle.DUST, victim.getLocation().add(0, 1, 0), 40, 0.5, 1, 0.5, 0,
                 new Particle.DustOptions(org.bukkit.Color.PURPLE, 1.5f));
+        // Cinematic rewind: helix + spell-cast layered sound
+        com.vampirez.fx.VFX.fx().helix(victim.getLocation(), org.bukkit.Color.fromRGB(180, 100, 255), 30);
+        com.vampirez.fx.VFX.sound().playSpellCast(victim.getLocation());
         victim.playSound(victim.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 0.5f, 2.0f);
         victim.sendMessage(MM.parse("<light_purple>Time Warp! Rewound 3 seconds!"));
         incrementStat(uuid, "rewinds");

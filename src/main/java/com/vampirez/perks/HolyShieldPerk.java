@@ -55,11 +55,12 @@ public class HolyShieldPerk extends Perk {
             accumulated.put(uuid, 0.0);
             cooldowns.put(uuid, now);
 
-            // Explode
+            // Explode + golden shockwave + layered explosion sound
             victim.getWorld().spawnParticle(Particle.EXPLOSION, victim.getLocation().add(0, 1, 0), 5, 1, 0.5, 1, 0);
             victim.getWorld().spawnParticle(Particle.DUST, victim.getLocation().add(0, 1, 0), 40, 2, 1, 2, 0,
                     new Particle.DustOptions(org.bukkit.Color.fromRGB(255, 215, 0), 2.0f));
-            victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.5f);
+            com.vampirez.fx.VFX.fx().shockwave(victim.getLocation(), org.bukkit.Color.fromRGB(255, 215, 0), 5.0, 25);
+            com.vampirez.fx.VFX.sound().playExplosion(victim.getLocation());
 
             int hits = 0;
             double totalDamage = 0;

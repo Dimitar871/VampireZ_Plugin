@@ -9,6 +9,8 @@ import com.vampirez.discord.DiscordBot;
 import com.vampirez.discord.DiscordEmbedFactory;
 import com.vampirez.discord.DiscordEventListener;
 import com.vampirez.discord.DiscordStatusUpdater;
+import com.vampirez.fx.EffectKit;
+import com.vampirez.fx.SoundKit;
 import com.vampirez.engine.DataDrivenPerk;
 import com.vampirez.engine.PerkConfigLoader;
 import com.vampirez.perks.*;
@@ -42,6 +44,11 @@ public class VampireZPlugin extends JavaPlugin {
     private DatabaseManager databaseManager;
     private DiscordBot discordBot;
     private DiscordStatusUpdater discordStatusUpdater;
+    private EffectKit effectKit;
+    private SoundKit soundKit;
+
+    public EffectKit effects() { return effectKit; }
+    public SoundKit sounds()   { return soundKit; }
 
     private static final YamlConfigurationProperties CONFIG_PROPERTIES =
             YamlConfigurationProperties.newBuilder()
@@ -85,6 +92,10 @@ public class VampireZPlugin extends JavaPlugin {
         // Initialize SQLite (HikariCP pool + schema migrations) before any manager that uses it.
         databaseManager = new DatabaseManager(this);
         databaseManager.start();
+
+        // FX kits — visual (EffectLib) + audio (vanilla layered sounds). Used by perks via plugin.effects() / plugin.sounds().
+        effectKit = new EffectKit(this);
+        soundKit = new SoundKit(this);
 
         // 0. Initialize arena manager and load the arena world
         arenaManager = new ArenaManager(this);
@@ -201,6 +212,8 @@ public class VampireZPlugin extends JavaPlugin {
         // Player stats: synchronous flush since the scheduler is shutting down.
         if (playerStatsManager != null) playerStatsManager.saveBlocking();
         if (databaseManager != null) databaseManager.stop();
+        if (effectKit != null) effectKit.shutdown();
+        com.vampirez.fx.VFX.invalidate();
         // Discord: stop the timers first so they can't fire mid-shutdown, then close the JDA connection.
         if (discordStatusUpdater != null) discordStatusUpdater.stop();
         if (discordBot != null) discordBot.shutdown();
