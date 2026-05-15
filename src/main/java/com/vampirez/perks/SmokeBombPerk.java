@@ -74,10 +74,12 @@ public class SmokeBombPerk extends Perk {
         }
         cooldowns.put(uuid, now);
 
-        // Create blindness cloud
+        // Create blindness cloud + lingering rune circle on the ground
         player.getWorld().spawnParticle(Particle.LARGE_SMOKE, player.getLocation().add(0, 1, 0), 150, 2, 1, 2, 0.05);
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 60, 2, 1, 2, 0,
                 new Particle.DustOptions(org.bukkit.Color.GRAY, 2.0f));
+        com.vampirez.fx.VFX.fx().runeCircle(player.getLocation(), org.bukkit.Color.fromRGB(64, 64, 64), 4.0, 100); // 5s
+        com.vampirez.fx.VFX.sound().playPortal(player.getLocation());
         player.playSound(player.getLocation(), Sound.ENTITY_CREEPER_PRIMED, 1.0f, 2.0f);
 
         int playersBlinded = 0;

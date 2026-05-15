@@ -95,6 +95,9 @@ public class WraithWalkPerk extends Perk {
         player.getWorld().spawnParticle(Particle.SOUL, player.getLocation().add(0, 1, 0), 60, 0.5, 1, 0.5, 0.05);
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 40, 0.5, 1, 0.5, 0,
                 new Particle.DustOptions(Color.GRAY, 1.5f));
+        // Ghost-form vortex for the duration + portal cue
+        com.vampirez.fx.VFX.fx().vortex(player.getLocation(), Color.fromRGB(80, 0, 80), (int) GHOST_DURATION_TICKS);
+        com.vampirez.fx.VFX.sound().playPortal(player.getLocation());
         player.playSound(player.getLocation(), Sound.ENTITY_VEX_AMBIENT, 1.0f, 0.5f);
         player.sendMessage(MM.parse("<dark_gray>Wraith Walk! You become a ghost..."));
 
@@ -121,6 +124,9 @@ public class WraithWalkPerk extends Perk {
             p.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, p.getLocation().add(0, 1, 0), 80, 2, 1, 2, 0.05);
             p.getWorld().spawnParticle(Particle.DUST, p.getLocation().add(0, 1, 0), 50, 2, 1, 2, 0,
                     new Particle.DustOptions(Color.PURPLE, 1.5f));
+            // Death-rattle on AoE ghost expiry
+            com.vampirez.fx.VFX.fx().shockwave(p.getLocation(), Color.fromRGB(120, 0, 120), 5.0, 20);
+            com.vampirez.fx.VFX.sound().playDeathRattle(p.getLocation());
             p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SHOOT, 0.8f, 1.5f);
 
             int enemiesHit = 0;

@@ -107,11 +107,12 @@ public class ShadowStrikePerk extends Perk {
         behindTarget.setY(target.getLocation().getY());
         behindTarget.setDirection(target.getLocation().toVector().subtract(behindTarget.toVector()));
 
-        // Effects at origin
+        // Effects at origin (with portal cue + lingering vortex marking the departure point)
         player.getWorld().spawnParticle(Particle.LARGE_SMOKE, player.getLocation(), 40, 0.3, 0.5, 0.3, 0.05);
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 25, 0.3, 0.5, 0.3, 0,
                 new Particle.DustOptions(org.bukkit.Color.BLACK, 1.5f));
-        player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.5f);
+        com.vampirez.fx.VFX.fx().vortex(player.getLocation(), org.bukkit.Color.fromRGB(40, 0, 60), 30);
+        com.vampirez.fx.VFX.sound().playPortal(player.getLocation());
 
         player.teleport(behindTarget);
 
@@ -119,6 +120,7 @@ public class ShadowStrikePerk extends Perk {
         player.getWorld().spawnParticle(Particle.LARGE_SMOKE, player.getLocation(), 40, 0.3, 0.5, 0.3, 0.05);
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 25, 0.3, 0.5, 0.3, 0,
                 new Particle.DustOptions(org.bukkit.Color.BLACK, 1.5f));
+        com.vampirez.fx.VFX.fx().vortex(player.getLocation(), org.bukkit.Color.fromRGB(40, 0, 60), 30);
 
         incrementStat(uuid, "teleports");
     }

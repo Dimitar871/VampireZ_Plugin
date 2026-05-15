@@ -66,10 +66,12 @@ public class VampireLeapListener implements Listener {
         direction.setY(Math.max(direction.getY(), 0.4));
         player.setVelocity(direction);
 
-        // Launch burst particles
+        // Launch burst particles + vampire blood spray + portal cue
         player.getWorld().spawnParticle(Particle.PORTAL, player.getLocation(), 50, 0.5, 0.5, 0.5, 0.3);
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 0.5, 0), 25, 0.4, 0.2, 0.4, 0,
                 new Particle.DustOptions(Color.fromRGB(100, 0, 150), 1.8f));
+        com.vampirez.fx.VFX.fx().bloodSpray(player.getLocation());
+        com.vampirez.fx.VFX.sound().playPortal(player.getLocation());
         player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP, 0.8f, 1.5f);
 
         // Trailing particle effect during leap
