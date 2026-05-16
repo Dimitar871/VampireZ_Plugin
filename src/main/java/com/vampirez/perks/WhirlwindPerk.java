@@ -72,9 +72,11 @@ public class WhirlwindPerk extends Perk {
         }
         cooldowns.put(uuid, now);
 
-        // Tornado AoE effect
+        // Tornado AoE effect + cyan shockwave + layered explosion
         player.getWorld().spawnParticle(Particle.SWEEP_ATTACK, player.getLocation().add(0, 1, 0), 25, 2.0, 0.5, 2.0, 0);
         player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation().add(0, 0.5, 0), 30, 1.5, 0.3, 1.5, 0.05);
+        com.vampirez.fx.VFX.fx().shockwave(player.getLocation(), org.bukkit.Color.fromRGB(150, 220, 255), 3.5, 18);
+        com.vampirez.fx.VFX.sound().playExplosion(player.getLocation());
         // Spiral ring of particles
         for (int i = 0; i < 12; i++) {
             double angle = i * (Math.PI * 2 / 12);

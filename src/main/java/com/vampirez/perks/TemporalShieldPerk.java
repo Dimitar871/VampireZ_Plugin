@@ -76,6 +76,9 @@ public class TemporalShieldPerk extends Perk {
         player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1, 0), 60, 2.5, 1, 2.5, 0.02);
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 40, 2.5, 1, 2.5, 0,
                 new Particle.DustOptions(org.bukkit.Color.AQUA, 1.5f));
+        // Cyan rune circle staying for the freeze duration (40 ticks = 2s)
+        com.vampirez.fx.VFX.fx().runeCircle(player.getLocation(), org.bukkit.Color.AQUA, 5.0, 40);
+        com.vampirez.fx.VFX.sound().playSpellCast(player.getLocation());
         player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1.0f, 2.0f);
 
         int frozen = 0;

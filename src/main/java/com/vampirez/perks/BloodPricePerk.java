@@ -86,6 +86,9 @@ public class BloodPricePerk extends Perk {
 
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0,
                 new Particle.DustOptions(org.bukkit.Color.RED, 1.5f));
+        // Sacrifice cue: blood spray on caster + de-buff sound (it hurts)
+        com.vampirez.fx.VFX.fx().bloodSpray(player.getLocation());
+        com.vampirez.fx.VFX.sound().playDebuff(player);
         player.playSound(player.getLocation(), Sound.ENTITY_WITHER_HURT, 0.5f, 1.5f);
         player.sendMessage(MM.parse("<dark_red>Blood Price! Next hit deals double damage!"));
 

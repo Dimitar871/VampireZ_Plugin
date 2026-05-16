@@ -118,6 +118,10 @@ public class ReapersMarkPerk extends Perk {
         nearest.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 600, 0, false, true), true);
         nearest.getWorld().spawnParticle(Particle.DUST, nearest.getLocation().add(0, 2, 0), 20, 0.3, 0.3, 0.3, 0,
                 new Particle.DustOptions(org.bukkit.Color.RED, 1.5f));
+        // Beam from caster to marked target + persistent atom orbit on the target for 30s
+        com.vampirez.fx.VFX.fx().beam(player.getLocation().add(0, 1, 0), nearest.getLocation().add(0, 1, 0), org.bukkit.Color.fromRGB(120, 0, 0));
+        com.vampirez.fx.VFX.fx().atomAround(nearest, org.bukkit.Color.RED, 600);
+        com.vampirez.fx.VFX.sound().playSpellCast(player.getLocation());
         player.playSound(player.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.5f, 1.5f);
         nearest.sendMessage(MM.parse("<red>You have been marked by the Reaper!"));
         player.sendMessage(MM.parse("<red>Marked " + nearest.getName() + "!"));

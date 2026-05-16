@@ -92,6 +92,9 @@ public class BarricadePerk extends Perk {
         }
 
         player.playSound(player.getLocation(), Sound.BLOCK_GLASS_PLACE, 1.0f, 1.0f);
+        // White rune circle at the wall location for the 5s duration (100 ticks)
+        com.vampirez.fx.VFX.fx().runeCircle(player.getLocation(), org.bukkit.Color.fromRGB(220, 240, 255), 3.0, 100);
+        com.vampirez.fx.VFX.sound().playSpellCast(player.getLocation());
         player.sendMessage(MM.parse("<aqua>Barricade placed!"));
         incrementStat(uuid, "walls_placed");
 

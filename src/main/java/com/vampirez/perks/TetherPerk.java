@@ -103,6 +103,8 @@ public class TetherPerk extends Perk {
         nearest.setVelocity(direction.multiply(4.8).setY(0.6));
 
         nearest.getWorld().spawnParticle(Particle.CRIT, nearest.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3, 0.1);
+        // Visual tether: red beam from caster to target
+        com.vampirez.fx.VFX.fx().beam(player.getLocation().add(0, 1, 0), nearest.getLocation().add(0, 1, 0), org.bukkit.Color.fromRGB(150, 0, 0));
         player.playSound(player.getLocation(), Sound.BLOCK_CHAIN_BREAK, 1.0f, 0.8f);
         nearest.sendMessage(MM.parse("<red>You've been tethered!"));
         player.sendMessage(MM.parse("<gray>Tethered " + nearest.getName() + "!"));

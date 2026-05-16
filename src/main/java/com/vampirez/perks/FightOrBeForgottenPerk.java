@@ -56,6 +56,12 @@ public class FightOrBeForgottenPerk extends Perk {
             victim.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 600, 0, false, true)); // Speed I
 
             victim.getWorld().spawnParticle(Particle.FLAME, victim.getLocation().add(0, 1, 0), 40, 0.5, 1, 0.5, 0.05);
+            // MAX DRAMA — loudest moment in the game. Lightning + giant red shockwave +
+            // layered explosion + persistent red atom orbit for the full 30s last-stand.
+            com.vampirez.fx.VFX.fx().lightningFlash(victim.getLocation());
+            com.vampirez.fx.VFX.fx().shockwave(victim.getLocation(), org.bukkit.Color.fromRGB(255, 0, 0), 8.0, 35);
+            com.vampirez.fx.VFX.fx().atomAround(victim, org.bukkit.Color.fromRGB(255, 0, 0), 600); // 30s
+            com.vampirez.fx.VFX.sound().playExplosion(victim.getLocation());
             victim.playSound(victim.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.8f, 1.2f);
             victim.sendMessage(MM.parse("<red><bold>FIGHT OR BE FORGOTTEN! 30 seconds to live!"));
 
@@ -82,10 +88,13 @@ public class FightOrBeForgottenPerk extends Perk {
                 victim.removePotionEffect(PotionEffectType.STRENGTH);
                 victim.removePotionEffect(PotionEffectType.SPEED);
 
-                // Convert to vampire
+                // Convert to vampire — dramatic dark expiry: shockwave + vortex + death-rattle
                 victim.sendMessage(MM.parse("<dark_red>Your time is up... you rise as a Vampire!"));
                 victim.playSound(victim.getLocation(), Sound.ENTITY_ZOMBIE_VILLAGER_CONVERTED, 1.0f, 0.8f);
                 victim.getWorld().spawnParticle(Particle.LARGE_SMOKE, victim.getLocation().add(0, 1, 0), 30, 0.5, 1, 0.5, 0.02);
+                com.vampirez.fx.VFX.fx().shockwave(victim.getLocation(), org.bukkit.Color.fromRGB(80, 0, 0), 7.0, 30);
+                com.vampirez.fx.VFX.fx().vortex(victim.getLocation(), org.bukkit.Color.fromRGB(40, 0, 0), 40);
+                com.vampirez.fx.VFX.sound().playDeathRattle(victim.getLocation());
 
                 plugin.getGameManager().convertHumanToVampire(victim);
             }, 600L); // 30 seconds

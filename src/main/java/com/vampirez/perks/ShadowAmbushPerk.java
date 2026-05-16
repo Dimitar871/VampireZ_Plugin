@@ -82,6 +82,9 @@ public class ShadowAmbushPerk extends Perk {
         // 3s invisibility = 60 ticks
         player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 60, 0, false, false));
         player.getWorld().spawnParticle(Particle.LARGE_SMOKE, player.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.02);
+        // Black vortex during stealth
+        com.vampirez.fx.VFX.fx().vortex(player.getLocation(), org.bukkit.Color.fromRGB(20, 20, 30), 60);
+        com.vampirez.fx.VFX.sound().playPortal(player.getLocation());
         player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.7f, 1.5f);
         player.sendMessage(MM.parse("<dark_gray>You vanish into the shadows..."));
         incrementStat(uuid, "activations");

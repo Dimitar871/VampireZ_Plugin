@@ -8,7 +8,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Copying plugin to server...
-copy /Y target\VampireZ-2.2.1.jar ..\test-server\plugins\
+copy /Y target\VampireZ-2.3.0.jar ..\test-server\plugins\
 
 if %errorlevel% neq 0 (
     echo Copy failed!

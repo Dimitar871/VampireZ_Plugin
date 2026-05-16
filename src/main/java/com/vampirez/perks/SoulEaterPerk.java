@@ -73,8 +73,10 @@ public class SoulEaterPerk extends Perk {
         killer.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, killer.getLocation().add(0, 0.5, 0), 20, 0.5, 0.5, 0.5, 0.03);
         killer.getWorld().spawnParticle(Particle.DUST, killer.getLocation().add(0, 2, 0), 25, 0.6, 0.6, 0.6, 0,
                 new Particle.DustOptions(org.bukkit.Color.fromRGB(40, 200, 200), 2.0f));
-        // Soul rising from victim
+        // Soul rising from victim + blood spray cue + pickup ding
         victim.getWorld().spawnParticle(Particle.SOUL, victim.getLocation().add(0, 1, 0), 30, 0.3, 1.5, 0.3, 0.1);
+        com.vampirez.fx.VFX.fx().bloodSpray(victim.getLocation());
+        com.vampirez.fx.VFX.sound().playPickup(killer);
         killer.playSound(killer.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 0.5f, 1.5f);
         killer.sendMessage(MM.parse("<dark_purple>Soul consumed! Damage +" + (stacks * 10) + "%"));
     }

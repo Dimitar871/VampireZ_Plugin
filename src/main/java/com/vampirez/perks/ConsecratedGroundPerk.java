@@ -88,6 +88,9 @@ public class ConsecratedGroundPerk extends Perk {
         player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, loc.clone().add(0, 1, 0), 80, 2, 0.5, 2, 0.1);
         player.getWorld().spawnParticle(Particle.DUST, loc.clone().add(0, 1, 0), 40, 2, 0.5, 2, 0,
                 new Particle.DustOptions(org.bukkit.Color.fromRGB(255, 215, 0), 2.0f));
+        // Holy gold ground rune marking the 8s zone (160 ticks)
+        com.vampirez.fx.VFX.fx().runeCircle(loc, org.bukkit.Color.fromRGB(255, 215, 0), 4.0, 160);
+        com.vampirez.fx.VFX.sound().playBuff(player);
         incrementStat(uuid, "activations");
         player.sendMessage(MM.parse("<gold>Consecrated Ground activated!"));
     }

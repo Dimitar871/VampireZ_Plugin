@@ -49,6 +49,10 @@ public class PhoenixDownPerk extends Perk {
             victim.setHealth(victim.getMaxHealth() / 2.0);
             victim.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 60, 4, false, true));
             victim.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, victim.getLocation().add(0, 1, 0), 50, 1, 1, 1, 0.2);
+            // Resurrection cue: orange helix + atom orbit during invuln + buff cue
+            com.vampirez.fx.VFX.fx().helix(victim.getLocation(), org.bukkit.Color.fromRGB(255, 140, 0), 30);
+            com.vampirez.fx.VFX.fx().atomAround(victim, org.bukkit.Color.fromRGB(255, 140, 0), 60);
+            com.vampirez.fx.VFX.sound().playBuff(victim);
             victim.playSound(victim.getLocation(), Sound.ITEM_TOTEM_USE, 1.0f, 1.0f);
             victim.sendMessage(MM.parse("<gold>Phoenix Down activated! You were saved from death!"));
         }

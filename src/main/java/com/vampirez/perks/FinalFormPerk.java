@@ -57,6 +57,9 @@ public class FinalFormPerk extends Perk {
             player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 40, 1.0, 1.5, 1.0, 0,
                     new Particle.DustOptions(org.bukkit.Color.fromRGB(100, 0, 150), 2.5f));
             player.getWorld().spawnParticle(Particle.FLAME, player.getLocation().add(0, 1, 0), 25, 0.5, 1, 0.5, 0.05);
+            // Persistent red atom orbit for the buff duration + spell-cast cue
+            com.vampirez.fx.VFX.fx().atomAround(player, org.bukkit.Color.fromRGB(180, 0, 0), DURATION_TICKS * 20);
+            com.vampirez.fx.VFX.sound().playSpellCast(player.getLocation());
             player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.5f, 2.0f);
         }
 

@@ -128,8 +128,10 @@ public class DecoyPerk extends Perk {
         if (armorAttr != null) armorAttr.addModifier(armorMod);
         if (toughnessAttr != null) toughnessAttr.addModifier(toughnessMod);
 
-        // Effects
+        // Effects: gray vortex marking the deployment + portal cue
         victim.getWorld().spawnParticle(Particle.CLOUD, victim.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.1);
+        com.vampirez.fx.VFX.fx().vortex(victim.getLocation(), org.bukkit.Color.fromRGB(180, 180, 200), 40);
+        com.vampirez.fx.VFX.sound().playPortal(victim.getLocation());
         victim.playSound(victim.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 1.0f);
         victim.sendMessage(MM.parse("<light_purple>4 Decoys deployed! You're fully invisible for 2s!"));
 

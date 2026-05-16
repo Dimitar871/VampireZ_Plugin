@@ -87,6 +87,9 @@ public class CitadelPerk extends Perk {
 
         player.getWorld().playSound(loc, Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.0f);
         player.getWorld().spawnParticle(Particle.END_ROD, loc.clone().add(0, 1, 0), 60, 2, 0.5, 2, 0.05);
+        // Gold rune circle marking the zone for its 8s duration (160 ticks)
+        com.vampirez.fx.VFX.fx().runeCircle(loc, org.bukkit.Color.fromRGB(255, 215, 0), 5.0, 160);
+        com.vampirez.fx.VFX.sound().playSpellCast(loc);
         incrementStat(uuid, "activations");
         player.sendMessage(MM.parse("<light_purple>Citadel activated!"));
     }

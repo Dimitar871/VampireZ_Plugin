@@ -127,6 +127,9 @@ public class BatFormPerk extends Perk {
         player.getWorld().spawnParticle(Particle.LARGE_SMOKE, player.getLocation().add(0, 1, 0), 80, 0.5, 1, 0.5, 0.05);
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 30, 0.5, 1, 0.5, 0,
                 new Particle.DustOptions(Color.fromRGB(48, 0, 48), 1.5f));
+        // Bat-form vortex for the 5s invis duration
+        com.vampirez.fx.VFX.fx().vortex(player.getLocation(), Color.fromRGB(48, 0, 48), 100);
+        com.vampirez.fx.VFX.sound().playPortal(player.getLocation());
         player.playSound(player.getLocation(), Sound.ENTITY_BAT_TAKEOFF, 1.0f, 0.8f);
         player.sendMessage(MM.parse("<dark_purple>You transform into a bat!"));
 

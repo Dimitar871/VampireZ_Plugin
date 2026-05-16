@@ -104,17 +104,21 @@ public class VoidWalkerPerk extends Perk {
         teleportLoc.setYaw(target.getLocation().getYaw());
         teleportLoc.setPitch(target.getLocation().getPitch());
 
-        // Effects at origin
+        // Effects at origin (vortex + portal cue)
         player.getWorld().spawnParticle(Particle.PORTAL, player.getLocation().add(0, 1, 0), 40, 0.5, 1, 0.5, 0.5);
+        com.vampirez.fx.VFX.fx().vortex(player.getLocation(), org.bukkit.Color.PURPLE, 30);
+        com.vampirez.fx.VFX.sound().playPortal(player.getLocation());
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
 
         player.teleport(teleportLoc);
 
-        // AoE burst on arrival - 3 hearts to nearby enemies + slowness
+        // AoE burst on arrival - 3 hearts to nearby enemies + slowness + shockwave
         player.getWorld().spawnParticle(Particle.PORTAL, teleportLoc.clone().add(0, 1, 0), 60, 1.5, 1, 1.5, 0.5);
         player.getWorld().spawnParticle(Particle.EXPLOSION, teleportLoc.clone().add(0, 1, 0), 3, 1, 0.5, 1, 0);
         player.getWorld().spawnParticle(Particle.DUST, teleportLoc.clone().add(0, 1, 0), 30, 2, 1, 2, 0,
                 new Particle.DustOptions(org.bukkit.Color.PURPLE, 2.0f));
+        com.vampirez.fx.VFX.fx().shockwave(teleportLoc, org.bukkit.Color.PURPLE, 4.0, 20);
+        com.vampirez.fx.VFX.sound().playExplosion(teleportLoc);
         player.playSound(teleportLoc, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
         player.playSound(teleportLoc, Sound.ENTITY_GENERIC_EXPLODE, 0.6f, 1.5f);
 
