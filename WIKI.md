@@ -327,7 +327,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 **Team key:** 🔵 Human only · 🔴 Vampire only · ⚪ Both teams
 
 
-### Silver Tier (50 perks · 50 g)
+### Silver Tier (51 perks · 50 g)
 
 
 | Icon | Team | Perk | Effect |
@@ -358,6 +358,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/ghast_tear.png" width="24"> | ⚪ | Regenerative | Permanent slow health regen |
 | <img src="images/perks/skeleton_skull.png" width="24"> | ⚪ | Headhunter | Bonus damage to targets above 80 % HP |
 | <img src="images/perks/sunflower.png" width="24"> | ⚪ | Lucky Roll (Silver) | Replaces itself with a random Gold perk |
+| <img src="images/perks/experience_bottle.png" width="24"> | ⚪ | Caring is Sharing | Start with 64 XP bottles, regen 4 every 30 s (cap 64) |
 | <img src="images/perks/golden_apple.png" width="24"> | 🔵 | First-Aid Kit | +30 % healing received |
 | <img src="images/perks/beacon.png" width="24"> | 🔵 | Buff Buddies | Allies within 10 blocks get Resistance I |
 | <img src="images/perks/target.png" width="24"> | 🔵 | Steady Aim | +20 % projectile damage |

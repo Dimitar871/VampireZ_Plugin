@@ -998,6 +998,39 @@ ender_pearl_supply:
             material: ENDER_PEARL
             amount: 1
 
+caring_is_sharing:
+  name: "Caring is Sharing"
+  tier: SILVER
+  team: BOTH
+  icon: EXPERIENCE_BOTTLE
+  description:
+    - "Start with 64 XP bottles."
+    - "Regenerate 4 every 30 seconds (cap 64)."
+  hooks:
+    apply:
+      - actions:
+          - type: give_item
+            material: EXPERIENCE_BOTTLE
+            amount: 64
+            display_name: "&bBottle o' Sharing"
+    on_tick:
+      - conditions:
+          - type: cooldown
+            ms: 30000
+          - type: item_count_below
+            material: EXPERIENCE_BOTTLE
+            threshold: 64
+        actions:
+          - type: give_item
+            material: EXPERIENCE_BOTTLE
+            amount: 4
+            display_name: "&bBottle o' Sharing"
+          - type: play_sound
+            target: owner
+            sound: ENTITY_EXPERIENCE_ORB_PICKUP
+            volume: 0.6
+            pitch: 1.4
+
 poison_quiver:
   name: "Poison Quiver"
   tier: GOLD

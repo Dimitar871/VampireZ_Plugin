@@ -1056,8 +1056,12 @@ public class GameManager {
             return;
         }
 
-        // ENDING state — just clean up
-        joinedPlayers.remove(uuid);
+        // ENDING state — keep in joinedPlayers so resetToLobby's offline-cleanup branch
+        // picks them up. Their saved-state .yml stays on disk so handlePlayerJoin's Case 3
+        // can restore their pre-game inventory on reconnect. Removing here would orphan
+        // them: resetToLobby would never see them, and they'd reconnect still holding
+        // the gear they had at quit time.
+        scoreboardManager.removePlayer(uuid);
     }
 
     private PerkTier randomTier() {
@@ -1235,12 +1239,13 @@ public class GameManager {
     public boolean isInCombat(UUID uuid)    { return teamManager.isInCombat(uuid); }
 
     /**
-     * Restores saved states for all players still in the lobby.
-     * Called on server shutdown so no stale save files remain on disk after restart.
+     * Restores saved states for ONLINE players still in the lobby on server shutdown.
+     * Offline players in joinedPlayers (e.g. quit mid-game and never returned) intentionally
+     * keep their .yml on disk — handlePlayerJoin's Case 3 restores them on next reconnect.
+     * Wiping those files here would permanently destroy their pre-game inventory.
      */
     public void restoreLobbyPlayers() {
         if (playerStateManager == null) return;
-        // Restore online players' inventories
         for (UUID uuid : new HashSet<>(joinedPlayers)) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline()) {
@@ -1248,8 +1253,6 @@ public class GameManager {
             }
         }
         joinedPlayers.clear();
-        // Wipe ALL saved state files — server is shutting down, no game will be running
-        playerStateManager.clearAllSavedStates();
     }
 
     public Location getLobbySpawn()   { return spawnManager.getLobbySpawn(); }

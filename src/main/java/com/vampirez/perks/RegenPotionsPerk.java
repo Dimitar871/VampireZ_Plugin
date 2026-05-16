@@ -4,10 +4,16 @@ import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.MM;
+import com.vampirez.fx.VFX;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.Color;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
@@ -67,6 +73,15 @@ public class RegenPotionsPerk extends Perk {
             lastRegen.put(uuid, now);
             player.getInventory().addItem(createPotion());
             player.sendMessage(MM.parse("<light_purple>A regeneration potion has regenerated!"));
+
+            Color pink = Color.fromRGB(205, 92, 171);
+            Location loc = player.getLocation().add(0, 1.0, 0);
+            player.getWorld().spawnParticle(Particle.DUST, loc, 25, 0.5, 0.7, 0.5, 0,
+                    new Particle.DustOptions(pink, 1.3f));
+            player.getWorld().spawnParticle(Particle.WITCH, loc, 10, 0.4, 0.6, 0.4, 0);
+            VFX.fx().atomAround(player, pink, 16);
+            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.6f, 1.3f);
+            player.playSound(player.getLocation(), Sound.BLOCK_BREWING_STAND_BREW, SoundCategory.PLAYERS, 0.5f, 1.5f);
         }
     }
 }
