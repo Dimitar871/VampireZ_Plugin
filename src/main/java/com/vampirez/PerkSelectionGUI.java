@@ -193,6 +193,15 @@ public class PerkSelectionGUI {
 
     private void selectPerk(Player player, SelectionState state, int idx) {
         if (state.selected) return;
+        // Game-state guard: if the game has already ended (e.g. last human just converted
+        // while this GUI was still open), don't add the perk — it would leak into the lobby
+        // and the next game.
+        if (gameManager.getState() != GameState.ACTIVE && gameManager.getState() != GameState.STARTING) {
+            state.selected = true;
+            cancelCountdown(state);
+            player.closeInventory();
+            return;
+        }
         Perk picked = state.offeredPerks.get(idx);
         UUID uuid = player.getUniqueId();
 
@@ -276,6 +285,14 @@ public class PerkSelectionGUI {
                         + secondsLeft[0] + "</bold><yellow>s <red>⚠"));
             }
             if (secondsLeft[0] <= 0) {
+                // Game-state guard: if the game ended while the GUI was open, don't
+                // auto-assign — would leak the perk into lobby and next game.
+                if (gameManager.getState() != GameState.ACTIVE && gameManager.getState() != GameState.STARTING) {
+                    state.selected = true;
+                    cancelCountdown(state);
+                    p.closeInventory();
+                    return;
+                }
                 Perk randomPerk = state.offeredPerks.get(rng.nextInt(state.offeredPerks.size()));
                 perkManager.addPerkToPlayer(uuid, randomPerk, sourceFor(state));
                 p.sendMessage(Component.empty()

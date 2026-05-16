@@ -135,6 +135,10 @@ public class GameManager {
         // Save survival state to disk, then clear player
         playerStateManager.saveAndClear(player);
         joinedPlayers.add(uuid);
+        // Defensive: wipe any perks left over from a previous game (e.g. from a delayed
+        // conversion-GUI auto-pick that fired after resetToLobby).
+        perkManager.removeAllPerks(uuid);
+        economyManager.resetPlayer(uuid);
 
         // Teleport to lobby in adventure mode (arena is protected)
         if (spawnManager.getLobbySpawn() != null) {
@@ -342,6 +346,9 @@ public class GameManager {
         for (UUID uuid : teamManager.getHumanTeam()) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null) {
+                // Defensive: clear any leftover perks before assigning loadout.
+                // resetPlayerFully handles inventory/attrs/potions; this catches the perk registry.
+                perkManager.removeAllPerks(uuid);
                 resetPlayerFully(player);
                 player.setWalkSpeed(0.2f); // default walk speed
                 player.setFlySpeed(0.1f);
@@ -359,6 +366,7 @@ public class GameManager {
         for (UUID uuid : teamManager.getVampireTeam()) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null) {
+                perkManager.removeAllPerks(uuid);
                 resetPlayerFully(player);
                 player.setWalkSpeed(0.2f);
                 player.setFlySpeed(0.1f);
