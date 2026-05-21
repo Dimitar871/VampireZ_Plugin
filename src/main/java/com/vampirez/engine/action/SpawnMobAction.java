@@ -1,5 +1,7 @@
 package com.vampirez.engine.action;
 
+import com.vampirez.GameManager;
+import com.vampirez.VampireZPlugin;
 import com.vampirez.engine.HookContext;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -16,6 +18,11 @@ import org.bukkit.entity.Zombie;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Spawns N mobs around the owner, with optional name, team metadata, equipment, taming, and
@@ -100,9 +107,10 @@ public class SpawnMobAction implements Action {
             // Make the mob target enemies of owner's team. Mobs use vampirez_team metadata to
             // decide friend/foe via existing GameListener mob-targeting logic.
             if (entity instanceof Mob mob) {
-                // No explicit target — GameListener already wires mob aggression by team metadata.
-                // Just leave the mob to behave naturally.
                 mob.setRemoveWhenFarAway(false);
+                // Force immediate aggression — vanilla AI scanning can take 1-3s otherwise,
+                // wasting a chunk of the mob's lifetime standing idle.
+                aggroNearestEnemy(mob, owner, plugin);
             }
 
             if (lifetimeTicks > 0) {
@@ -110,6 +118,43 @@ public class SpawnMobAction implements Action {
                     if (!entity.isDead()) entity.remove();
                 }, lifetimeTicks);
             }
+        }
+    }
+
+    /**
+     * Force the mob to attack the nearest enemy player of the owner's opposing team.
+     * Searches within 24 blocks; falls back to no-op if no enemy is online or in range.
+     * Also briefly buffs Speed I so the mob actually closes the distance fast.
+     *
+     * <p>Public + static so other spawnable perks (e.g. {@code SummonerPerk}) can reuse it.
+     */
+    public static void aggroNearestEnemy(Mob mob, Player owner, JavaPlugin plugin) {
+        if (!(plugin instanceof VampireZPlugin vzPlugin)) return;
+        GameManager gm = vzPlugin.getGameManager();
+        if (gm == null) return;
+
+        boolean ownerIsVampire = gm.isVampire(owner.getUniqueId());
+        Set<UUID> enemyTeam = ownerIsVampire ? gm.getHumanTeam() : gm.getVampireTeam();
+        if (enemyTeam == null || enemyTeam.isEmpty()) return;
+
+        Player nearest = null;
+        double nearestDistSq = 24 * 24; // max aggro range
+        Location mobLoc = mob.getLocation();
+        for (UUID uuid : enemyTeam) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p == null || !p.isOnline()) continue;
+            if (!p.getWorld().equals(mob.getWorld())) continue;
+            double distSq = p.getLocation().distanceSquared(mobLoc);
+            if (distSq < nearestDistSq) {
+                nearestDistSq = distSq;
+                nearest = p;
+            }
+        }
+
+        if (nearest != null) {
+            mob.setTarget(nearest);
+            // Brief Speed I so the mob actually closes — Zombies/Skeletons walk slowly.
+            mob.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 100, 0, false, false));
         }
     }
 }

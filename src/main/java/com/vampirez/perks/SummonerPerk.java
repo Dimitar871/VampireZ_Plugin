@@ -86,6 +86,8 @@ public class SummonerPerk extends Perk {
             wolf.customName(Component.text(player.getName() + "'s Wolf").color(NamedTextColor.RED));
             wolf.setCustomNameVisible(true);
             wolf.setMetadata("vampirez_team", new FixedMetadataValue(getPlugin(), "VAMPIRE"));
+            // Force immediate aggression on nearest enemy (same helper as YAML spawn_mob action).
+            com.vampirez.engine.action.SpawnMobAction.aggroNearestEnemy(wolf, player, getPlugin());
         }
 
         player.getWorld().spawnParticle(Particle.LARGE_SMOKE, player.getLocation().add(0, 0.5, 0), 20, 1, 0.5, 1, 0.02);
