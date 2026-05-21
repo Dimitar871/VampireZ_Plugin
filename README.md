@@ -6,28 +6,29 @@
 
 A Minecraft minigame plugin where **Humans survive against Vampires** for 25 minutes. Dead humans convert into vampires — the last surviving human wins the round, or the vampires do if they wipe everyone out.
 
-Built for **Spigot / Paper 1.21.3+** with Java 17.
+Built for **Spigot / Paper 1.21.3+** with Java 21.
 
-> 📖 Full game mechanics, damage math, and the complete 145-perk catalogue live in the **[Wiki](WIKI.md)**.
+> 📖 Full game mechanics, damage math, and the complete 166-perk catalogue live in the **[Wiki](WIKI.md)**.
 
 ---
 
 ## Features at a glance
 
 - Two asymmetric teams — Humans (iron + bows) vs Vampires (leather + leap)
-- **145 unique perks** across Silver / Gold / Prismatic tiers
+- **166 unique perks** across Silver / Gold / Prismatic tiers
 - Gold economy (passive income, kill & assist rewards)
 - Day / Night cycle with vampire-specific buffs and debuffs
 - Perk shop GUI with random roll selection
 - Free timed perks at 5 / 10 / 15 min
 - Multi-server safe — full inventory isolation, crash-safe saves
 - Clickable event broadcasts with `/vz announce`
+- Optional **Discord bot** integration — live status embed, game start/end announcements, day/night posts
 
 ---
 
 ## Installation
 
-Requirements: **Paper or Spigot 1.21.3+** and **Java 17+**.
+Requirements: **Paper or Spigot 1.21.3+** and **Java 21+**.
 
 1. Download the latest `VampireZ-*.jar` from the [Releases](../../releases) page (or build with `mvn clean package`) and drop it into your server's `plugins/` folder.
 2. Download `VampireZ-Map.zip` and extract it into your server root (next to `plugins/`, `server.properties`). It already contains an **`arena-template/`** folder. Leave your existing `world/` alone — the plugin clones a fresh copy of `arena-template/` every round.
@@ -97,7 +98,7 @@ Settings live in `plugins/VampireZ/config.yml` after first run. Common tweaks:
 | `game.vampire-ratio` | 0.3 | Starting vampire fraction |
 | `economy.kill-reward` | 15 | Gold for a kill |
 | `economy.assist-reward` | 5 | Gold per assist |
-| `perks.max-perks-per-player` | 4 | Perk slot cap |
+| `perks.max-perks-per-player` | 10 | Perk slot cap |
 
 The full schema and tuning tips are in the [Wiki → Configuration](WIKI.md#configuration-reference).
 
@@ -106,7 +107,70 @@ The full schema and tuning tips are in the [Wiki → Configuration](WIKI.md#conf
 ## Requirements
 
 - Spigot or Paper 1.21.3+
-- Java 17+
+- Java 21+
+
+---
+
+## Discord Bot Setup (Optional)
+
+The plugin can post game status to Discord — a live embed that edits in place plus announcements for game start / end and day↔night flips. The bot is **disabled by default** and is per-server: each operator runs their own Discord application, so no shared token is ever shipped or exposed.
+
+### 1. Create your Discord application
+
+1. Open <https://discord.com/developers/applications> → **New Application** → give it any name.
+2. Left sidebar → **Bot** → **Reset Token** → copy the token. Treat it like a password.
+3. Leave all **Privileged Gateway Intents** OFF — the plugin uses none.
+
+### 2. Invite the bot to your server
+
+Build this URL, replacing `<APPLICATION_ID>` with the Application ID from the **General Information** page:
+
+```
+https://discord.com/api/oauth2/authorize?client_id=<APPLICATION_ID>&scope=bot&permissions=18432
+```
+
+`permissions=18432` grants exactly **Send Messages** + **Embed Links** — nothing more. Open the URL, pick your server, click **Authorize**.
+
+### 3. Grab the channel IDs
+
+In Discord: **User Settings → Advanced → Developer Mode ON**. Right-click the target channel → **Copy Channel ID**. You need one for the live status embed and one for announcements (they can be the same channel).
+
+### 4. Configure the plugin
+
+Start the server once with the plugin installed so it generates `plugins/VampireZ/config.yml`, then edit the `discord:` section:
+
+```yaml
+discord:
+  enabled: true
+  token: "PASTE_YOUR_BOT_TOKEN_HERE"
+  status-channel-id: "1234567890123456789"
+  announce-channel-id: "1234567890123456789"
+  presence-update-seconds: 30
+  status-embed-update-seconds: 10
+  announce-conversions: false
+  announce-day-night: true
+```
+
+Leave `status-message-id` blank — the bot writes it itself on first post.
+
+### 5. Restart and verify
+
+On boot you should see:
+
+```
+Discord bot connected as <BotName>#0000
+```
+
+If the token is wrong or empty the plugin logs a warning and runs normally without Discord — the integration is fully optional.
+
+### Troubleshooting
+
+| Symptom | Fix |
+|--------|-----|
+| `status channel … not found` | Bot isn't in the server, channel ID is wrong, or the bot's role can't see that channel. |
+| `lacks permission to edit messages` | Channel overrides are blocking Send Messages / Embed Links for the bot's role. |
+| Token leaked | Dev portal → **Reset Token** → paste the new one into config.yml. The old token is instantly invalidated. |
+| Status embed deleted manually | The plugin detects this (UNKNOWN_MESSAGE) and posts a fresh one next tick — no action needed. |
 
 ---
 
