@@ -445,8 +445,9 @@ re-apply enchant-а след respawn).
 ## Конфигурация
 
 `config.yml` се парсва автоматично в `PluginConfig` POJO при boot.
-`reloadPluginConfig()` препрочита от диск (lobby state only). Промени за
-`perks.yml` все още изискват restart (планирана подобрение).
+`reloadPluginConfig()` препрочита от диск (lobby state only). `/vz reload`
+презарежда и `perks.yml` — data-driven perks се ре-парсват и подменят в
+registry-то (`PerkManager.reloadDataDrivenPerks`), Java perks остават.
 
 Ключови tunables:
 - `game.*` - min players, duration, vampire ratio

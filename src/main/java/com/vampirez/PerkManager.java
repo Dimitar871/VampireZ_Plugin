@@ -176,6 +176,40 @@ public class PerkManager {
         }
     }
 
+    /**
+     * Replaces every registered {@link com.vampirez.engine.DataDrivenPerk} with the
+     * freshly loaded set — the heart of perks.yml hot reload. Call in LOBBY only.
+     *
+     * <p>Stale data-driven instances are first detached from any player still holding
+     * them (admin test perks), so no player list keeps a perk the registry no longer
+     * knows. Boot order registers YAML perks before Java perks, so a YAML id that
+     * collides with a Java perk loses; this method preserves that precedence by
+     * skipping such ids instead of overwriting.
+     *
+     * @return ids that were skipped because a Java perk already owns them
+     */
+    public List<String> reloadDataDrivenPerks(List<? extends Perk> fresh) {
+        for (UUID uuid : new ArrayList<>(playerPerks.keySet())) {
+            for (Perk perk : new ArrayList<>(playerPerks.get(uuid))) {
+                if (perk instanceof com.vampirez.engine.DataDrivenPerk) {
+                    removePerk(uuid, perk);
+                }
+            }
+        }
+
+        perkRegistry.values().removeIf(p -> p instanceof com.vampirez.engine.DataDrivenPerk);
+
+        List<String> skipped = new ArrayList<>();
+        for (Perk perk : fresh) {
+            if (perkRegistry.containsKey(perk.getId())) {
+                skipped.add(perk.getId());
+                continue;
+            }
+            perkRegistry.put(perk.getId(), perk);
+        }
+        return skipped;
+    }
+
     public boolean hasPerk(UUID uuid, String perkId) {
         List<Perk> perks = playerPerks.get(uuid);
         if (perks == null) return false;

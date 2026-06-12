@@ -568,7 +568,7 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             return;
         }
         gameManager.reloadAllConfig();
-        player.sendMessage(MM.parse("<green>Config reloaded! Updated: game settings, economy, day/night, disabled perks, perk limits."));
+        player.sendMessage(MM.parse("<green>Config reloaded! Updated: game settings, economy, day/night, disabled perks, perk limits, perks.yml."));
     }
 
     void handleLeaderboard(Player player) {

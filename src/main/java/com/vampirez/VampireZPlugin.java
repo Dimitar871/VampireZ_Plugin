@@ -221,11 +221,32 @@ public class VampireZPlugin extends JavaPlugin {
         api = null;
     }
 
-    private void registerAllPerks(PerkManager pm) {
-        // ===== Data-driven perks (loaded from perks.yml) =====
+    /** Parses perks.yml from the data folder into DataDrivenPerk instances. */
+    private java.util.List<DataDrivenPerk> loadDataDrivenPerks() {
         PerkConfigLoader loader = new PerkConfigLoader(getLogger());
         File perksYml = new File(getDataFolder(), "perks.yml");
-        for (DataDrivenPerk p : loader.loadAll(perksYml)) {
+        return loader.loadAll(perksYml);
+    }
+
+    /**
+     * Hot-reloads perks.yml: re-parses the file and swaps the registered
+     * data-driven perks. LOBBY only (enforced by the /vz reload handler).
+     *
+     * @return the number of data-driven perks now registered
+     */
+    public int reloadDataDrivenPerks() {
+        java.util.List<DataDrivenPerk> fresh = loadDataDrivenPerks();
+        java.util.List<String> skipped = gameManager.getPerkManager().reloadDataDrivenPerks(fresh);
+        for (String id : skipped) {
+            getLogger().warning("perks.yml entry '" + id + "' skipped on reload — a Java perk owns that id.");
+        }
+        getLogger().info("Reloaded perks.yml: " + (fresh.size() - skipped.size()) + " data-driven perks registered.");
+        return fresh.size() - skipped.size();
+    }
+
+    private void registerAllPerks(PerkManager pm) {
+        // ===== Data-driven perks (loaded from perks.yml) =====
+        for (DataDrivenPerk p : loadDataDrivenPerks()) {
             pm.registerPerk(p);
         }
 

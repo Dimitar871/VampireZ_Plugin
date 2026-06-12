@@ -551,7 +551,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | `/vz setvampspawn` | `vampirez.admin` | Set vampire spawn |
 | `/vz arena` | `vampirez.admin` | Teleport to arena world |
 | `/vz test` | `vampirez.admin` | Open perk test menu |
-| `/vz reload` | `vampirez.admin` | Reload config (lobby only) |
+| `/vz reload` | `vampirez.admin` | Reload config + perks.yml (lobby only) |
 
 ---
 

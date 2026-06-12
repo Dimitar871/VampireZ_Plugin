@@ -110,6 +110,7 @@ public class GameManager {
         economyManager.reloadConfig();
         dayNightManager.reloadConfig();
         perkManager.setDisabledPerks(plugin.getPluginConfig().perks.disabledPerks);
+        plugin.reloadDataDrivenPerks();
     }
 
     public StatAnvilManager getStatAnvilManager()      { return statAnvilManager; }
