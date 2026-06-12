@@ -670,9 +670,11 @@ public class GameManager {
                 giveBloodCompass(player);
             }
 
-            // Open free replacement perk selection for each removed human-only perk
+            // Open free replacement perk selection for each removed human-only perk,
+            // each pick at the same tier as the perk it replaces.
             if (!removedPerks.isEmpty() && perkSelectionGUISupplier.get() != null) {
-                perkSelectionGUISupplier.get().openConversionSelection(player, PerkTeam.VAMPIRE, removedPerks.size());
+                List<PerkTier> lostTiers = removedPerks.stream().map(Perk::getTier).toList();
+                perkSelectionGUISupplier.get().openConversionSelection(player, PerkTeam.VAMPIRE, lostTiers);
             }
         }, 40L); // 2 second delay
 
@@ -1027,20 +1029,17 @@ public class GameManager {
             if (elapsed >= t.freeGoldPerkAtSeconds)      perksToGive.add(randomTier());
             if (elapsed >= t.freePrismaticPerkAtSeconds) perksToGive.add(randomTier());
 
-            // 3. Replacements for human-only perks (if they were human)
+            // 3. Replacements for human-only perks (if they were human) — same tier
+            //    as each lost perk, matching the interactive conversion picks.
             if (teamManager.getHumanTeam().contains(uuid)) {
-                // Count human-only perks before removing
-                long humanOnlyCount = perkManager.getPlayerPerks(uuid).stream()
+                perkManager.getPlayerPerks(uuid).stream()
                         .filter(p -> p.getTeam() == PerkTeam.HUMAN)
-                        .count();
-                for (int i = 0; i < humanOnlyCount; i++) {
-                    perksToGive.add(randomTier());
-                }
+                        .map(Perk::getTier)
+                        .forEach(perksToGive::add);
 
                 // Convert to vampire (event is informational only — cancellation can't be acted on after disconnect)
                 Bukkit.getPluginManager().callEvent(new PlayerConvertedEvent(uuid, PlayerConvertedEvent.Cause.DISCONNECT));
-                teamManager.getHumanTeam().remove(uuid);
-                teamManager.getVampireTeam().add(uuid);
+                teamManager.convertToVampire(uuid);
 
                 Component dcPrefix = MM.legacy(plugin.getPluginConfig().messages.prefix);
                 for (Player p : getJoinedOnlinePlayers()) {

@@ -160,6 +160,41 @@ class ConversionFlowTest {
         }
 
         @Test
+        void removedPerksKeepTheirTiersInRemovalOrder() {
+            // The conversion GUI replaces each lost perk at ITS tier, in order —
+            // so the removal result must preserve both.
+            StubPerk goldHuman = new StubPerk("marksman", PerkTeam.HUMAN, PerkTier.GOLD);
+            StubPerk prisHuman = new StubPerk("guardian_angel", PerkTeam.HUMAN, PerkTier.PRISMATIC);
+            perkManager.registerPerk(goldHuman);
+            perkManager.registerPerk(prisHuman);
+            perkManager.addPerkToPlayer(alice, humanPerk);   // SILVER
+            perkManager.addPerkToPlayer(alice, goldHuman);
+            perkManager.addPerkToPlayer(alice, prisHuman);
+
+            List<PerkTier> lostTiers = perkManager.removeTeamSpecificPerks(alice, PerkTeam.HUMAN)
+                    .stream().map(Perk::getTier).toList();
+
+            assertEquals(List.of(PerkTier.SILVER, PerkTier.GOLD, PerkTier.PRISMATIC), lostTiers);
+        }
+
+        @Test
+        void replacementPoolMatchesTheLostPerkTier() {
+            StubPerk goldVampire = new StubPerk("shadow_strike", PerkTeam.VAMPIRE, PerkTier.GOLD);
+            StubPerk prisVampire = new StubPerk("final_form", PerkTeam.VAMPIRE, PerkTier.PRISMATIC);
+            perkManager.registerPerk(goldVampire);
+            perkManager.registerPerk(prisVampire);
+
+            // Lost a GOLD perk → the pick pool must be gold-only
+            List<Perk> goldPool = perkManager.getRandomPerks(PerkTier.GOLD, PerkTeam.VAMPIRE, 10, alice);
+            assertEquals(List.of(goldVampire), goldPool,
+                    "a lost Gold perk must roll Gold replacements — not Silver, not Prismatic");
+
+            // Lost a PRISMATIC perk → prismatic-only
+            List<Perk> prisPool = perkManager.getRandomPerks(PerkTier.PRISMATIC, PerkTeam.VAMPIRE, 10, alice);
+            assertEquals(List.of(prisVampire), prisPool);
+        }
+
+        @Test
         void maxPerkCapHoldsDuringConversionPicks() {
             perkManager.setMaxPerks(1);
             assertTrue(perkManager.addPerkToPlayer(alice, bothPerk));

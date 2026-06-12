@@ -60,7 +60,8 @@ public class PerkSelectionGUI {
         PerkTier perkTier;
         PerkTeam playerTeam;
         List<Perk> offeredPerks;
-        int remainingConversionPicks;
+        /** CONVERSION mode: tiers still owed, head = the tier of THIS pick (same rarity as the lost perk). */
+        List<PerkTier> conversionTiers = List.of();
         Component title;
         boolean selected;
         boolean rerolling;
@@ -99,17 +100,32 @@ public class PerkSelectionGUI {
         openSelectionGui(player, state);
     }
 
-    public void openConversionSelection(Player player, PerkTeam newTeam, int picksRemaining) {
-        List<Perk> options = perkManager.getRandomPerks(PerkTier.SILVER, newTeam, 3, player.getUniqueId());
-        if (options.isEmpty()) return;
+    /**
+     * Conversion replacement picks: one pick per lost human-only perk, each at the
+     * SAME tier as the perk it replaces (head of {@code tiersRemaining}). 3 options,
+     * one reroll per slot, chained until the tier queue is empty.
+     */
+    public void openConversionSelection(Player player, PerkTeam newTeam, List<PerkTier> tiersRemaining) {
+        if (tiersRemaining.isEmpty()) return;
+        PerkTier tier = tiersRemaining.get(0);
+
+        List<Perk> options = perkManager.getRandomPerks(tier, newTeam, 3, player.getUniqueId());
+        if (options.isEmpty()) {
+            // Pool for this tier is exhausted (player owns everything) — skip this
+            // pick but keep the rest of the queue alive.
+            openConversionSelection(player, newTeam, tiersRemaining.subList(1, tiersRemaining.size()));
+            return;
+        }
 
         SelectionState state = new SelectionState();
         state.mode = Mode.CONVERSION;
-        state.perkTier = PerkTier.SILVER;
+        state.perkTier = tier;
         state.playerTeam = newTeam;
         state.offeredPerks = new ArrayList<>(options);
-        state.remainingConversionPicks = picksRemaining;
-        state.title = Component.text("Choose Replacement Perk").color(NamedTextColor.DARK_PURPLE);
+        state.conversionTiers = new ArrayList<>(tiersRemaining);
+        state.title = Component.text("Choose Replacement ").color(NamedTextColor.DARK_PURPLE)
+                .append(Component.text(tier.getDisplayName()).color(tier.getTextColor()))
+                .append(Component.text(" Perk").color(NamedTextColor.DARK_PURPLE));
         openSelectionGui(player, state);
     }
 
@@ -193,7 +209,7 @@ public class PerkSelectionGUI {
                 lore.add(Component.text("FREE!").color(NamedTextColor.GREEN)
                         .decorate(TextDecoration.BOLD).decoration(TextDecoration.ITALIC, false));
             } else {
-                lore.add(Component.text("Replacement perk (" + state.remainingConversionPicks + " remaining)")
+                lore.add(Component.text("Replacement perk (" + state.conversionTiers.size() + " remaining)")
                         .color(NamedTextColor.DARK_PURPLE).decoration(TextDecoration.ITALIC, false));
             }
             meta.lore(lore);
@@ -363,11 +379,11 @@ public class PerkSelectionGUI {
     }
 
     private void chainNextConversionPick(Player player, SelectionState state) {
-        if (state.mode == Mode.CONVERSION && state.remainingConversionPicks > 1) {
-            int remaining = state.remainingConversionPicks - 1;
+        if (state.mode == Mode.CONVERSION && state.conversionTiers.size() > 1) {
+            List<PerkTier> rest = new ArrayList<>(state.conversionTiers.subList(1, state.conversionTiers.size()));
             PerkTeam team = state.playerTeam;
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (player.isOnline()) openConversionSelection(player, team, remaining);
+                if (player.isOnline()) openConversionSelection(player, team, rest);
             }, 20L);
         }
     }

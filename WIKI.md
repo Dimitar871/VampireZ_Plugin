@@ -260,7 +260,7 @@ $$
 3. The player moves from the human team to the vampire team.
 4. **All Human-only perks are removed** from their loadout.
 5. After a 2-second delay: vampire gear given, remaining perks re-applied, day/night effect re-applied.
-6. For every perk that got stripped, a free **Vampire perk selection** GUI opens so they can pick a replacement.
+6. For every perk that got stripped, a free **Vampire perk selection** GUI opens so they can pick a replacement — **at the same tier as the perk it replaces** (a lost Prismatic is replaced by a Prismatic pick, a lost Gold by a Gold pick). Each menu shows 3 options with one reroll per slot. A disconnecting human's auto-assigned replacements follow the same tier rule.
 
 ### Vampire respawn
 1. Death plays the "vampire cackle" sound.
