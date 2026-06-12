@@ -1022,8 +1022,11 @@ public class GameManager {
         if (stateManager.getState() == GameState.LOBBY) {
             // Keep in joinedPlayers so they rejoin the lobby automatically
             scoreboardManager.removePlayer(uuid);
-            if (timerManager.autoStartTask != null && getJoinedOnlinePlayers().size() < minPlayers) {
-                cancelAutoStartCountdown("Not enough players online.");
+            // PlayerQuitEvent fires while the quitter still counts as online —
+            // subtract them or the countdown survives dropping below the minimum.
+            int onlineAfterQuit = getJoinedOnlinePlayers().size() - 1;
+            if (timerManager.autoStartTask != null && onlineAfterQuit < minPlayers) {
+                cancelAutoStartCountdown("Not enough players online (" + onlineAfterQuit + "/" + minPlayers + ").");
             }
             scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers, timerManager.getAutoStartCountdown());
             return;
