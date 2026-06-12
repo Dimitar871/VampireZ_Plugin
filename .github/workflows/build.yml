@@ -1,0 +1,35 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Runs all unit tests and packages the shaded jar
+      - name: Build and test
+        run: mvn --batch-mode --no-transfer-progress verify
+
+      # High-priority findings fail the build (0 expected)
+      - name: SpotBugs static analysis
+        run: mvn --batch-mode --no-transfer-progress spotbugs:check
+
+      - name: Upload plugin jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: VampireZ-jar
+          path: target/VampireZ-*.jar
+          if-no-files-found: error
