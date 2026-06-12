@@ -18,7 +18,21 @@ dependency-reduced-pom.xml
 Thumbs.db
 .DS_Store
 
-# Misc
+# Node tooling (logo/render capture scripts — not part of the plugin)
+node_modules/
+package.json
+package-lock.json
+capture-logo.js
+frames/
+VampireZ.html
+VampireZ.mp4
+
+# Distributed via GitHub Releases, not the repo (9+ MB)
+VampireZ-Map.zip
+
+# Local notes
 newPerks.txt
 nul
 ARCHITECTURE.md
+MODERNIZATION_PLAN.md
+BUG_PERK_PERSISTENCE.md
