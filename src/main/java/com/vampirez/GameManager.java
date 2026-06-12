@@ -733,9 +733,9 @@ public class GameManager {
         economyManager.stopPassiveIncome();
         dayNightManager.stopCycle();
 
-        // Clear all perks immediately so perk ticks (Undead Horde, etc.) stop
+        // Clear all perks immediately so perk ticks (Undead Horde, etc.) stop.
+        // resetAll() also clears cross-player perk state (webs, curses, stacks).
         perkManager.resetAll();
-        com.vampirez.perks.TrapperPerk.clearAllWebs();
 
         announcer.broadcastWinner(humansWin);
 
@@ -760,7 +760,6 @@ public class GameManager {
         economyManager.stopPassiveIncome();
         dayNightManager.stopCycle();
         perkManager.resetAll();
-        com.vampirez.perks.TrapperPerk.clearAllWebs();
 
         // Reset immediately (no 10s delay — server may be shutting down)
         resetToLobby();

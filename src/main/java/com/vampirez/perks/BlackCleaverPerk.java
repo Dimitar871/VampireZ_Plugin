@@ -87,6 +87,12 @@ public class BlackCleaverPerk extends Perk {
         return true;
     }
 
+    @Override
+    public void clearGlobalState() {
+        cleavedTargets.clear();
+        cleavedExpiry.clear();
+    }
+
     public static int getStacks(UUID victim) {
         if (!isCleaved(victim)) return 0;
         int[] stacks = cleavedTargets.get(victim);

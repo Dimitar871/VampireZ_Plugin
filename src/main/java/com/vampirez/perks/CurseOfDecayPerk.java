@@ -55,6 +55,11 @@ public class CurseOfDecayPerk extends Perk {
     }
 
     @Override
+    public void clearGlobalState() {
+        cursedPlayers.clear();
+    }
+
+    @Override
     public Map<String, String> getStatLabels() {
         Map<String, String> labels = new LinkedHashMap<>();
         labels.put("curses_applied", "Curses Applied");

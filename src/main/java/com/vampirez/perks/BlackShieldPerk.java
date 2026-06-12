@@ -56,6 +56,12 @@ public class BlackShieldPerk extends Perk {
         }
     }
 
+    @Override
+    public void clearGlobalState() {
+        shielded.clear();
+        cooldowns.clear();
+    }
+
     // ===== Static API for other classes to check/consume the shield =====
 
     /**

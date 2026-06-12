@@ -43,6 +43,14 @@ public class NetherBladePerk extends Perk {
         return pendingDamageMult.remove(uuid);
     }
 
+    @Override
+    public void clearGlobalState() {
+        pendingDamageMult.clear();
+        playerTier.clear();
+        playerProgress.clear();
+        dashCooldowns.clear();
+    }
+
     private static final long DASH_COOLDOWN_MS = 30000;
 
     // Damage multipliers per tier: tier 2 = 1.0 (matches starting sword)

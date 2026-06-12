@@ -76,6 +76,16 @@ public class TrailPerk extends Perk {
     }
 
     @Override
+    public void clearGlobalState() {
+        playerTrails.clear();
+        // remove() only cancels tasks for online owners — cancel any leftovers
+        for (BukkitTask task : particleTasks.values()) {
+            task.cancel();
+        }
+        particleTasks.clear();
+    }
+
+    @Override
     public void onTick(Player player) {
         UUID uuid = player.getUniqueId();
         Deque<TrailPoint> trail = playerTrails.get(uuid);

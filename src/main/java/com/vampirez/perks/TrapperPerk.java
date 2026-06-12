@@ -67,6 +67,12 @@ public class TrapperPerk extends Perk {
     }
 
     @Override
+    public void clearGlobalState() {
+        clearAllWebs();
+        lastRefill.clear();
+    }
+
+    @Override
     public void apply(Player player) {
         player.getInventory().addItem(createTrapWeb(MAX_WEBS));
     }

@@ -43,6 +43,11 @@ public class WarDrumsPerk extends Perk {
     }
 
     @Override
+    public void clearGlobalState() {
+        boostedByDrummer.clear();
+    }
+
+    @Override
     public void onTick(Player player) {
         UUID drummerUUID = player.getUniqueId();
         Set<UUID> boosted = new HashSet<>();

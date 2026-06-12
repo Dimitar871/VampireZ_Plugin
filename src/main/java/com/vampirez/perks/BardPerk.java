@@ -36,6 +36,14 @@ public class BardPerk extends Perk {
         return false;
     }
 
+    @Override
+    public void clearGlobalState() {
+        damageBoostedByBard.clear();
+        regenBuffedAllies.clear();
+        strengthBuffedAllies.clear();
+        lastHeldAura.clear();
+    }
+
     public BardPerk() {
         super("bard", "Bard", PerkTier.PRISMATIC, PerkTeam.HUMAN,
                 Material.NOTE_BLOCK,

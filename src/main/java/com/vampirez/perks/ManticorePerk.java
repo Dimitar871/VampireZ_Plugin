@@ -105,6 +105,11 @@ public class ManticorePerk extends Perk {
     }
 
     @Override
+    public void clearGlobalState() {
+        activeGrants.clear();
+    }
+
+    @Override
     public void onTick(Player player) {
         UUID uuid = player.getUniqueId();
         List<HealthGrant> grants = activeGrants.get(uuid);

@@ -64,4 +64,10 @@ public class HomeguardPerk extends Perk {
             victim.playSound(victim.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.6f, 1.8f);
         }
     }
+
+    @Override
+    public void clearGlobalState() {
+        hasHomeguardSpeed.clear();
+        activeHomeguards.clear();
+    }
 }

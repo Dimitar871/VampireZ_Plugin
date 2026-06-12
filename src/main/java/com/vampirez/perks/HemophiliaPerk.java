@@ -81,6 +81,11 @@ public class HemophiliaPerk extends Perk {
         target.sendMessage(MM.parse("<dark_red>You are bleeding!"));
     }
 
+    @Override
+    public void clearGlobalState() {
+        activeBleedsByAttacker.clear();
+    }
+
     /**
      * Remove all active bleeds on a target (used by Plague Doctor).
      * @return true if any bleeds were cleared

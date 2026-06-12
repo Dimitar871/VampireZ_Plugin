@@ -56,6 +56,15 @@ public abstract class Perk {
         return Collections.emptyMap();
     }
 
+    /**
+     * Clears any cross-player state the perk keeps outside the per-player lists —
+     * static maps keyed by victim UUIDs (cleaver stacks, curses, bleeds), placed
+     * blocks, scheduled tasks. remove(player) only runs for online owners, so
+     * without this hook such state survives into the next game.
+     * Called once per registered perk from PerkManager.resetAll().
+     */
+    public void clearGlobalState() {}
+
     public Perk(String id, String displayName, PerkTier tier, PerkTeam team, Material icon, String... description) {
         this.id = id;
         this.displayName = displayName;

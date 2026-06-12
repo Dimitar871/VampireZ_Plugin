@@ -169,6 +169,11 @@ public class PerkManager {
             }
         }
         playerPerks.clear();
+        // remove(player) above only reaches online owners — stale cross-player
+        // state (cleaver stacks, curses, bleeds, tasks) must be wiped explicitly.
+        for (Perk perk : perkRegistry.values()) {
+            perk.clearGlobalState();
+        }
     }
 
     public boolean hasPerk(UUID uuid, String perkId) {
