@@ -195,9 +195,21 @@ public class GameManager {
             scoreboardManager.updateLobbyScoreboard(joinedPlayers.size(), minPlayers, timerManager.getAutoStartCountdown());
         }
 
-        // Check win condition
-        if (wasInActiveGame && wasHuman && teamManager.getHumanTeam().isEmpty() && !teamManager.getVampireTeam().isEmpty()) {
-            endGame(false);
+        // Win / team-integrity check
+        if (wasInActiveGame) {
+            if (stateManager.getState() == GameState.STARTING) {
+                // Game hasn't begun — leaving must not award a vampire win.
+                switch (afterStartingDropout(teamManager.getHumanTeam().size(), teamManager.getVampireTeam().size())) {
+                    case ABORT_GAME -> {
+                        announcer.broadcast(MM.parse("<red>All humans left during the countdown — game aborted."));
+                        stopGame();
+                    }
+                    case PROMOTE_HUMAN_TO_VAMPIRE -> promoteRandomHumanToVampire();
+                    case CONTINUE -> { }
+                }
+            } else if (wasHuman && teamManager.getHumanTeam().isEmpty() && !teamManager.getVampireTeam().isEmpty()) {
+                endGame(false);
+            }
         }
     }
 
@@ -1032,7 +1044,30 @@ public class GameManager {
             return;
         }
 
-        if (stateManager.getState() == GameState.ACTIVE || stateManager.getState() == GameState.STARTING) {
+        if (stateManager.getState() == GameState.STARTING) {
+            // The game hasn't begun — a drop during the countdown must NOT convert
+            // (a lag spike at the wrong second would force a whole round as vampire)
+            // and must NOT hand vampires a win. Remove from the team; if they
+            // reconnect mid-game, Case 1's teamless fallback makes them a vampire.
+            boolean wasOnTeam = teamManager.removeHuman(uuid) || teamManager.removeVampire(uuid);
+            perkManager.removeAllPerks(uuid);
+            economyManager.resetPlayer(uuid);
+            scoreboardManager.removePlayer(uuid);
+
+            if (wasOnTeam) {
+                switch (afterStartingDropout(teamManager.getHumanTeam().size(), teamManager.getVampireTeam().size())) {
+                    case ABORT_GAME -> {
+                        announcer.broadcast(MM.parse("<red>All humans dropped during the countdown — game aborted."));
+                        stopGame();
+                    }
+                    case PROMOTE_HUMAN_TO_VAMPIRE -> promoteRandomHumanToVampire();
+                    case CONTINUE -> { }
+                }
+            }
+            return;
+        }
+
+        if (stateManager.getState() == GameState.ACTIVE) {
             // --- Compensation for reconnect: one auto-perk per perk ACTUALLY held,
             // same tier (human-only perks roll vampire equivalents on reconnect).
             // Reconstructing freebies from elapsed time over-paid: the starting pick
@@ -1077,6 +1112,42 @@ public class GameManager {
         // them: resetToLobby would never see them, and they'd reconnect still holding
         // the gear they had at quit time.
         scoreboardManager.removePlayer(uuid);
+    }
+
+    /**
+     * Promotes a random remaining human to the vampire team — used when every
+     * vampire dropped during the STARTING countdown (a game needs at least one).
+     * Runs the normal conversion flow so gear/perk replacement stay consistent.
+     */
+    private void promoteRandomHumanToVampire() {
+        for (UUID candidate : new ArrayList<>(teamManager.getHumanTeam())) {
+            Player player = Bukkit.getPlayer(candidate);
+            if (player != null && player.isOnline()
+                    && convertHumanToVampire(player, PlayerConvertedEvent.Cause.FORCED)) {
+                announcer.broadcast(MM.parse("<red>All vampires dropped during the countdown — <dark_red>"
+                        + player.getName() + "</dark_red> takes their place!"));
+                return;
+            }
+        }
+        // No online humans either — nobody left to play.
+        announcer.broadcast(MM.parse("<red>Everyone dropped during the countdown — game aborted."));
+        stopGame();
+    }
+
+    /** What the game must do after a player drops out during the STARTING countdown. */
+    enum StartingDropoutAction {
+        /** Teams still viable — carry on. */
+        CONTINUE,
+        /** No vampires left — promote a random human so the game can begin. */
+        PROMOTE_HUMAN_TO_VAMPIRE,
+        /** No humans left — the game cannot begin; abort, do NOT award a vampire win. */
+        ABORT_GAME
+    }
+
+    static StartingDropoutAction afterStartingDropout(int humansLeft, int vampiresLeft) {
+        if (humansLeft == 0) return StartingDropoutAction.ABORT_GAME;
+        if (vampiresLeft == 0) return StartingDropoutAction.PROMOTE_HUMAN_TO_VAMPIRE;
+        return StartingDropoutAction.CONTINUE;
     }
 
     /**
