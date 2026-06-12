@@ -1030,30 +1030,16 @@ public class GameManager {
         }
 
         if (stateManager.getState() == GameState.ACTIVE || stateManager.getState() == GameState.STARTING) {
-            // --- Build the list of perks to auto-assign on reconnect ---
-            List<PerkTier> perksToGive = new ArrayList<>();
+            // --- Compensation for reconnect: one auto-perk per perk ACTUALLY held,
+            // same tier (human-only perks roll vampire equivalents on reconnect).
+            // Reconstructing freebies from elapsed time over-paid: the starting pick
+            // could be counted twice (once as freebie, once as human-only replacement).
+            boolean startingFreebieGranted =
+                    teamManager.isVampiresReleased() || teamManager.getHumanTeam().contains(uuid);
+            List<PerkTier> perksToGive =
+                    quitCompensationTiers(perkManager.getPlayerPerks(uuid), startingFreebieGranted);
 
-            // 1. Starting perk (Silver) — only if already received
-            //    Vampires get theirs on release, so skip if still in scouting phase
-            if (teamManager.isVampiresReleased() || teamManager.getHumanTeam().contains(uuid)) {
-                perksToGive.add(PerkTier.SILVER);
-            }
-
-            // 2. Timed free perks that have already been given (use wall-clock so admin time-edits don't desync)
-            int elapsed = getActiveElapsedSeconds();
-            PluginConfig.TimingsSection t = plugin.getPluginConfig().timings;
-            if (elapsed >= t.freeSilverPerkAtSeconds)    perksToGive.add(randomTier());
-            if (elapsed >= t.freeGoldPerkAtSeconds)      perksToGive.add(randomTier());
-            if (elapsed >= t.freePrismaticPerkAtSeconds) perksToGive.add(randomTier());
-
-            // 3. Replacements for human-only perks (if they were human) — same tier
-            //    as each lost perk, matching the interactive conversion picks.
             if (teamManager.getHumanTeam().contains(uuid)) {
-                perkManager.getPlayerPerks(uuid).stream()
-                        .filter(p -> p.getTeam() == PerkTeam.HUMAN)
-                        .map(Perk::getTier)
-                        .forEach(perksToGive::add);
-
                 // Convert to vampire (event is informational only — cancellation can't be acted on after disconnect)
                 Bukkit.getPluginManager().callEvent(new PlayerConvertedEvent(uuid, PlayerConvertedEvent.Cause.DISCONNECT));
                 teamManager.convertToVampire(uuid);
@@ -1090,9 +1076,21 @@ public class GameManager {
         scoreboardManager.removePlayer(uuid);
     }
 
-    private PerkTier randomTier() {
-        PerkTier[] tiers = PerkTier.values();
-        return tiers[RANDOM.nextInt(tiers.length)];
+    /**
+     * Tiers to auto-assign when a mid-game quitter reconnects: one per perk they
+     * actually held, at the same tier. If they held nothing but the starting
+     * freebie had already been granted (vampires released, or they were human),
+     * they're still owed that one Silver pick.
+     */
+    static List<PerkTier> quitCompensationTiers(List<Perk> heldPerks, boolean startingFreebieGranted) {
+        List<PerkTier> tiers = new ArrayList<>();
+        for (Perk perk : heldPerks) {
+            tiers.add(perk.getTier());
+        }
+        if (tiers.isEmpty() && startingFreebieGranted) {
+            tiers.add(PerkTier.SILVER);
+        }
+        return tiers;
     }
 
     // ===== TIMED PERKS =====
