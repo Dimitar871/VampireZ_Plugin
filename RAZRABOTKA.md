@@ -18,7 +18,7 @@ Spigot/Paper минигейм плъгин: **Хора оцеляват срещ
 
 - **Технологичен стек**: Java 21, Maven, Paper 1.21.4 API
 - **Точка на влизане**: `com.vampirez.VampireZPlugin`
-- **165 perks** общо (122 Java класа + 43 data-driven YAML записа)
+- **167 perks** общо (123 Java класа + 44 data-driven YAML записа) — точният каталог е в `WIKI.md`
 
 ---
 

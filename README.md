@@ -8,14 +8,14 @@ A Minecraft minigame plugin where **Humans survive against Vampires** for 25 min
 
 Built for **Spigot / Paper 1.21.3+** with Java 21.
 
-> 📖 Full game mechanics, damage math, and the complete 166-perk catalogue live in the **[Wiki](WIKI.md)**.
+> 📖 Full game mechanics, damage math, and the complete perk catalogue live in the **[Wiki](WIKI.md)**.
 
 ---
 
 ## Features at a glance
 
 - Two asymmetric teams — Humans (iron + bows) vs Vampires (leather + leap)
-- **166 unique perks** across Silver / Gold / Prismatic tiers
+- **160+ unique perks** across Silver / Gold / Prismatic tiers (exact catalogue in the [Wiki](WIKI.md#full-perk-catalogue))
 - Gold economy (passive income, kill & assist rewards)
 - Day / Night cycle with vampire-specific buffs and debuffs
 - Perk shop GUI with random roll selection
@@ -176,7 +176,7 @@ If the token is wrong or empty the plugin logs a warning and runs normally witho
 
 ## Documentation
 
-- **[WIKI.md](WIKI.md)** — game flow, damage formula, perk system, full 145-perk catalogue, day/night math, economy math, configuration reference, arena map.
+- **[WIKI.md](WIKI.md)** — game flow, damage formula, perk system, the full perk catalogue, day/night math, economy math, configuration reference, arena map.
 
 ---
 

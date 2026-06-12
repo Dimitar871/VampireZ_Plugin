@@ -364,7 +364,6 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new HolyShieldPerk());
         pm.registerPerk(new TemporalShieldPerk());
         pm.registerPerk(new IronGuardianPerk());
-        // DiamondEdgePerk removed
         pm.registerPerk(new ThornsEnchantPerk());
         pm.registerPerk(new RegenPotionsPerk());
         // Vampire only

@@ -4,7 +4,7 @@
 
 # VampireZ Wiki
 
-Everything behind the curtain: game flow, combat math, economy, day/night, perk interactions, and the full 144-perk catalogue.
+Everything behind the curtain: game flow, combat math, economy, day/night, perk interactions, and the full 167-perk catalogue.
 
 For install & usage, see the [README](README.md).
 
@@ -344,7 +344,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 **Team key:** 🔵 Human only · 🔴 Vampire only · ⚪ Both teams
 
 
-### Silver Tier (51 perks · 50 g)
+### Silver Tier (64 perks · 50 g)
 
 
 | Icon | Team | Perk | Effect |
@@ -414,7 +414,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/rabbit_foot.png" width="24"> | 🔴 | Feral Charge | Sprinting attacks deal +30 % damage (6 s cd) |
 | <img src="images/perks/spider_eye.png" width="24"> | 🔴 | Infectious Bite | On kill: heal nearby vampires for 4 ♥ |
 
-### Gold Tier (50 perks · 150 g)
+### Gold Tier (61 perks · 150 g)
 
 
 | Icon | Team | Perk | Effect |
@@ -481,7 +481,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/fermented_spider_eye.png" width="24"> | 🔴 | Plague Carrier | Spread poison to nearby enemies over time |
 | <img src="images/perks/turtle_scute.png" width="24"> | 🔴 | Manticore | On kill: +½ victim's max ♥ (temp 30 s); nearby enemies get Weakness I + Slowness I (30 s) |
 
-### Prismatic Tier (45 perks · 400 g)
+### Prismatic Tier (42 perks · 400 g)
 
 
 | Icon | Team | Perk | Effect |
@@ -508,7 +508,6 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/golden_chestplate.png" width="24"> | 🔵 | Holy Shield | Absorb 10 dmg → auto-explode 4 ♥ AoE |
 | <img src="images/perks/clock.png" width="24"> | 🔵 | Temporal Shield | Freeze enemies within 5 blocks for 2 s (45 s cd) |
 | <img src="images/perks/iron_block.png" width="24"> | 🔵 | Iron Guardian | On vampire kill: summon Iron Golem (12 s) |
-| <img src="images/perks/diamond_sword.png" width="24"> | 🔵 | Diamond Edge | Iron sword → Diamond (Sharpness I) |
 | <img src="images/perks/cactus.png" width="24"> | 🔵 | Thorns Enchant | All armor gets Thorns II + Unbreaking III |
 | <img src="images/perks/splash_potion.png" width="24"> | 🔵 | Regeneration Potions | 3 Regen potions, regen 1 every 2 min |
 | <img src="images/perks/sunflower.png" width="24"> | 🔵 | Radiant Aura | Enemies within 6 blocks take 1 ♥/3 s + Glowing |
