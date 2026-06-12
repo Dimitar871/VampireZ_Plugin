@@ -26,6 +26,7 @@ import java.util.*;
 public class VoidWalkerPerk extends Perk {
 
     private final Map<UUID, Long> cooldowns = new HashMap<>();
+    private final Random rng = new Random();
     private static final long COOLDOWN_MS = 25000;
 
     public VoidWalkerPerk() {
@@ -89,7 +90,7 @@ public class VoidWalkerPerk extends Perk {
         }
 
         cooldowns.put(uuid, now);
-        Player target = enemies.get(new Random().nextInt(enemies.size()));
+        Player target = enemies.get(rng.nextInt(enemies.size()));
 
         // Black Shield: target blocks the teleport
         if (BlackShieldPerk.isShielded(target.getUniqueId())) {

@@ -88,13 +88,6 @@
             <version>5.1.0</version>
         </dependency>
 
-        <!-- In-memory cache (shaded) -->
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-            <version>3.1.8</version>
-        </dependency>
-
         <!-- Typed YAML config (shaded) -->
         <dependency>
             <groupId>de.exlll</groupId>
@@ -141,13 +134,6 @@
             <version>5.20.0</version>
             <scope>test</scope>
         </dependency>
-        <!-- MockBukkit for unit-testing plugin code without a running server -->
-        <dependency>
-            <groupId>org.mockbukkit.mockbukkit</groupId>
-            <artifactId>mockbukkit-v1.21</artifactId>
-            <version>4.110.0</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -160,6 +146,17 @@
                 <configuration>
                     <source>21</source>
                     <target>21</target>
+                </configuration>
+            </plugin>
+            <!-- Static analysis: run on demand with `mvn spotbugs:check` (also run in CI).
+                 Reports only high-confidence, high-priority bugs to keep the signal clean. -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.10.2.0</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>High</threshold>
                 </configuration>
             </plugin>
             <plugin>
@@ -183,10 +180,6 @@
                         <relocation>
                             <pattern>com.zaxxer.hikari</pattern>
                             <shadedPattern>com.vampirez.lib.hikari</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>com.github.benmanes.caffeine</pattern>
-                            <shadedPattern>com.vampirez.lib.caffeine</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>de.exlll.configlib</pattern>

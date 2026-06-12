@@ -96,7 +96,7 @@ public class PlayerStateManager {
 
         // --- Now clear the player for the minigame ---
         player.getInventory().clear();
-        player.getInventory().setArmorContents(null);
+        player.getInventory().setArmorContents(new org.bukkit.inventory.ItemStack[4]);
         player.getInventory().setItemInOffHand(null);
         player.setLevel(0);
         player.setExp(0f);
@@ -128,7 +128,7 @@ public class PlayerStateManager {
 
         // --- Step 1: Completely wipe the player (remove all minigame data) ---
         player.getInventory().clear();
-        player.getInventory().setArmorContents(null);
+        player.getInventory().setArmorContents(new org.bukkit.inventory.ItemStack[4]);
         player.getInventory().setItemInOffHand(null);
         player.setLevel(0);
         player.setExp(0f);

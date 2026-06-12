@@ -803,7 +803,7 @@ public class GameManager {
             if (player != null && player.isOnline()) {
                 resetPlayerFully(player);
                 player.getInventory().clear();
-                player.getInventory().setArmorContents(null);
+                player.getInventory().setArmorContents(new org.bukkit.inventory.ItemStack[4]);
                 player.getInventory().setItemInOffHand(null);
                 player.setGameMode(org.bukkit.GameMode.ADVENTURE);
                 player.setHealth(player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getBaseValue());
@@ -868,7 +868,7 @@ public class GameManager {
 
         player.setGameMode(GameMode.SURVIVAL);
         player.getInventory().clear();
-        player.getInventory().setArmorContents(null);
+        player.getInventory().setArmorContents(new org.bukkit.inventory.ItemStack[4]);
         player.setFoodLevel(20);
         player.setSaturation(20f);
 

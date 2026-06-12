@@ -25,7 +25,7 @@ public class GearManager {
 
     public void giveHumanGear(Player player) {
         player.getInventory().clear();
-        player.getInventory().setArmorContents(null);
+        player.getInventory().setArmorContents(new ItemStack[4]);
 
         // Iron Sword with Sharpness I
         ItemStack sword = new ItemStack(Material.IRON_SWORD);
@@ -66,7 +66,7 @@ public class GearManager {
 
     public void giveVampireGear(Player player) {
         player.getInventory().clear();
-        player.getInventory().setArmorContents(null);
+        player.getInventory().setArmorContents(new ItemStack[4]);
 
         // Stone Sword
         player.getInventory().setItem(0, new ItemStack(Material.STONE_SWORD));
