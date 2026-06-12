@@ -933,13 +933,16 @@ public class GameManager {
                             PotionEffectType.INVISIBILITY, 50 * 20, 0, false, false, false));
                     player.addPotionEffect(new PotionEffect(
                             PotionEffectType.NIGHT_VISION, 999999, 0, false, false, true));
-                    // Auto-assign pending perks (they'll be applied on release)
+                    // Auto-assign pending perks WITHOUT applying — releaseVampires()
+                    // runs reapplyPerks() on release; applying here too would double-grant
+                    // items from item-granting perks.
                     List<PerkTier> pending = pendingAutoPerks.remove(uuid);
                     if (pending != null) {
                         for (PerkTier tier : pending) {
                             List<Perk> options = perkManager.getRandomPerks(tier, PerkTeam.VAMPIRE, 1, uuid);
                             if (!options.isEmpty()) {
-                                perkManager.addPerkToPlayer(uuid, options.get(0));
+                                perkManager.addPerkToPlayer(uuid, options.get(0),
+                                        com.vampirez.api.event.PlayerPerkGainedEvent.Source.INTERNAL, false);
                             }
                         }
                     }
@@ -952,13 +955,16 @@ public class GameManager {
                         if (spawnManager.getVampireSpawn() != null) player.teleport(spawnManager.getVampireSpawn());
                         gearManager.giveVampireGear(player);
 
-                        // Auto-assign pending perks from disconnect
+                        // Auto-assign pending perks from disconnect WITHOUT applying —
+                        // the reapplyPerks() below applies everything exactly once
+                        // (applying twice double-granted items from item-granting perks).
                         List<PerkTier> pending = pendingAutoPerks.remove(uuid);
                         if (pending != null) {
                             for (PerkTier tier : pending) {
                                 List<Perk> options = perkManager.getRandomPerks(tier, PerkTeam.VAMPIRE, 1, uuid);
                                 if (!options.isEmpty()) {
-                                    perkManager.addPerkToPlayer(uuid, options.get(0));
+                                    perkManager.addPerkToPlayer(uuid, options.get(0),
+                                            com.vampirez.api.event.PlayerPerkGainedEvent.Source.INTERNAL, false);
                                 }
                             }
                             int count = perkManager.getPlayerPerkCount(uuid);

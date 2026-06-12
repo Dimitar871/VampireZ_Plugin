@@ -52,6 +52,15 @@ public class PerkManager {
     }
 
     public boolean addPerkToPlayer(UUID uuid, Perk perk, PlayerPerkGainedEvent.Source source) {
+        return addPerkToPlayer(uuid, perk, source, true);
+    }
+
+    /**
+     * @param applyNow pass false when a later bulk {@link #reapplyPerks} will run apply()
+     *                 (reconnect auto-assign, scouting phase) — applying here too would
+     *                 double-grant items from item-granting perks
+     */
+    public boolean addPerkToPlayer(UUID uuid, Perk perk, PlayerPerkGainedEvent.Source source, boolean applyNow) {
         List<Perk> perks = playerPerks.computeIfAbsent(uuid, k -> new ArrayList<>());
         if (perks.size() >= maxPerks) return false;
 
@@ -60,11 +69,13 @@ public class PerkManager {
         if (event.isCancelled()) return false;
 
         perks.add(perk);
-        Player player = Bukkit.getPlayer(uuid);
-        if (player != null && !player.isDead()) {
-            perk.apply(player);
+        if (applyNow) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null && !player.isDead()) {
+                perk.apply(player);
+            }
+            // If dead, perk is tracked but not applied — reapplyPerks() will handle it on respawn
         }
-        // If dead, perk is tracked but not applied — reapplyPerks() will handle it on respawn
         return true;
     }
 
