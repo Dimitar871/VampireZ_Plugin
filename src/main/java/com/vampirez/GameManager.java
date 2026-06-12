@@ -641,9 +641,8 @@ public class GameManager {
 
         announcer.broadcastConversion(player);
 
-        // Switch teams
-        teamManager.getHumanTeam().remove(uuid);
-        teamManager.getVampireTeam().add(uuid);
+        // Switch teams; true means this was the last human (vampires win)
+        boolean humansExtinct = teamManager.convertToVampire(uuid);
 
         // Reset gold on conversion (always, whether death or disconnect)
         economyManager.resetPlayer(uuid);
@@ -678,7 +677,7 @@ public class GameManager {
         }, 40L); // 2 second delay
 
         // Check win condition
-        if (teamManager.getHumanTeam().isEmpty()) {
+        if (humansExtinct) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> endGame(false), 20L);
         }
         return true;

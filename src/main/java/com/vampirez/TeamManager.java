@@ -48,6 +48,23 @@ public class TeamManager {
 
     public boolean isInGame(Player player) { return isInGame(player.getUniqueId()); }
 
+    /**
+     * Moves a human to the vampire team — the team-membership half of a conversion.
+     * The caller is responsible for everything physical (gear, perks, teleport).
+     *
+     * @return true if this conversion emptied the human team (the vampire win condition)
+     * @throws IllegalStateException if the player is not currently a human — converting
+     *         a non-human (e.g. the same player twice in a race) corrupts team counts
+     */
+    public boolean convertToVampire(UUID uuid) {
+        if (!humanTeam.remove(uuid)) {
+            throw new IllegalStateException("convertToVampire called for non-human " + uuid
+                    + " — caller must check isHuman first");
+        }
+        vampireTeam.add(uuid);
+        return humanTeam.isEmpty();
+    }
+
     /** Wipe both teams. Called by {@code resetToLobby}. */
     public void clearTeams() {
         humanTeam.clear();
