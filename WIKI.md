@@ -358,7 +358,6 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/iron_ingot.png" width="24"> | ⚪ | Tough Skin | −10 % damage taken |
 | <img src="images/perks/gold_ingot.png" width="24"> | ⚪ | Swift Strikes | +15 % attack speed |
 | <img src="images/perks/feather.png" width="24"> | ⚪ | Dash | Right-click Feather to dash forward (5 s cd) |
-| <img src="images/perks/feather.png" width="24"> | ⚪ | Lightweight | Jump Boost I + no fall damage |
 | <img src="images/perks/ghast_tear.png" width="24"> | ⚪ | Second Wind | Regen I when below 50 % HP |
 | <img src="images/perks/sugar.png" width="24"> | ⚪ | Adrenaline Rush | Taking damage grants Speed I for 3 s |
 | <img src="images/perks/iron_sword.png" width="24"> | ⚪ | Riposte | After being hit, next attack within 3 s deals +40 % |
@@ -413,6 +412,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/spider_eye.png" width="24"> | 🔴 | Blood Scent | Enemies below 50 % HP glow through walls |
 | <img src="images/perks/rabbit_foot.png" width="24"> | 🔴 | Feral Charge | Sprinting attacks deal +30 % damage (6 s cd) |
 | <img src="images/perks/spider_eye.png" width="24"> | 🔴 | Infectious Bite | On kill: heal nearby vampires for 4 ♥ |
+| <img src="images/perks/chainmail_chestplate.png" width="24"> | 🔴 | Chain Armor | Leather armor → Chainmail |
 
 ### Gold Tier (61 perks · 150 g)
 
@@ -439,6 +439,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/saddle.png" width="24"> | ⚪ | War Horse | Permanent speed + mount-style charge damage |
 | <img src="images/perks/sunflower.png" width="24"> | ⚪ | Lucky Roll (Gold) | Replaces itself with a random Prismatic perk |
 | <img src="images/perks/wooden_sword.png" width="24"> | ⚪ | Nether Blade | 5-tier upgradable wooden sword; max tier = healing dash |
+| <img src="images/perks/feather.png" width="24"> | ⚪ | Lightweight | +25 % damage dealt, −4 max ♥ |
 | <img src="images/perks/sunflower.png" width="24"> | 🔵 | Dawnbringer's Resolve | Auto-regen 1 ♥ / 2 s when below 4 ♥ |
 | <img src="images/perks/splash_potion.png" width="24"> | 🔵 | All For You | Splash healing potions heal 50 % more |
 | <img src="images/perks/diamond_chestplate.png" width="24"> | 🔵 | Armored Up | Armor upgraded to Diamond |
@@ -452,7 +453,6 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/splash_potion.png" width="24"> | 🔵 | Strength Potions | 3 Strength potions, regen 1 every 2 min |
 | <img src="images/perks/golden_apple.png" width="24"> | 🔵 | Golden Feast | +3 extra Golden Apples (6 total) |
 | <img src="images/perks/piston.png" width="24"> | 🔵 | Knockback | Sword gets Knockback I |
-| <img src="images/perks/chainmail_chestplate.png" width="24"> | 🔵 | Chain Armor | Leather armor → Chainmail |
 | <img src="images/perks/tipped_arrow.png" width="24"> | 🔵 | Poison Quiver | 8 Poison arrows, regen 1 every 10 s |
 | <img src="images/perks/golden_shovel.png" width="24"> | 🔵 | Consecrated Ground | Right-click: holy zone heals / damages (40 s cd) |
 | <img src="images/perks/totem_of_undying.png" width="24"> | 🔵 | Martyr | On death: nearby allies heal 4 ♥ + Absorption II |
