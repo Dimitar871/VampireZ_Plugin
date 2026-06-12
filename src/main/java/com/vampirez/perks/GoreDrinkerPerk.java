@@ -76,9 +76,7 @@ public class GoreDrinkerPerk extends Perk {
         }
 
         if (hits > 0) {
-            double heal = hits * HEAL_PER_HIT;
-            double newHealth = Math.min(player.getHealth() + heal, player.getMaxHealth());
-            player.setHealth(newHealth);
+            com.vampirez.Health.heal(player, hits * HEAL_PER_HIT);
             player.getWorld().spawnParticle(Particle.HEART, player.getLocation().add(0, 2, 0), hits * 2, 0.5, 0.3, 0.5, 0);
             player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_DRINK, 0.8f, 1.2f);
         }

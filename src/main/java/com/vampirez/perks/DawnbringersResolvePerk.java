@@ -55,8 +55,7 @@ public class DawnbringersResolvePerk extends Perk {
         // Every 2 ticks (2 seconds since onTick fires every second)
         if (count >= 2) {
             tickCounters.put(player.getUniqueId(), 0);
-            double newHealth = Math.min(player.getHealth() + 2.0, player.getMaxHealth()); // 1 heart
-            player.setHealth(newHealth);
+            com.vampirez.Health.heal(player, 2.0); // 1 heart
             player.getWorld().spawnParticle(Particle.HEART, player.getLocation().add(0, 2, 0), 5, 0.4, 0.3, 0.4, 0);
             VFX.fx().helix(player.getLocation(), SUNRISE_GOLD, 14);
             player.playSound(player.getLocation(), Sound.BLOCK_BELL_RESONATE, SoundCategory.PLAYERS, 0.4f, 1.6f);

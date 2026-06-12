@@ -49,7 +49,7 @@ public class FightOrBeForgottenPerk extends Perk {
             event.setCancelled(true);
             activated.add(uuid);
 
-            victim.setHealth(victim.getMaxHealth());
+            victim.setHealth(com.vampirez.Health.max(victim));
             // 30 seconds = 600 ticks
             victim.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 600, 4, false, true)); // Resistance V = invuln
             victim.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 600, 1, false, true)); // Strength II

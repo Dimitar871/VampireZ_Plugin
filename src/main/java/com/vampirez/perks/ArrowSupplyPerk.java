@@ -10,7 +10,6 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 
 public class ArrowSupplyPerk extends Perk {
@@ -28,7 +27,7 @@ public class ArrowSupplyPerk extends Perk {
         ItemStack poisonArrows = new ItemStack(Material.TIPPED_ARROW, 16);
         PotionMeta poisonMeta = (PotionMeta) poisonArrows.getItemMeta();
         if (poisonMeta != null) {
-            poisonMeta.setBasePotionData(new PotionData(PotionType.POISON, false, false));
+            poisonMeta.setBasePotionType(PotionType.POISON);
             poisonMeta.displayName(Component.text("Poison Arrow").color(NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
             poisonArrows.setItemMeta(poisonMeta);
         }
@@ -38,7 +37,7 @@ public class ArrowSupplyPerk extends Perk {
         ItemStack slowArrows = new ItemStack(Material.TIPPED_ARROW, 16);
         PotionMeta slowMeta = (PotionMeta) slowArrows.getItemMeta();
         if (slowMeta != null) {
-            slowMeta.setBasePotionData(new PotionData(PotionType.SLOWNESS, false, false));
+            slowMeta.setBasePotionType(PotionType.SLOWNESS);
             slowMeta.displayName(Component.text("Slowness Arrow").color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
             slowArrows.setItemMeta(slowMeta);
         }
@@ -48,7 +47,7 @@ public class ArrowSupplyPerk extends Perk {
         ItemStack blindArrows = new ItemStack(Material.TIPPED_ARROW, 16);
         PotionMeta blindMeta = (PotionMeta) blindArrows.getItemMeta();
         if (blindMeta != null) {
-            blindMeta.setBasePotionData(new PotionData(PotionType.MUNDANE, false, false));
+            blindMeta.setBasePotionType(PotionType.MUNDANE);
             blindMeta.addCustomEffect(new org.bukkit.potion.PotionEffect(
                     org.bukkit.potion.PotionEffectType.BLINDNESS, 60, 0, false, true), true);
             blindMeta.displayName(Component.text("Blindness Arrow").color(NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));

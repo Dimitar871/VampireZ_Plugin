@@ -51,7 +51,7 @@ public class GuardianAngelPerk extends Perk {
             event.setCancelled(true);
             lastTrigger.put(uuid, now);
 
-            victim.setHealth(victim.getMaxHealth() / 2.0);
+            victim.setHealth(com.vampirez.Health.max(victim) / 2.0);
             victim.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 100, 4, false, true));
             victim.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 60, 1, false, true));
             victim.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, victim.getLocation().add(0, 1, 0), 60, 1, 1.5, 1, 0.3);

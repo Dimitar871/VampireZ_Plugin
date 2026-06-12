@@ -25,9 +25,7 @@ public class GoredrinkPerk extends Perk {
 
     @Override
     public void onDamageDealt(Player attacker, Entity victim, EntityDamageByEntityEvent event) {
-        double healAmount = event.getDamage() * 0.15;
-        double newHealth = Math.min(attacker.getHealth() + healAmount, attacker.getMaxHealth());
-        attacker.setHealth(newHealth);
+        com.vampirez.Health.heal(attacker, event.getDamage() * 0.15);
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_GENERIC_DRINK, 0.5f, 0.6f);
 
         // Blood drip from victim to attacker

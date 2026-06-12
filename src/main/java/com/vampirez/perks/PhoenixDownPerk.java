@@ -46,7 +46,7 @@ public class PhoenixDownPerk extends Perk {
             // Prevent death
             event.setCancelled(true);
             used.add(uuid);
-            victim.setHealth(victim.getMaxHealth() / 2.0);
+            victim.setHealth(com.vampirez.Health.max(victim) / 2.0);
             victim.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 60, 4, false, true));
             victim.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, victim.getLocation().add(0, 1, 0), 50, 1, 1, 1, 0.2);
             // Resurrection cue: orange helix + atom orbit during invuln + buff cue

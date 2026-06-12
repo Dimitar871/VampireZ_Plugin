@@ -149,9 +149,7 @@ public class PerkListener implements Listener {
         if (!event.isCancelled() && attacker != null && event.getEntity() instanceof Player) {
             double lifesteal = statAnvilManager.getLifestealPercent(attacker.getUniqueId());
             if (lifesteal > 0) {
-                double heal = event.getDamage() * lifesteal;
-                double newHealth = Math.min(attacker.getHealth() + heal, attacker.getMaxHealth());
-                attacker.setHealth(newHealth);
+                Health.heal(attacker, event.getDamage() * lifesteal);
             }
         }
     }

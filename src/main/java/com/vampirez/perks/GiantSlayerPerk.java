@@ -34,7 +34,7 @@ public class GiantSlayerPerk extends Perk {
     @Override
     public void onDamageDealt(Player attacker, Entity victim, EntityDamageByEntityEvent event) {
         if (victim instanceof LivingEntity livingVictim) {
-            if (livingVictim.getMaxHealth() > attacker.getMaxHealth()) {
+            if (com.vampirez.Health.max(livingVictim) > com.vampirez.Health.max(attacker)) {
                 event.setDamage(event.getDamage() * 1.25);
                 attacker.playSound(attacker.getLocation(), Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK, 0.5f, 0.7f);
             }

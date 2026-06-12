@@ -152,7 +152,17 @@ public class PerkConfigLoader {
                 logger.warning("Invalid attribute key '" + keyStr + "' in perk '" + perkId + "' — skipped.");
                 return null;
             }
-            s.attribute = Attribute.valueOf(String.valueOf(spec.get("attribute")).toUpperCase());
+            // Registry lookup (Attribute.valueOf is removal-deprecated); accepts
+            // both bare names (MAX_HEALTH) and namespaced (minecraft:max_health).
+            String attrName = String.valueOf(spec.get("attribute"));
+            NamespacedKey attrKey = attrName.contains(":")
+                    ? NamespacedKey.fromString(attrName.toLowerCase())
+                    : NamespacedKey.minecraft(attrName.toLowerCase());
+            s.attribute = attrKey == null ? null : Registry.ATTRIBUTE.get(attrKey);
+            if (s.attribute == null) {
+                logger.warning("Unknown attribute '" + attrName + "' in perk '" + perkId + "' — skipped.");
+                return null;
+            }
             s.operation = AttributeModifier.Operation.valueOf(String.valueOf(spec.get("operation")).toUpperCase());
             s.value = asDouble(spec.get("value"), 0.0);
             Object slotRaw = spec.get("slot_group");

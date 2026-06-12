@@ -87,9 +87,7 @@ public class FinalFormPerk extends Perk {
     public void onDamageDealt(Player attacker, Entity victim, EntityDamageByEntityEvent event) {
         if (activeBoost.contains(attacker.getUniqueId())) {
             // 25% lifesteal during active period
-            double healAmount = event.getDamage() * 0.25;
-            double newHealth = Math.min(attacker.getHealth() + healAmount, attacker.getMaxHealth());
-            attacker.setHealth(newHealth);
+            com.vampirez.Health.heal(attacker, event.getDamage() * 0.25);
         }
     }
 }

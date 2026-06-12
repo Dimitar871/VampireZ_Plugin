@@ -26,7 +26,7 @@ public class HeavyHitterPerk extends Perk {
 
     @Override
     public void onDamageDealt(Player attacker, Entity victim, EntityDamageByEntityEvent event) {
-        double bonus = attacker.getMaxHealth() * 0.04;
+        double bonus = com.vampirez.Health.max(attacker) * 0.04;
         event.setDamage(event.getDamage() + bonus);
         addStat(attacker.getUniqueId(), "bonus_damage", bonus);
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK, 0.5f, 1.0f);

@@ -17,7 +17,6 @@ import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
@@ -42,7 +41,7 @@ public class RegenPotionsPerk extends Perk {
         ItemStack potion = new ItemStack(Material.SPLASH_POTION);
         PotionMeta meta = (PotionMeta) potion.getItemMeta();
         if (meta != null) {
-            meta.setBasePotionData(new PotionData(PotionType.WATER));
+            meta.setBasePotionType(PotionType.WATER);
             meta.addCustomEffect(new PotionEffect(PotionEffectType.REGENERATION, 600, 0), true); // 30 seconds
             meta.displayName(Component.text("Splash Potion of Regeneration").color(NamedTextColor.LIGHT_PURPLE).decoration(TextDecoration.ITALIC, false));
             meta.setColor(org.bukkit.Color.fromRGB(205, 92, 171));

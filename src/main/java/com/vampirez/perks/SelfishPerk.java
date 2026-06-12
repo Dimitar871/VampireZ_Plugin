@@ -128,8 +128,9 @@ public class SelfishPerk extends Perk {
         double currentMax = player.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
         player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(currentMax - BONUS_HEARTS * 2);
         player.removePotionEffect(PotionEffectType.STRENGTH);
-        if (player.getHealth() > player.getMaxHealth()) {
-            player.setHealth(player.getMaxHealth());
+        double max = com.vampirez.Health.max(player);
+        if (player.getHealth() > max) {
+            player.setHealth(max);
         }
     }
 }

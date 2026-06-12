@@ -427,7 +427,8 @@ public class GameListener implements Listener {
                 || event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.RAID
                 || event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.VILLAGE_INVASION
                 || event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.JOCKEY
-                || event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.CHUNK_GEN
+                // CHUNK_GEN was removal-deprecated: modern Paper never fires it
+                // (chunk-gen mobs spawn without an event), so it's dropped here.
                 || event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.MOUNT) {
             event.setCancelled(true);
         }

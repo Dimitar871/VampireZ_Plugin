@@ -103,8 +103,7 @@ public class AlwaysConnectedPerk extends Perk {
             human.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 100, 0, false, false, true), true);
 
             // Heal 1 heart (2 HP)
-            double newHealth = Math.min(human.getHealth() + 2.0, human.getMaxHealth());
-            human.setHealth(newHealth);
+            com.vampirez.Health.heal(human, 2.0);
 
             // Particles around each human
             human.getWorld().spawnParticle(Particle.DUST, human.getLocation().add(0, 1.5, 0),

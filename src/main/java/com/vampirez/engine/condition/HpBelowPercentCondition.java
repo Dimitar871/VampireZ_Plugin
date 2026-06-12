@@ -14,6 +14,9 @@ public class HpBelowPercentCondition implements Condition {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // getMaxHealth kept deliberately: the Attribute
+    // registry (com.vampirez.Health) can't initialize in unit tests, and this
+    // condition is covered by HpBelowPercentConditionTest with a mocked entity.
     public boolean test(HookContext ctx) {
         LivingEntity entity = target.resolveLivingEntity(ctx);
         if (entity == null) return false;

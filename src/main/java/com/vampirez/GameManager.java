@@ -906,7 +906,7 @@ public class GameManager {
 
         player.setWalkSpeed(0.2f);
         player.setFlySpeed(0.1f);
-        player.setHealth(player.getMaxHealth());
+        player.setHealth(Health.max(player));
     }
 
     // ===== PLAYER JOIN/QUIT =====
