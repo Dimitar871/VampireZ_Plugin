@@ -133,6 +133,12 @@ public class GameManager {
             return false;
         }
 
+        // A dead player would snapshot health=0 — restoring that later would kill
+        // them on the spot. Respawn first so the saved state is always livable.
+        if (player.isDead()) {
+            player.spigot().respawn();
+        }
+
         // Save survival state to disk, then clear player
         playerStateManager.saveAndClear(player);
         joinedPlayers.add(uuid);
@@ -182,6 +188,12 @@ public class GameManager {
         economyManager.resetPlayer(uuid);
         scoreboardManager.removePlayer(uuid);
         joinedPlayers.remove(uuid);
+
+        // Restoring onto a corpse silently loses everything — the respawn that follows
+        // wipes the freshly restored inventory. Respawn first.
+        if (player.isDead()) {
+            player.spigot().respawn();
+        }
 
         // Restore survival state (wipes game items first, then restores saved inventory)
         playerStateManager.restore(player);

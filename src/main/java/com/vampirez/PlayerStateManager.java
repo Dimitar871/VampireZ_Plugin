@@ -160,9 +160,10 @@ public class PlayerStateManager {
         double maxHealth = cfg.getDouble("max-health", 20.0);
         player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).setBaseValue(maxHealth);
 
-        // Restore health (clamped to max)
+        // Restore health (clamped to max; never <= 0 — a snapshot taken while the
+        // player was dead would otherwise kill them the moment they're restored)
         double health = cfg.getDouble("health", maxHealth);
-        player.setHealth(Math.min(health, maxHealth));
+        player.setHealth(Math.max(1.0, Math.min(health, maxHealth)));
 
         // Restore food
         player.setFoodLevel(cfg.getInt("food-level", 20));
