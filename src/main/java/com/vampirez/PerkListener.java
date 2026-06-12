@@ -20,6 +20,7 @@ import com.vampirez.perks.BardPerk;
 import com.vampirez.perks.BlackCleaverPerk;
 import com.vampirez.perks.BlackShieldPerk;
 import com.vampirez.perks.CurseOfDecayPerk;
+import com.vampirez.perks.NetherBladePerk;
 import com.vampirez.perks.WarDrumsPerk;
 
 import java.util.List;
@@ -127,6 +128,16 @@ public class PerkListener implements Listener {
             }
         }
 
+        // Nether Blade: pending multiplier set by its onDamageDealt hook above.
+        // Must stay in this handler, before the cap — Bukkit does not guarantee
+        // ordering between two handlers of the same priority.
+        if (!event.isCancelled() && attacker != null && event.getEntity() instanceof Player) {
+            Double netherMult = NetherBladePerk.consumeDamageMultiplier(attacker.getUniqueId());
+            if (netherMult != null) {
+                event.setDamage(event.getDamage() * netherMult);
+            }
+        }
+
         // Cap max PvP damage at 7.0 HP (3.5 hearts) to prevent multiplicative perk stacking
         if (!event.isCancelled() && event.getEntity() instanceof Player) {
             if (event.getDamage() > 7.0) {
@@ -141,28 +152,6 @@ public class PerkListener implements Listener {
                 double heal = event.getDamage() * lifesteal;
                 double newHealth = Math.min(attacker.getHealth() + heal, attacker.getMaxHealth());
                 attacker.setHealth(newHealth);
-            }
-        }
-    }
-
-    /**
-     * HIGHEST priority: runs AFTER GameListener (HIGH) sets base damage.
-     * Applies Nether Blade damage multiplier on top of the final base damage.
-     */
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onDamagePost(EntityDamageByEntityEvent event) {
-        if (event.isCancelled()) return;
-        if (!(event.getEntity() instanceof Player)) return;
-
-        Player attacker = resolveAttacker(event);
-        if (attacker == null) return;
-
-        Double mult = com.vampirez.perks.NetherBladePerk.consumeDamageMultiplier(attacker.getUniqueId());
-        if (mult != null) {
-            event.setDamage(event.getDamage() * mult);
-            // Re-apply damage cap
-            if (event.getDamage() > 7.0) {
-                event.setDamage(7.0);
             }
         }
     }

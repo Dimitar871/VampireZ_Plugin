@@ -31,11 +31,25 @@ class PerkListenerPriorityTest {
                 + "GameListener.onEntityDamage (HIGH) overwriting event.setDamage(finalDamage).");
     }
 
+    /**
+     * Bukkit does NOT guarantee ordering between two handlers registered at the same
+     * priority — reflection method order is unspecified. All damage math (perk hooks,
+     * Nether Blade, Black Cleaver, Stat Anvil, the 7.0 cap, lifesteal) must therefore
+     * live in ONE handler where ordering is explicit. If a second handler for
+     * EntityDamageByEntityEvent appears, steps like "cap after all multipliers" can
+     * silently run in the wrong order.
+     */
     @Test
-    void perkListener_onDamagePost_isHighestPriority() throws Exception {
-        EventPriority p = priorityOf(PerkListener.class, "onDamagePost", EntityDamageByEntityEvent.class);
-        assertEquals(EventPriority.HIGHEST, p,
-                "PerkListener.onDamagePost (Black Cleaver / damage cap) MUST run at HIGHEST.");
+    void perkListenerHasExactlyOneDamageEventHandler() {
+        long damageHandlers = java.util.Arrays.stream(PerkListener.class.getMethods())
+                .filter(m -> m.getAnnotation(EventHandler.class) != null)
+                .filter(m -> m.getParameterCount() == 1
+                        && m.getParameterTypes()[0] == EntityDamageByEntityEvent.class)
+                .count();
+        assertEquals(1, damageHandlers,
+                "PerkListener must have exactly ONE EntityDamageByEntityEvent handler. "
+                + "Same-priority handler ordering is unspecified in Bukkit — fold new damage "
+                + "logic into onDamage at the correct step instead of adding a second handler.");
     }
 
     @Test
