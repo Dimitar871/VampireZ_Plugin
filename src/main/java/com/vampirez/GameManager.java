@@ -733,6 +733,11 @@ public class GameManager {
         economyManager.stopPassiveIncome();
         dayNightManager.stopCycle();
 
+        // Close any open perk-selection GUIs BEFORE wiping perks, so no countdown
+        // or click handler can re-add perks after the reset (BUG_PERK_PERSISTENCE).
+        if (perkSelectionGUISupplier.get() != null) {
+            perkSelectionGUISupplier.get().cancelAllOpen();
+        }
         // Clear all perks immediately so perk ticks (Undead Horde, etc.) stop.
         // resetAll() also clears cross-player perk state (webs, curses, stacks).
         perkManager.resetAll();
@@ -759,6 +764,9 @@ public class GameManager {
         bossBarManager.setVisible(false);
         economyManager.stopPassiveIncome();
         dayNightManager.stopCycle();
+        if (perkSelectionGUISupplier.get() != null) {
+            perkSelectionGUISupplier.get().cancelAllOpen();
+        }
         perkManager.resetAll();
 
         // Reset immediately (no 10s delay — server may be shutting down)
@@ -770,6 +778,9 @@ public class GameManager {
         timerManager.cancelAutoStartTask();
 
         // Cleanup
+        if (perkSelectionGUISupplier.get() != null) {
+            perkSelectionGUISupplier.get().cancelAllOpen();
+        }
         for (Perk perk : perkManager.getAllPerks()) {
             perk.clearAllStats();
         }

@@ -14,8 +14,10 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -37,6 +39,13 @@ public class PerkSelectionGUI {
     private final GameManager gameManager;
     private final VampireZPlugin plugin;
     private final Random rng = new Random();
+
+    /**
+     * Selections currently awaiting a pick, keyed by player. Lets the game-end path
+     * force-close every open selection (cancelAllOpen) instead of relying on each
+     * countdown/click handler to notice the state change on its own.
+     */
+    private final Map<UUID, SelectionState> activeStates = new HashMap<>();
 
     public PerkSelectionGUI(PerkManager perkManager, GameManager gameManager, VampireZPlugin plugin) {
         this.perkManager = perkManager;
@@ -107,9 +116,38 @@ public class PerkSelectionGUI {
     // ===== GUI building =====
 
     private void openSelectionGui(Player player, SelectionState state) {
+        activeStates.put(player.getUniqueId(), state);
         Gui gui = buildGui(player, state);
         gui.open(player);
         startCountdown(player, state);
+    }
+
+    /**
+     * Force-closes every open selection GUI without assigning perks. Called when the
+     * game ends (endGame / stopGame / resetToLobby) so no countdown or click handler
+     * can add a perk after the perk lists have been wiped (BUG_PERK_PERSISTENCE
+     * Layer 2 — the per-handler state guards remain as Layer 1).
+     */
+    public void cancelAllOpen() {
+        for (Map.Entry<UUID, SelectionState> entry : new HashMap<>(activeStates).entrySet()) {
+            SelectionState state = entry.getValue();
+            state.selected = true; // stops handleClose from reopening and countdown from assigning
+            cancelCountdown(state);
+            Player p = Bukkit.getPlayer(entry.getKey());
+            if (p != null && p.isOnline()) {
+                p.closeInventory();
+            }
+        }
+        activeStates.clear();
+    }
+
+    /** Marks a selection finished and forgets it (unless a chained pick already replaced it). */
+    private void concludeState(UUID uuid, SelectionState state) {
+        state.selected = true;
+        cancelCountdown(state);
+        if (activeStates.get(uuid) == state) {
+            activeStates.remove(uuid);
+        }
     }
 
     private Gui buildGui(Player player, SelectionState state) {
@@ -197,8 +235,7 @@ public class PerkSelectionGUI {
         // while this GUI was still open), don't add the perk — it would leak into the lobby
         // and the next game.
         if (gameManager.getState() != GameState.ACTIVE && gameManager.getState() != GameState.STARTING) {
-            state.selected = true;
-            cancelCountdown(state);
+            concludeState(player.getUniqueId(), state);
             player.closeInventory();
             return;
         }
@@ -256,7 +293,11 @@ public class PerkSelectionGUI {
             }, 20L);
         } else {
             // Out of patience — auto-assign a random perk.
-            cancelCountdown(state);
+            concludeState(player.getUniqueId(), state);
+            // Game-state guard: same leak as selectPerk/countdown — never assign post-game.
+            if (gameManager.getState() != GameState.ACTIVE && gameManager.getState() != GameState.STARTING) {
+                return;
+            }
             Perk randomPerk = state.offeredPerks.get(rng.nextInt(state.offeredPerks.size()));
             perkManager.addPerkToPlayer(player.getUniqueId(), randomPerk, sourceFor(state));
             player.sendMessage(Component.empty()
@@ -276,7 +317,7 @@ public class PerkSelectionGUI {
         state.countdownTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (state.selected) { cancelCountdown(state); return; }
             Player p = Bukkit.getPlayer(uuid);
-            if (p == null || !p.isOnline()) { cancelCountdown(state); return; }
+            if (p == null || !p.isOnline()) { concludeState(uuid, state); return; }
 
             secondsLeft[0]--;
             if (secondsLeft[0] <= 5 && secondsLeft[0] > 0) {
@@ -288,8 +329,7 @@ public class PerkSelectionGUI {
                 // Game-state guard: if the game ended while the GUI was open, don't
                 // auto-assign — would leak the perk into lobby and next game.
                 if (gameManager.getState() != GameState.ACTIVE && gameManager.getState() != GameState.STARTING) {
-                    state.selected = true;
-                    cancelCountdown(state);
+                    concludeState(uuid, state);
                     p.closeInventory();
                     return;
                 }
@@ -300,7 +340,7 @@ public class PerkSelectionGUI {
                         .append(Component.text(randomPerk.getDisplayName()).color(randomPerk.getTier().getTextColor())));
                 p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
 
-                state.selected = true;
+                concludeState(uuid, state);
                 p.closeInventory();
                 chainNextConversionPick(p, state);
             }
@@ -317,8 +357,7 @@ public class PerkSelectionGUI {
     // ===== Lifecycle helpers =====
 
     private void finalizeSelection(Player player, SelectionState state) {
-        state.selected = true;
-        cancelCountdown(state);
+        concludeState(player.getUniqueId(), state);
         player.closeInventory();
         chainNextConversionPick(player, state);
     }
