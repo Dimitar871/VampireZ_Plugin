@@ -331,6 +331,7 @@ public class VampireZPlugin extends JavaPlugin {
         // Expansion Gold - Vampire
         pm.registerPerk(new SpiderClimbPerk());
         pm.registerPerk(new PlagueCarrierPerk());
+        pm.registerPerk(new ManticorePerk());
         // Expansion Gold - Both
         pm.registerPerk(new SelfishPerk());
         pm.registerPerk(new GoreDrinkerPerk());
@@ -376,7 +377,6 @@ public class VampireZPlugin extends JavaPlugin {
         pm.registerPerk(new ReapersMarkPerk());
         // Expansion Prismatic - Both
         pm.registerPerk(new ChainLightningPerk());
-        // DeathsGambitPerk removed
         pm.registerPerk(new PlagueDoctorPerk());
         // Expansion Prismatic - Human
         pm.registerPerk(new RadiantAuraPerk());

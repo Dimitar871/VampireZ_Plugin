@@ -4,7 +4,7 @@
 
 # VampireZ Wiki
 
-Everything behind the curtain: game flow, combat math, economy, day/night, perk interactions, and the full 145-perk catalogue.
+Everything behind the curtain: game flow, combat math, economy, day/night, perk interactions, and the full 144-perk catalogue.
 
 For install & usage, see the [README](README.md).
 
@@ -209,6 +209,23 @@ $$
 ### Armor repair
 25 g via the shop GUI — restores durability on all armor pieces.
 
+### Stat Anvils
+A permanent stat-boost shop opened from the **Stat Anvil** button inside the Perk Shop. Each purchase costs **75 g** and **does not use a perk slot** — buffs stack on top of your 6 perks for as much gold as you can spend.
+
+Clicking the anvil rolls **3 random buffs** out of the pool below; pick one to buy. Every buff is **stackable** (buy the same one repeatedly for more), and all of them **persist through death, respawn, and human → vampire conversion**.
+
+| Buff | Effect | Stacking |
+|------|--------|----------|
+| **+2 Hearts** | +4 max HP | Additive — each stack adds 2 hearts |
+| **+10% Damage** | +10 % melee damage dealt | Additive — `1.0 + 0.10 × stacks` |
+| **+10% Speed** | +10 % movement speed | Multiplicative on vanilla walk speed |
+| **+15% Attack Speed** | +15 % attack speed | Multiplicative on vanilla attack speed |
+| **+10% Lifesteal** | Heal 10 % of damage dealt to players | Additive per stack |
+
+- **Damage** is applied in combat *before* the 7 HP cap (see Combat → Step 7); **lifesteal** heals off the *final, post-cap* damage and never overheals past your max HP.
+- **Hearts / Speed / Attack Speed** are attribute buffs, re-applied on every respawn and conversion using tracked totals so they never double-stack or drift.
+- All anvil buffs reset when the game ends.
+
 ### Assist tracking
 Every time a player takes damage, the attacker is remembered for a rolling **10-second window**. When that player dies, everyone who hit them in the window — except the final killer — earns the assist reward.
 
@@ -397,7 +414,7 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/rabbit_foot.png" width="24"> | 🔴 | Feral Charge | Sprinting attacks deal +30 % damage (6 s cd) |
 | <img src="images/perks/spider_eye.png" width="24"> | 🔴 | Infectious Bite | On kill: heal nearby vampires for 4 ♥ |
 
-### Gold Tier (49 perks · 150 g)
+### Gold Tier (50 perks · 150 g)
 
 
 | Icon | Team | Perk | Effect |
@@ -462,8 +479,9 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/flint.png" width="24"> | 🔴 | Shadow Ambush | 3 s invis, next hit +50 % damage (30 s cd) |
 | <img src="images/perks/cobweb.png" width="24"> | 🔴 | Spider Climb | Wall climbing ability |
 | <img src="images/perks/fermented_spider_eye.png" width="24"> | 🔴 | Plague Carrier | Spread poison to nearby enemies over time |
+| <img src="images/perks/turtle_scute.png" width="24"> | 🔴 | Manticore | On kill: +½ victim's max ♥ (temp 30 s); nearby enemies get Weakness I + Slowness I (30 s) |
 
-### Prismatic Tier (46 perks · 400 g)
+### Prismatic Tier (45 perks · 400 g)
 
 
 | Icon | Team | Perk | Effect |
@@ -474,7 +492,6 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | <img src="images/perks/lightning_rod.png" width="24"> | ⚪ | Thunderstrike | Every 5th hit summons lightning |
 | <img src="images/perks/brown_dye.png" width="24"> | ⚪ | Earthquake | Right-click: 6-block AoE knockback + 3 ♥ (30 s cd) |
 | <img src="images/perks/trident.png" width="24"> | ⚪ | Chain Lightning | Melee hits chain for 50 % damage |
-| <img src="images/perks/soul_lantern.png" width="24"> | ⚪ | Death's Gambit | Fatal: 50/50 survive at 1 HP or take 50 % more |
 | <img src="images/perks/brewing_stand.png" width="24"> | ⚪ | Plague Doctor | Immune to all negative potion effects |
 | <img src="images/perks/armor_stand.png" width="24"> | ⚪ | Decoy | Spawn a decoy of yourself |
 | <img src="images/perks/totem_of_undying.png" width="24"> | ⚪ | Ankh of Rebirth | On death: save location. On respawn: teleport to death location at 60 % HP |
