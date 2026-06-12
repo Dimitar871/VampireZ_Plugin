@@ -234,7 +234,7 @@ public class PerkSelectionGUI {
         // Game-state guard: if the game has already ended (e.g. last human just converted
         // while this GUI was still open), don't add the perk — it would leak into the lobby
         // and the next game.
-        if (gameManager.getState() != GameState.ACTIVE && gameManager.getState() != GameState.STARTING) {
+        if (!gameManager.getState().allowsPerkSelection()) {
             concludeState(player.getUniqueId(), state);
             player.closeInventory();
             return;
@@ -288,14 +288,14 @@ public class PerkSelectionGUI {
             state.reopenAttempts++;
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (!player.isOnline()) return;
-                if (gameManager.getState() != GameState.ACTIVE && gameManager.getState() != GameState.STARTING) return;
+                if (!gameManager.getState().allowsPerkSelection()) return;
                 buildGui(player, state).open(player);
             }, 20L);
         } else {
             // Out of patience — auto-assign a random perk.
             concludeState(player.getUniqueId(), state);
             // Game-state guard: same leak as selectPerk/countdown — never assign post-game.
-            if (gameManager.getState() != GameState.ACTIVE && gameManager.getState() != GameState.STARTING) {
+            if (!gameManager.getState().allowsPerkSelection()) {
                 return;
             }
             Perk randomPerk = state.offeredPerks.get(rng.nextInt(state.offeredPerks.size()));
@@ -328,7 +328,7 @@ public class PerkSelectionGUI {
             if (secondsLeft[0] <= 0) {
                 // Game-state guard: if the game ended while the GUI was open, don't
                 // auto-assign — would leak the perk into lobby and next game.
-                if (gameManager.getState() != GameState.ACTIVE && gameManager.getState() != GameState.STARTING) {
+                if (!gameManager.getState().allowsPerkSelection()) {
                     concludeState(uuid, state);
                     p.closeInventory();
                     return;
