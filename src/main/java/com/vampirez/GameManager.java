@@ -821,9 +821,10 @@ public class GameManager {
                     // No arena reset — go straight to lobby spawn, no intermediate teleport
                     player.teleport(spawnManager.getLobbySpawn());
                 }
-                if (playerStateManager != null) {
-                    playerStateManager.clearSavedState(uuid);
-                }
+                // NOTE: the saved-state file is deliberately KEPT. The player stays in the
+                // VampireZ lobby for the next round; their pre-join inventory is restored
+                // by /vz leave or restoreLobbyPlayers() on shutdown — both read this file.
+                // (Deleting it here was the v2.5 item-loss bug: restore() then no-op'd.)
             } else {
                 joinedPlayers.remove(uuid);
             }
