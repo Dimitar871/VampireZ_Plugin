@@ -922,6 +922,16 @@ public class GameManager {
 
         // Case 1: Reconnecting to an active game (they quit mid-game)
         if (joinedPlayers.contains(uuid) && (stateManager.getState() == GameState.ACTIVE || stateManager.getState() == GameState.STARTING)) {
+            // Joined the lobby but was offline when teams were assigned (or removed
+            // from their team after dropping during the STARTING countdown) — without
+            // a team they'd be a ghost: no gear, no scoreboard, uncounted by win
+            // conditions. Join as vampire, consistent with the mid-game disconnect
+            // rule, owed at least the starting freebie pick.
+            if (!teamManager.isInGame(uuid)) {
+                teamManager.addVampire(uuid);
+                pendingAutoPerks.putIfAbsent(uuid, new ArrayList<>(List.of(PerkTier.SILVER)));
+                player.sendMessage(MM.parse("<dark_red>The game started without you — you join the hunt as a Vampire!"));
+            }
             if (teamManager.getVampireTeam().contains(uuid)) {
                 resetPlayerFully(player);
                 player.setGameMode(GameMode.SURVIVAL);
