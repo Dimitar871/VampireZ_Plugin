@@ -31,9 +31,10 @@ class DamageCalculatorTest {
         assertFalse(DamageCalculator.isMeleeWeapon(Material.BOW));
         assertFalse(DamageCalculator.isMeleeWeapon(Material.STICK));
         assertFalse(DamageCalculator.isMeleeWeapon(Material.AIR));
-        // PICKAXE contains "AXE" by substring — current formula treats it as a weapon.
-        // This documents the existing behavior; change deliberately if unwanted.
-        assertTrue(DamageCalculator.isMeleeWeapon(Material.IRON_PICKAXE));
+        // Pickaxes matched via the "AXE" substring until v2.5.1 and hit with full
+        // formula damage — deliberately excluded now (balance decision).
+        assertFalse(DamageCalculator.isMeleeWeapon(Material.IRON_PICKAXE));
+        assertFalse(DamageCalculator.isMeleeWeapon(Material.NETHERITE_PICKAXE));
     }
 
     // ===== base damage =====

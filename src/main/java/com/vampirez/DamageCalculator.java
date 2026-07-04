@@ -27,10 +27,14 @@ public final class DamageCalculator {
 
     private DamageCalculator() {}
 
-    /** The custom formula only applies to swords and axes in the main hand. */
+    /**
+     * The custom formula only applies to swords and axes in the main hand.
+     * endsWith("_AXE") deliberately excludes pickaxes — the old contains("AXE")
+     * let a map-loot pickaxe hit with full formula damage.
+     */
     public static boolean isMeleeWeapon(Material material) {
         String name = material.name();
-        return name.contains("SWORD") || name.contains("AXE");
+        return name.contains("SWORD") || name.endsWith("_AXE");
     }
 
     /**
