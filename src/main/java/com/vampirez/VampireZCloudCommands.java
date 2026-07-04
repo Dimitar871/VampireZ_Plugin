@@ -55,6 +55,7 @@ public class VampireZCloudCommands {
         leaf("status",       ctx -> handlers.handleStatus(player(ctx)));
         leaf("leaderboard",  ctx -> handlers.handleLeaderboard(player(ctx)));
         leaf("lb",           ctx -> handlers.handleLeaderboard(player(ctx)));
+        leaf("perkstats",    ctx -> handlers.handlePerkStats(player(ctx)));
 
         // /vz perks [player]
         manager.command(manager.commandBuilder("vz")

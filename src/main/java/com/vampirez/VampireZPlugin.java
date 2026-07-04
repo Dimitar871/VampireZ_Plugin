@@ -130,8 +130,9 @@ public class VampireZPlugin extends JavaPlugin {
         perkSelectionGUI = new PerkSelectionGUI(perkManager, gameManager, this);
         PerkTestGUI perkTestGUI = new PerkTestGUI(perkManager);
 
-        // 6. Stats trackers — PlayerStatsManager persists to SQLite via the repository.
-        perkStatsManager = new PerkStatsManager(this, gameManager, perkManager);
+        // 6. Stats trackers — both persist to SQLite via their repositories.
+        perkStatsManager = new PerkStatsManager(this, gameManager, perkManager,
+                new com.vampirez.db.PerkStatsRepository(databaseManager));
         playerStatsManager = new PlayerStatsManager(this, gameManager,
                 new PlayerStatsRepository(databaseManager));
 
@@ -158,7 +159,7 @@ public class VampireZPlugin extends JavaPlugin {
 
         // 8. Leaderboard GUI + commands (Cloud handles dispatch + tab-complete + Brigadier)
         LeaderboardGUI leaderboardGUI = new LeaderboardGUI(playerStatsManager);
-        GameCommands gameCommands = new GameCommands(gameManager, perkShopGUI, perkTestGUI, api, leaderboardGUI);
+        GameCommands gameCommands = new GameCommands(gameManager, perkShopGUI, perkTestGUI, api, leaderboardGUI, perkStatsManager);
         new VampireZCloudCommands(this, gameCommands, gameManager, api).register();
 
         // 6. Register event listeners
@@ -208,7 +209,7 @@ public class VampireZPlugin extends JavaPlugin {
             // Restore all lobby players' saved states so nothing is stale on restart
             gameManager.restoreLobbyPlayers();
         }
-        if (perkStatsManager != null) perkStatsManager.save();
+        if (perkStatsManager != null) perkStatsManager.saveBlocking();
         // Player stats: synchronous flush since the scheduler is shutting down.
         if (playerStatsManager != null) playerStatsManager.saveBlocking();
         if (databaseManager != null) databaseManager.stop();

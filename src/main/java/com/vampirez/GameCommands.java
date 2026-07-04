@@ -25,14 +25,16 @@ public class GameCommands implements CommandExecutor, TabCompleter {
     private final PerkTestGUI perkTestGUI;
     private final VampireZAPI api;
     private final LeaderboardGUI leaderboardGUI;
+    private final PerkStatsManager perkStatsManager;
 
     public GameCommands(GameManager gameManager, PerkShopGUI perkShopGUI, PerkTestGUI perkTestGUI,
-                        VampireZAPI api, LeaderboardGUI leaderboardGUI) {
+                        VampireZAPI api, LeaderboardGUI leaderboardGUI, PerkStatsManager perkStatsManager) {
         this.gameManager = gameManager;
         this.perkShopGUI = perkShopGUI;
         this.perkTestGUI = perkTestGUI;
         this.api = api;
         this.leaderboardGUI = leaderboardGUI;
+        this.perkStatsManager = perkStatsManager;
     }
 
     @Override
@@ -67,6 +69,7 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             case "announce" -> handleAnnounce(player);
             case "arena" -> handleArena(player);
             case "reload" -> handleReload(player);
+            case "perkstats" -> handlePerkStats(player);
             case "giveperk" -> handleGivePerk(player, args);
             case "removeperk" -> handleRemovePerk(player, args);
             case "forceconvert" -> handleForceConvert(player, args);
@@ -92,6 +95,7 @@ public class GameCommands implements CommandExecutor, TabCompleter {
         player.sendMessage(MM.parse("<gold>/vz gold<gray> - Show your gold"));
         player.sendMessage(MM.parse("<gold>/vz status<gray> - Show game status"));
         player.sendMessage(MM.parse("<gold>/vz leaderboard<gray> - Open the player leaderboard"));
+        player.sendMessage(MM.parse("<gold>/vz perkstats<gray> - Perk pick counts and win rates"));
         if (player.hasPermission("vampirez.admin")) {
             player.sendMessage(MM.parse("<red>/vz start<gray> - Start the game"));
             player.sendMessage(MM.parse("<red>/vz forcestart<gray> - Force start"));
@@ -273,7 +277,7 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             return filter(args[0], List.of(
                     "help", "join", "leave", "shop", "perks", "gold", "status",
                     "start", "forcestart", "stop", "setlobby", "sethumanspawn", "setvampspawn",
-                    "test", "tools", "debugdmg", "announce", "arena", "reload",
+                    "test", "tools", "debugdmg", "announce", "arena", "reload", "perkstats",
                     "giveperk", "removeperk", "forceconvert", "settime", "setphase",
                     "setgold", "addgold", "apitest", "leaderboard", "lb",
                     "disableperk", "enableperk"
@@ -569,6 +573,47 @@ public class GameCommands implements CommandExecutor, TabCompleter {
         }
         gameManager.reloadAllConfig();
         player.sendMessage(MM.parse("<green>Config reloaded! Updated: game settings, economy, day/night, disabled perks, perk limits, perks.yml."));
+    }
+
+    /** Balance telemetry view: most-picked perks and best win-rates. */
+    void handlePerkStats(Player player) {
+        if (perkStatsManager == null) {
+            player.sendMessage(MM.parse("<red>Perk statistics are not available."));
+            return;
+        }
+        List<java.util.Map.Entry<String, PerkStatsManager.PerkStats>> top = perkStatsManager.getTopByPicks(10);
+        if (top.isEmpty()) {
+            player.sendMessage(MM.parse("<gray>No perk statistics recorded yet — finish a few games first."));
+            return;
+        }
+
+        player.sendMessage(MM.parse("<gold><bold>Most Picked Perks</bold> <gray>(picks · win rate)"));
+        int rank = 1;
+        for (java.util.Map.Entry<String, PerkStatsManager.PerkStats> e : top) {
+            PerkStatsManager.PerkStats s = e.getValue();
+            player.sendMessage(MM.parse("<yellow>" + rank++ + ". <white>" + perkDisplayName(e.getKey())
+                    + " <gray>— " + s.picks + " picks · " + winRateText(s)));
+        }
+
+        List<java.util.Map.Entry<String, PerkStatsManager.PerkStats>> best = perkStatsManager.getTopByWinRate(5, 5);
+        if (!best.isEmpty()) {
+            player.sendMessage(MM.parse("<gold><bold>Best Win Rates</bold> <gray>(min 5 games)"));
+            rank = 1;
+            for (java.util.Map.Entry<String, PerkStatsManager.PerkStats> e : best) {
+                PerkStatsManager.PerkStats s = e.getValue();
+                player.sendMessage(MM.parse("<yellow>" + rank++ + ". <white>" + perkDisplayName(e.getKey())
+                        + " <gray>— " + winRateText(s) + " over " + s.getGamesPlayed() + " games"));
+            }
+        }
+    }
+
+    private String perkDisplayName(String perkId) {
+        Perk perk = gameManager.getPerkManager().getPerkById(perkId);
+        return perk != null ? perk.getDisplayName() : perkId;
+    }
+
+    private static String winRateText(PerkStatsManager.PerkStats s) {
+        return s.getGamesPlayed() == 0 ? "no games yet" : Math.round(s.getWinRate() * 100) + "% win rate";
     }
 
     void handleLeaderboard(Player player) {

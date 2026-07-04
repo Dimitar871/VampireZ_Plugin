@@ -77,6 +77,16 @@ public class DatabaseManager {
             // Indexes for leaderboard queries.
             s.executeUpdate("CREATE INDEX IF NOT EXISTS idx_player_stats_kills ON player_stats(kills DESC)");
             s.executeUpdate("CREATE INDEX IF NOT EXISTS idx_player_stats_wins  ON player_stats(wins DESC)");
+            // V2: per-perk balance telemetry (picks + team outcome per game).
+            s.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS perk_stats (
+                        perk_id TEXT PRIMARY KEY NOT NULL,
+                        picks   INTEGER NOT NULL DEFAULT 0,
+                        wins    INTEGER NOT NULL DEFAULT 0,
+                        losses  INTEGER NOT NULL DEFAULT 0
+                    )
+                    """);
+            s.executeUpdate("CREATE INDEX IF NOT EXISTS idx_perk_stats_picks ON perk_stats(picks DESC)");
         } catch (SQLException e) {
             log.error("Schema migration failed", e);
             throw new RuntimeException("DatabaseManager migration failed", e);
