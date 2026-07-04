@@ -14,14 +14,17 @@ import com.vampirez.engine.action.DashAction;
 import com.vampirez.engine.action.GiveItemAction;
 import com.vampirez.engine.action.MultiplyDamageAction;
 import com.vampirez.engine.action.PlaySoundAction;
+import com.vampirez.engine.action.PullTargetAction;
 import com.vampirez.engine.action.RemoveAttributeModifierAction;
 import com.vampirez.engine.action.SetDamageAction;
+import com.vampirez.engine.action.StrikeLightningAction;
 import com.vampirez.engine.action.SetFireAction;
 import com.vampirez.engine.action.SpawnMobAction;
 import com.vampirez.engine.action.SpawnParticleAction;
 import com.vampirez.engine.condition.AllyWithinRangeCondition;
 import com.vampirez.engine.condition.Condition;
 import com.vampirez.engine.condition.CooldownCondition;
+import com.vampirez.engine.condition.EveryNthHitCondition;
 import com.vampirez.engine.condition.FromBehindCondition;
 import com.vampirez.engine.condition.HpBelowAbsoluteCondition;
 import com.vampirez.engine.condition.HpBelowPercentCondition;
@@ -229,6 +232,8 @@ public class PerkConfigLoader {
                 return new AllyWithinRangeCondition(asDouble(map.get("radius"), 10.0));
             case "is_right_click":
                 return new IsRightClickCondition();
+            case "every_nth_hit":
+                return new EveryNthHitCondition((int) asLong(map.get("n"), 5L));
             case "item_count_below": {
                 Material mat = parseMaterial(asString(map.get("material")));
                 if (mat == null) {
@@ -259,6 +264,15 @@ public class PerkConfigLoader {
                 return new MultiplyDamageAction(asDouble(map.get("factor"), 1.0));
             case "set_damage":
                 return new SetDamageAction(asDouble(map.get("value"), 0.0));
+            case "pull_target":
+                return new PullTargetAction(
+                        parseTargetWithDefault(map.get("target"), Target.VICTIM),
+                        asDouble(map.get("strength"), 1.0),
+                        asDouble(map.get("lift"), 0.2));
+            case "strike_lightning":
+                return new StrikeLightningAction(
+                        parseTargetWithDefault(map.get("target"), Target.VICTIM),
+                        asDouble(map.get("damage"), 0.0));
             case "add_attribute_modifier": {
                 AttributeShortcut s = parseAttributeShortcut(perkId, map);
                 if (s == null) return null;

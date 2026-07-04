@@ -25,6 +25,7 @@
 #                       hp_below_percent, hp_below_absolute, cooldown,
 #                       ally_within_range (radius),
 #                       is_right_click,
+#                       every_nth_hit (n) — passes on every Nth evaluation per player,
 #                       item_count_below (material, threshold),
 #                       item_in_hand (material, name_contains)
 #
@@ -46,6 +47,8 @@
 #                    give_item (material, amount, display_name, lore [list],
 #                               enchantments [list of {name, level}], potion_type),
 #                    dash (magnitude, lift),
+#                    pull_target (strength, lift; target: victim by default) — yank toward owner,
+#                    strike_lightning (damage; target: victim by default) — visual bolt + bonus dmg,
 #                    cancel_event
 
 blunt_force:
