@@ -70,6 +70,7 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             case "arena" -> handleArena(player);
             case "reload" -> handleReload(player);
             case "perkstats" -> handlePerkStats(player);
+            case "spectate" -> gameManager.toggleSpectate(player);
             case "giveperk" -> handleGivePerk(player, args);
             case "removeperk" -> handleRemovePerk(player, args);
             case "forceconvert" -> handleForceConvert(player, args);
@@ -96,6 +97,7 @@ public class GameCommands implements CommandExecutor, TabCompleter {
         player.sendMessage(MM.parse("<gold>/vz status<gray> - Show game status"));
         player.sendMessage(MM.parse("<gold>/vz leaderboard<gray> - Open the player leaderboard"));
         player.sendMessage(MM.parse("<gold>/vz perkstats<gray> - Perk pick counts and win rates"));
+        player.sendMessage(MM.parse("<gold>/vz spectate<gray> - Watch the current game (toggle)"));
         if (player.hasPermission("vampirez.admin")) {
             player.sendMessage(MM.parse("<red>/vz start<gray> - Start the game"));
             player.sendMessage(MM.parse("<red>/vz forcestart<gray> - Force start"));
@@ -277,7 +279,7 @@ public class GameCommands implements CommandExecutor, TabCompleter {
             return filter(args[0], List.of(
                     "help", "join", "leave", "shop", "perks", "gold", "status",
                     "start", "forcestart", "stop", "setlobby", "sethumanspawn", "setvampspawn",
-                    "test", "tools", "debugdmg", "announce", "arena", "reload", "perkstats",
+                    "test", "tools", "debugdmg", "announce", "arena", "reload", "perkstats", "spectate",
                     "giveperk", "removeperk", "forceconvert", "settime", "setphase",
                     "setgold", "addgold", "apitest", "leaderboard", "lb",
                     "disableperk", "enableperk"

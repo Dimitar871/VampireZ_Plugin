@@ -50,6 +50,8 @@ public class GameManager {
     private final BossBarManager bossBarManager = new BossBarManager();
 
     private final Set<UUID> joinedPlayers = new HashSet<>();
+    /** Non-participants watching the current game in SPECTATOR mode. Never in joinedPlayers. */
+    private final Set<UUID> spectators = new HashSet<>();
     /** Stores how many perks to auto-assign (with tiers) for players who disconnected mid-game. */
     private final Map<UUID, List<PerkTier>> pendingAutoPerks = new HashMap<>();
 
@@ -174,6 +176,11 @@ public class GameManager {
      */
     public void leaveGame(Player player) {
         UUID uuid = player.getUniqueId();
+        if (spectators.contains(uuid)) {
+            stopSpectating(player);
+            player.sendMessage(MM.parse("<yellow>Stopped spectating. Your inventory has been restored."));
+            return;
+        }
         if (!joinedPlayers.contains(uuid)) {
             player.sendMessage(MM.parse("<red>You are not in a VampireZ game!"));
             return;
@@ -227,6 +234,69 @@ public class GameManager {
 
     public boolean isJoined(UUID uuid) {
         return joinedPlayers.contains(uuid);
+    }
+
+    // ===== SPECTATING =====
+
+    /** Why a spectate request is denied — pure so it's unit-testable. */
+    enum SpectateCheck { ALLOWED, NO_ACTIVE_GAME, ALREADY_IN_GAME }
+
+    static SpectateCheck spectateCheck(GameState state, boolean joined) {
+        if (joined) return SpectateCheck.ALREADY_IN_GAME;
+        if (state != GameState.ACTIVE) return SpectateCheck.NO_ACTIVE_GAME;
+        return SpectateCheck.ALLOWED;
+    }
+
+    public boolean isSpectator(UUID uuid) {
+        return spectators.contains(uuid);
+    }
+
+    /** /vz spectate — toggle. Non-participants only; state saved/restored like a join. */
+    public void toggleSpectate(Player player) {
+        UUID uuid = player.getUniqueId();
+        if (spectators.contains(uuid)) {
+            stopSpectating(player);
+            player.sendMessage(MM.parse("<yellow>Stopped spectating. Your inventory has been restored."));
+            return;
+        }
+        switch (spectateCheck(stateManager.getState(), joinedPlayers.contains(uuid))) {
+            case ALREADY_IN_GAME ->
+                    player.sendMessage(MM.parse("<red>You are in the game — use /vz leave first."));
+            case NO_ACTIVE_GAME ->
+                    player.sendMessage(MM.parse("<red>There is no active game to spectate."));
+            case ALLOWED -> {
+                if (player.isDead()) player.spigot().respawn();
+                playerStateManager.saveAndClear(player);
+                spectators.add(uuid);
+                player.setGameMode(GameMode.SPECTATOR);
+                if (spawnManager.getHumanSpawn() != null) {
+                    player.teleport(spawnManager.getHumanSpawn());
+                }
+                player.sendMessage(MM.parse("<gray>Now spectating — <yellow>/vz spectate<gray> again (or /vz leave) to exit."));
+            }
+        }
+    }
+
+    /** Removes a spectator and restores their saved state. No-op for non-spectators. */
+    public void stopSpectating(Player player) {
+        if (!spectators.remove(player.getUniqueId())) return;
+        playerStateManager.restore(player);
+    }
+
+    /**
+     * Game-end cleanup: restore online spectators; offline ones just leave the set —
+     * their saved-state file remains, so handlePlayerJoin Case 3 restores next login.
+     */
+    private void restoreSpectators() {
+        for (UUID uuid : new HashSet<>(spectators)) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null && p.isOnline()) {
+                stopSpectating(p);
+                p.sendMessage(MM.parse("<yellow>The game ended — spectating over, inventory restored."));
+            } else {
+                spectators.remove(uuid);
+            }
+        }
     }
 
     public Set<UUID> getJoinedPlayers() {
@@ -802,6 +872,7 @@ public class GameManager {
     private void resetToLobby() {
         stateManager.setState(GameState.LOBBY);
         timerManager.cancelAutoStartTask();
+        restoreSpectators();
 
         // Cleanup
         if (perkSelectionGUISupplier.get() != null) {
@@ -1040,6 +1111,10 @@ public class GameManager {
 
     public void handlePlayerQuit(Player player) {
         UUID uuid = player.getUniqueId();
+
+        // Spectators: drop from the set but keep the saved-state file on disk —
+        // handlePlayerJoin Case 3 restores their inventory on next login.
+        if (spectators.remove(uuid)) return;
 
         if (!joinedPlayers.contains(uuid)) return; // Not in VampireZ, ignore
 
