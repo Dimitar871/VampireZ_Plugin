@@ -24,7 +24,7 @@ jobs:
         run: mvn --batch-mode --no-transfer-progress verify
 
       - name: Create GitHub release with jar
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: target/VampireZ-*.jar
           generate_release_notes: true
