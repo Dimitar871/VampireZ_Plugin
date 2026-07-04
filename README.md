@@ -74,6 +74,8 @@ When the game ends — or when a player types `/vz leave` — their full invento
 | `/vz perks` | — | List your active perks |
 | `/vz gold` | — | Show gold balance |
 | `/vz status` | — | Game state and team counts |
+| `/vz spectate` | — | Watch the current game (toggle) |
+| `/vz perkstats` | — | Perk pick counts and win rates |
 | `/vz announce` | `vampirez.admin` | Broadcast join message |
 | `/vz start` | `vampirez.admin` | Start game |
 | `/vz forcestart` | `vampirez.admin` | Start ignoring player count |

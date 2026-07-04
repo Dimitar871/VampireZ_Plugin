@@ -622,7 +622,7 @@ VampireZ пише в `plugins/VampireZ/`:
 - `config.yml` - main config (managed от ConfigLib)
 - `perks.yml` - data-driven perk definitions (saved on first boot, not auto-overwritten)
 - `vampirez.db` + WAL companions - SQLite database
-- `perk-stats.yml` - perk pick frequency tracking (legacy YAML, not migrated yet)
+- `perk-stats.yml.migrated` - старият YAML perk stats след миграция към SQLite (таблица `perk_stats`)
 - `player-stats.yml.migrated` - стария YAML player stats после миграция към SQLite
 - `saved-states/<uuid>.yml` - inventory snapshots на joined играчи (restored on leave)
 - `arena-template/` - source folder за clone-ване

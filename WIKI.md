@@ -542,6 +542,8 @@ If a player closes the selection GUI, it re-opens up to 3 times; after that a ra
 | `/vz perks` | — | List your active perks |
 | `/vz gold` | — | Show gold balance |
 | `/vz status` | — | Game state, time, team counts |
+| `/vz spectate` | — | Watch the current game as a non-participant (toggle) |
+| `/vz perkstats` | — | Most-picked perks and best win rates |
 | `/vz announce` | `vampirez.admin` | Broadcast clickable join message |
 | `/vz start` | `vampirez.admin` | Start game (checks min players + spawns) |
 | `/vz forcestart` | `vampirez.admin` | Start ignoring player count |
