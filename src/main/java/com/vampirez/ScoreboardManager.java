@@ -1,8 +1,9 @@
 package com.vampirez;
 
-import fr.mrmicky.fastboard.FastBoard;
+import fr.mrmicky.fastboard.adventure.FastBoard;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
@@ -14,21 +15,19 @@ public class ScoreboardManager {
     private Scoreboard teamScoreboard;
     private final Map<UUID, FastBoard> boards = new HashMap<>();
 
-    private static final String TITLE = ChatColor.DARK_RED + "" + ChatColor.BOLD + "VAMPIREZ";
-    private static final String SEPARATOR = ChatColor.DARK_GRAY + "━━━━━━━━━━━━━━━━━";
+    private static final Component TITLE = MM.parse("<dark_red><bold>VAMPIREZ");
+    private static final Component SEPARATOR = MM.parse("<dark_gray>━━━━━━━━━━━━━━━━━");
 
     public void setupLobbyScoreboard() {
         teamScoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
 
         Team humanTeam = teamScoreboard.registerNewTeam("humans");
-        humanTeam.setColor(ChatColor.BLUE);
+        humanTeam.color(NamedTextColor.BLUE);
         humanTeam.setAllowFriendlyFire(false);
-        humanTeam.setPrefix(ChatColor.BLUE + "");
 
         Team vampTeam = teamScoreboard.registerNewTeam("vampires");
-        vampTeam.setColor(ChatColor.RED);
+        vampTeam.color(NamedTextColor.RED);
         vampTeam.setAllowFriendlyFire(false);
-        vampTeam.setPrefix(ChatColor.RED + "");
     }
 
     public void updateLobbyScoreboard(int playerCount, int minPlayers) {
@@ -40,22 +39,22 @@ public class ScoreboardManager {
 
         for (FastBoard board : boards.values()) {
             if (!board.isDeleted()) {
-                List<String> lines = new ArrayList<>();
+                List<Component> lines = new ArrayList<>();
                 lines.add(SEPARATOR);
-                lines.add("");
-                lines.add(ChatColor.GRAY + "       \u25B6 LOBBY \u25C0");
-                lines.add("");
-                lines.add(ChatColor.WHITE + "  Players: " + ChatColor.GREEN + playerCount + ChatColor.GRAY + "/" + ChatColor.WHITE + "100");
-                lines.add(ChatColor.WHITE + "  Min to start: " + ChatColor.YELLOW + minPlayers);
-                lines.add("");
+                lines.add(Component.empty());
+                lines.add(MM.parse("<gray>       \u25B6 LOBBY \u25C0"));
+                lines.add(Component.empty());
+                lines.add(MM.parse("<white>  Players: <green>" + playerCount + "<gray>/<white>100"));
+                lines.add(MM.parse("<white>  Min to start: <yellow>" + minPlayers));
+                lines.add(Component.empty());
                 if (autoStartCountdown >= 0) {
-                    lines.add(ChatColor.GREEN + "  Starting in: " + ChatColor.YELLOW + ChatColor.BOLD + autoStartCountdown + "s");
+                    lines.add(MM.parse("<green>  Starting in: <yellow><bold>" + autoStartCountdown + "s"));
                 } else if (playerCount >= minPlayers) {
-                    lines.add(ChatColor.GREEN + "  \u2714 Ready to start!");
+                    lines.add(MM.parse("<green>  \u2714 Ready to start!"));
                 } else {
-                    lines.add(ChatColor.YELLOW + "  Waiting for players...");
+                    lines.add(MM.parse("<yellow>  Waiting for players..."));
                 }
-                lines.add("");
+                lines.add(Component.empty());
                 lines.add(SEPARATOR);
                 board.updateLines(lines);
             }
@@ -115,19 +114,16 @@ public class ScoreboardManager {
         int seconds = remainingSeconds % 60;
         String timeStr = String.format("%02d:%02d", minutes, seconds);
 
-        ChatColor timeColor;
-        if (remainingSeconds > 300) timeColor = ChatColor.GREEN;
-        else if (remainingSeconds > 60) timeColor = ChatColor.YELLOW;
-        else timeColor = ChatColor.RED;
+        String timeColor = remainingSeconds > 300 ? "<green>" : remainingSeconds > 60 ? "<yellow>" : "<red>";
 
         // Calculate next perk countdown — skip already-fired milestones, use wall-clock elapsed
         int elapsed = gameManager.getActiveElapsedSeconds();
-        String nextPerkLine = null;
+        Component nextPerkLine = null;
         for (int milestone : new int[] { 300, 600, 900 }) {
             if (gameManager.hasFiredTimedMilestone(milestone)) continue;
             if (elapsed < milestone) {
                 int untilNext = milestone - elapsed;
-                nextPerkLine = ChatColor.WHITE + "  Next Perk: " + ChatColor.GREEN + formatTime(untilNext) + " " + ChatColor.GRAY + "(?)";
+                nextPerkLine = MM.parse("<white>  Next Perk: <green>" + formatTime(untilNext) + " <gray>(?)");
                 break;
             }
         }
@@ -135,32 +131,27 @@ public class ScoreboardManager {
         List<Perk> perks = perkManager.getPlayerPerks(uuid);
 
         // Build lines
-        List<String> lines = new ArrayList<>();
+        List<Component> lines = new ArrayList<>();
         lines.add(SEPARATOR);
 
         // Perks section
         for (Perk perk : perks) {
-            lines.add(perk.getTier().getColor() + " \u2726 " + perk.getDisplayName());
+            lines.add(Component.text(" ✦ " + perk.getDisplayName(), perk.getTier().getTextColor()));
         }
 
-        lines.add("");
-        lines.add(ChatColor.GREEN + "  Perks: " + ChatColor.WHITE + perkManager.getPlayerPerkCount(uuid) + "/" + perkManager.getMaxPerks());
-        lines.add(ChatColor.GOLD + "  Gold: " + ChatColor.WHITE + economyManager.getGold(uuid));
+        lines.add(Component.empty());
+        lines.add(MM.parse("<green>  Perks: <white>" + perkManager.getPlayerPerkCount(uuid) + "/" + perkManager.getMaxPerks()));
+        lines.add(MM.parse("<gold>  Gold: <white>" + economyManager.getGold(uuid)));
+        lines.add(MM.parse("<white>  Phase: " + (dayNightManager.isNight() ? "<dark_purple>☾ Night" : "<yellow>☀ Day")));
 
-        String phaseIcon = dayNightManager.isNight() ? "\u263E" : "\u2600";
-        String phaseText = dayNightManager.isNight()
-                ? (ChatColor.DARK_PURPLE + phaseIcon + " Night")
-                : (ChatColor.YELLOW + phaseIcon + " Day");
-        lines.add(ChatColor.WHITE + "  Phase: " + phaseText);
-
-        lines.add("");
+        lines.add(Component.empty());
         if (nextPerkLine != null) {
             lines.add(nextPerkLine);
         }
-        lines.add(ChatColor.WHITE + "  Time Left: " + timeColor + timeStr);
+        lines.add(MM.parse("<white>  Time Left: " + timeColor + timeStr));
         lines.add(SEPARATOR);
-        lines.add(ChatColor.BLUE + "  Humans: " + ChatColor.WHITE + humansAlive);
-        lines.add(ChatColor.RED + "  Vampires: " + ChatColor.WHITE + vampires);
+        lines.add(MM.parse("<blue>  Humans: <white>" + humansAlive));
+        lines.add(MM.parse("<red>  Vampires: <white>" + vampires));
         lines.add(SEPARATOR);
 
         board.updateLines(lines);
