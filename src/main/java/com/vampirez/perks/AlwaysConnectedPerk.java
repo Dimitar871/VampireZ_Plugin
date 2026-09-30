@@ -95,7 +95,7 @@ public class AlwaysConnectedPerk extends Perk {
             if (human == null || !human.isOnline()) continue;
 
             // Glowing for 5 seconds (100 ticks) - visible to teammates
-            human.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 100, 0, false, false, true), true);
+            human.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 100, 0, false, false, true));
 
             // Heal 1 heart (2 HP)
             com.vampirez.Health.heal(human, 2.0);

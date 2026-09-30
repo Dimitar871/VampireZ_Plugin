@@ -43,6 +43,6 @@ public class ApplyPotionAction implements Action {
                 finalDuration = existing.getDuration() + durationTicks;
             }
         }
-        entity.addPotionEffect(new PotionEffect(type, finalDuration, amplifier, ambient, particles), true);
+        entity.addPotionEffect(new PotionEffect(type, finalDuration, amplifier, ambient, particles));
     }
 }

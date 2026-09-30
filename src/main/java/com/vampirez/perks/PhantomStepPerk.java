@@ -60,8 +60,8 @@ public class PhantomStepPerk extends Perk {
         storedArmor.put(uuid, victim.getInventory().getArmorContents().clone());
         victim.getInventory().setArmorContents(new ItemStack[4]);
 
-        victim.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 20, 0, false, false), true);
-        victim.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 20, 0, false, true), true);
+        victim.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 20, 0, false, false));
+        victim.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 20, 0, false, true));
         victim.getWorld().spawnParticle(Particle.LARGE_SMOKE, victim.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.02);
         victim.playSound(victim.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 1.0f, 1.5f);
         victim.sendMessage(MM.parse("<dark_purple>Phantom Step! You vanished!"));

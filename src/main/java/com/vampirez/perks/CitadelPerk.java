@@ -114,11 +114,11 @@ public class CitadelPerk extends Perk {
         for (Entity entity : zoneLoc.getWorld().getNearbyEntities(zoneLoc, ZONE_RADIUS, ZONE_RADIUS, ZONE_RADIUS)) {
             if (!(entity instanceof Player target)) continue;
             if (target.getUniqueId().equals(uuid) || isSameTeam(player, target)) {
-                target.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 30, 0, false, true), true);
+                target.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 30, 0, false, true));
                 // Use 100-tick duration so Regen I's 50-tick heal timer can fire.
                 PotionEffect existingRegen = target.getPotionEffect(PotionEffectType.REGENERATION);
                 if (existingRegen == null || existingRegen.getDuration() < 30) {
-                    target.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 0, false, true), true);
+                    target.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 0, false, true));
                 }
                 incrementStat(uuid, "allies_buffed");
             }

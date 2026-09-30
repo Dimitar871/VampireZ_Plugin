@@ -49,7 +49,7 @@ public class CourageOfTheColossusPerk extends Perk {
         cooldowns.put(uuid, now);
 
         // Absorption I = 2 hearts, lasts 30 seconds (600 ticks)
-        attacker.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 600, 0, false, true), true);
+        attacker.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 600, 0, false, true));
         attacker.getWorld().spawnParticle(Particle.END_ROD, attacker.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0.02);
 
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_IRON_GOLEM_HURT, 0.5f, 1.5f);

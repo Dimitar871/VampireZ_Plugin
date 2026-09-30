@@ -14,11 +14,11 @@ import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.PlayerProfile;
 import org.bukkit.profile.PlayerTextures;
 
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.UUID;
 
 public class GearManager {
@@ -129,16 +129,16 @@ public class GearManager {
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
         if (skullMeta != null) {
-            PlayerProfile profile = Bukkit.createPlayerProfile(UUID.randomUUID(), "");
+            PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID(), null);
             PlayerTextures textures = profile.getTextures();
             try {
-                textures.setSkin(new URL(
-                        "http://textures.minecraft.net/texture/16b76d73c65089cc1264a6291990574a03783ba540a343a352bd49c073c5cf5c"));
+                textures.setSkin(URI.create(
+                        "http://textures.minecraft.net/texture/16b76d73c65089cc1264a6291990574a03783ba540a343a352bd49c073c5cf5c").toURL());
             } catch (MalformedURLException e) {
-                e.printStackTrace();
+                throw new IllegalStateException("Vampire head texture URL is invalid", e);
             }
             profile.setTextures(textures);
-            skullMeta.setOwnerProfile(profile);
+            skullMeta.setPlayerProfile(profile);
             skullMeta.displayName(Component.text("Vampire").color(NamedTextColor.DARK_RED).decoration(TextDecoration.ITALIC, false));
             skullMeta.setUnbreakable(true);
             skull.setItemMeta(skullMeta);

@@ -179,15 +179,7 @@ public class GameListener implements Listener {
             // Zero out vanilla armor and enchantment modifiers to prevent double-application
             // Our formula already accounts for armor and Protection
             try {
-                if (event.isApplicable(EntityDamageEvent.DamageModifier.ARMOR)) {
-                    event.setDamage(EntityDamageEvent.DamageModifier.ARMOR, 0);
-                }
-                if (event.isApplicable(EntityDamageEvent.DamageModifier.MAGIC)) {
-                    event.setDamage(EntityDamageEvent.DamageModifier.MAGIC, 0);
-                }
-                if (event.isApplicable(EntityDamageEvent.DamageModifier.RESISTANCE)) {
-                    event.setDamage(EntityDamageEvent.DamageModifier.RESISTANCE, 0);
-                }
+                zeroVanillaMitigation(event);
             } catch (UnsupportedOperationException ignored) {
                 // Some modifiers may not be applicable depending on damage cause
             }
@@ -195,6 +187,19 @@ public class GameListener implements Listener {
 
         // Track damage for assists
         economyManager.recordDamage(victimUUID, attackerUUID);
+    }
+
+    // DamageModifier has no replacement API; zeroing these keeps vanilla armor/Protection
+    // from applying on top of DamageCalculator's result.
+    @SuppressWarnings("deprecation")
+    private static void zeroVanillaMitigation(EntityDamageByEntityEvent event) {
+        for (EntityDamageEvent.DamageModifier modifier : new EntityDamageEvent.DamageModifier[] {
+                EntityDamageEvent.DamageModifier.ARMOR,
+                EntityDamageEvent.DamageModifier.MAGIC,
+                EntityDamageEvent.DamageModifier.RESISTANCE }) {
+            if (event.isApplicable(modifier))
+                event.setDamage(modifier, 0);
+        }
     }
 
     // ===== DEATH HANDLING =====
@@ -208,7 +213,7 @@ public class GameListener implements Listener {
 
         // Clear drops and death message
         event.getDrops().clear();
-        event.setDeathMessage(null);
+        event.deathMessage(null);
         event.setKeepInventory(false);
         event.setKeepLevel(false);
 

@@ -124,7 +124,7 @@ public class VoidWalkerPerk extends Perk {
             if (isSameTeam(player, nearby)) continue;
 
             nearby.damage(6.0);
-            nearby.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1, false, true), true);
+            nearby.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1, false, true));
             nearby.sendMessage(MM.parse("<dark_purple>Void Walker shockwave!"));
             hits++;
         }

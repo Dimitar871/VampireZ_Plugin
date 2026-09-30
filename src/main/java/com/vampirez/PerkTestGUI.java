@@ -63,7 +63,7 @@ public class PerkTestGUI {
         boolean isDisabled = perkManager.isDisabled(perk.getId());
         boolean owned = ownedIds.contains(perk.getId());
         ItemStack display = perk.createDisplayItem();
-        if (isDisabled) display.setType(Material.BARRIER);
+        if (isDisabled) display = display.withType(Material.BARRIER);
 
         ItemMeta meta = display.getItemMeta();
         if (meta != null) {

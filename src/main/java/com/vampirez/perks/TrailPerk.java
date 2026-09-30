@@ -144,10 +144,10 @@ public class TrailPerk extends Perk {
             if (onTrail) {
                 if (isSameTeam(player, other)) {
                     // Teammate: Speed I for 2 seconds (refreshes while on trail)
-                    other.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0, true, false, true), true);
+                    other.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0, true, false, true));
                 } else {
                     // Enemy: Slowness I for 2 seconds (refreshes while on trail)
-                    other.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0, true, false, true), true);
+                    other.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0, true, false, true));
                     incrementStat(uuid, "enemies_slowed");
                 }
             }

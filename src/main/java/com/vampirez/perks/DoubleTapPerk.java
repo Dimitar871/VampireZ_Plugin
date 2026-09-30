@@ -29,6 +29,7 @@ public class DoubleTapPerk extends Perk {
     public void remove(Player player) {}
 
     @Override
+    @SuppressWarnings("deprecation") // client-reported ground state only scales a crit; spoofing gains nothing a real jump would not
     public void onDamageDealt(Player attacker, Entity victim, EntityDamageByEntityEvent event) {
         // Check if the attack was a critical hit (player is falling and sprinting)
         if (attacker.getFallDistance() > 0.0f && !attacker.isOnGround()) {

@@ -72,6 +72,7 @@ public class VampireLeapListener implements Listener {
         new BukkitRunnable() {
             int ticks = 0;
             @Override
+            @SuppressWarnings("deprecation") // client-reported ground state only ends a particle trail
             public void run() {
                 if (!player.isOnline() || ticks >= 12 || player.isOnGround()) {
                     // Landing burst

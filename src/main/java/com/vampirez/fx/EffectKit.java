@@ -91,7 +91,7 @@ public class EffectKit {
     public void beam(Location from, Location to, Color color) {
         LineEffect e = new LineEffect(manager);
         e.setLocation(from);
-        e.setTargetLocation(to);
+        e.setTarget(to);
         e.particle = Particle.DUST;
         e.color = color;
         e.particles = 40;

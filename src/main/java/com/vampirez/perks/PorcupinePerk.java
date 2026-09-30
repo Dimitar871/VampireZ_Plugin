@@ -85,7 +85,7 @@ public class PorcupinePerk extends Perk {
 
         // Deal 2 hearts (4 HP) back to attacker
         attackerPlayer.damage(4.0);
-        attackerPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0, false, true), true);
+        attackerPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0, false, true));
 
         victim.getWorld().spawnParticle(Particle.DUST, victim.getLocation().add(0, 1, 0),
                 15, 0.5, 0.5, 0.5, 0, new Particle.DustOptions(Color.fromRGB(0, 180, 0), 1.5f));

@@ -17,7 +17,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -271,6 +270,7 @@ class PerkConfigLoaderTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation") // stubs getMaxHealth() read by HpBelowPercentCondition
     void executioner_executesBelowAbsoluteThresholdOtherwiseMultiplies() throws Exception {
         DataDrivenPerk perk = findById(load(PILOT_YAML), "executioner");
 

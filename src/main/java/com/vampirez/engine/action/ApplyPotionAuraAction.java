@@ -48,11 +48,11 @@ public class ApplyPotionAuraAction implements Action {
             if (!(e instanceof Player nearby)) continue;
             if (!includeSelf && nearby.equals(owner)) continue;
             if (alliesOnly && !ownerTeam.hasEntry(nearby.getName())) continue;
-            nearby.addPotionEffect(new PotionEffect(type, durationTicks, amplifier, ambient, particles), true);
+            nearby.addPotionEffect(new PotionEffect(type, durationTicks, amplifier, ambient, particles));
         }
 
         if (includeSelf) {
-            owner.addPotionEffect(new PotionEffect(type, durationTicks, amplifier, ambient, particles), true);
+            owner.addPotionEffect(new PotionEffect(type, durationTicks, amplifier, ambient, particles));
         }
     }
 }

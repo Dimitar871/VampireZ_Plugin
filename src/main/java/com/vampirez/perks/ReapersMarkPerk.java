@@ -110,7 +110,7 @@ public class ReapersMarkPerk extends Perk {
         marks.put(uuid, nearest.getUniqueId());
         markTimestamps.put(uuid, now);
 
-        nearest.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 600, 0, false, true), true);
+        nearest.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 600, 0, false, true));
         nearest.getWorld().spawnParticle(Particle.DUST, nearest.getLocation().add(0, 2, 0), 20, 0.3, 0.3, 0.3, 0,
                 new Particle.DustOptions(org.bukkit.Color.RED, 1.5f));
         // Beam from caster to marked target + persistent atom orbit on the target for 30s

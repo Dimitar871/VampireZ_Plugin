@@ -81,9 +81,9 @@ public class TemporalShieldPerk extends Perk {
             if (!(entity instanceof Player target)) continue;
             if (isSameTeam(player, target)) continue;
 
-            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 254, false, true), true);
-            target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 254, false, true), true);
-            target.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 40, 200, false, true), true);
+            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 254, false, true));
+            target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 254, false, true));
+            target.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 40, 200, false, true));
             target.sendMessage(MM.parse("<aqua>You've been frozen by Temporal Shield!"));
             frozen++;
         }

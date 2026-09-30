@@ -72,7 +72,7 @@ public class DecoyPerk extends Perk {
         List<ArmorStand> decoys = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             ArmorStand decoy = victim.getWorld().spawn(victim.getLocation(), ArmorStand.class);
-            decoy.setCustomName(victim.getDisplayName());
+            decoy.customName(victim.displayName());
             decoy.setCustomNameVisible(true);
             decoy.setArms(true);
             decoy.setBasePlate(false);
@@ -100,7 +100,7 @@ public class DecoyPerk extends Perk {
         }
 
         // Make player fully invisible: potion + temporarily hide armor
-        victim.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 40, 0, false, false), true);
+        victim.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 40, 0, false, false));
 
         // Snapshot current armor/toughness values before removing armor pieces
         AttributeInstance armorAttr = victim.getAttribute(Attribute.ARMOR);

@@ -1,5 +1,7 @@
 package com.vampirez.engine;
 
+import io.papermc.paper.registry.RegistryKey;
+import io.papermc.paper.registry.RegistryAccess;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.engine.action.Action;
@@ -296,7 +298,7 @@ public class PerkConfigLoader {
                 NamespacedKey enchKey = NamespacedKey.fromString(enchantStr.toLowerCase().contains(":")
                         ? enchantStr.toLowerCase()
                         : "minecraft:" + enchantStr.toLowerCase());
-                Enchantment enchantment = enchKey == null ? null : Registry.ENCHANTMENT.get(enchKey);
+                Enchantment enchantment = enchKey == null ? null : RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT).get(enchKey);
                 if (enchantment == null) {
                     logger.warning("Unknown enchantment '" + enchantStr + "' in perk '" + perkId + "' — skipped.");
                     return null;
@@ -370,9 +372,13 @@ public class PerkConfigLoader {
                         ? sndStr.toLowerCase() : "minecraft:" + sndStr.toLowerCase().replace('_', '.'));
                 Sound sound = sndKey == null ? null : Registry.SOUNDS.get(sndKey);
                 if (sound == null) {
-                    // Fallback: try the enum-style name (e.g. ENTITY_SPIDER_AMBIENT)
-                    try { sound = Sound.valueOf(sndStr.toUpperCase()); }
-                    catch (IllegalArgumentException ignored) {}
+                    // Fallback: enum-style name (e.g. ENTITY_SPIDER_AMBIENT) for keys whose path has underscores
+                    String legacyName = sndStr.toUpperCase(java.util.Locale.ROOT);
+                    sound = Registry.SOUNDS.stream()
+                            .filter(s -> Registry.SOUNDS.getKeyOrThrow(s).getKey()
+                                    .replace('.', '_').toUpperCase(java.util.Locale.ROOT).equals(legacyName))
+                            .findFirst()
+                            .orElse(null);
                 }
                 if (sound == null) {
                     logger.warning("Unknown sound '" + sndStr + "' in perk '" + perkId + "' — skipped.");

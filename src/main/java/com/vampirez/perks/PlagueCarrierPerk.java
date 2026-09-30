@@ -58,7 +58,7 @@ public class PlagueCarrierPerk extends Perk {
                 if (nearby.getUniqueId().equals(target.getUniqueId())) continue;
                 if (isSameTeam(attacker, nearby)) continue;
 
-                nearby.addPotionEffect(new PotionEffect(effect.getType(), effect.getDuration(), effect.getAmplifier(), false, true), true);
+                nearby.addPotionEffect(new PotionEffect(effect.getType(), effect.getDuration(), effect.getAmplifier(), false, true));
                 nearby.getWorld().spawnParticle(Particle.DUST, nearby.getLocation().add(0, 1, 0),
                         8, 0.3, 0.3, 0.3, 0, new Particle.DustOptions(Color.fromRGB(50, 120, 0), 1.2f));
                 spread = true;

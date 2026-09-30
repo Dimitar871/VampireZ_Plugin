@@ -70,7 +70,7 @@ public class SelfishPerk extends Perk {
                 teammate.playSound(teammate.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.5f);
             }
             // Glowing effect on nearby teammates so selfish player can see them
-            teammate.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 25, 0, false, false, false), true);
+            teammate.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 25, 0, false, false, false));
         }
 
         nearbyTeammates.put(uuid, currentNearby);
@@ -89,7 +89,7 @@ public class SelfishPerk extends Perk {
             removeBonus(player);
         } else if (alone && activeState.contains(uuid)) {
             // Refresh Strength I
-            player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 30, 0, true, true, true), true);
+            player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 30, 0, true, true, true));
         }
     }
 
@@ -121,7 +121,7 @@ public class SelfishPerk extends Perk {
     private void applyBonus(Player player) {
         double baseMax = player.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
         player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(baseMax + BONUS_HEARTS * 2);
-        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 30, 0, true, true, true), true);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 30, 0, true, true, true));
     }
 
     private void removeBonus(Player player) {

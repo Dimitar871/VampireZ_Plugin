@@ -1,10 +1,11 @@
 package com.vampirez.engine.action;
 
+import io.papermc.paper.registry.RegistryKey;
+import io.papermc.paper.registry.RegistryAccess;
 import com.vampirez.MM;
 import com.vampirez.engine.HookContext;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -61,7 +62,7 @@ public class GiveItemAction implements Action {
                     if (nameRaw == null) continue;
                     String name = String.valueOf(nameRaw).toLowerCase();
                     NamespacedKey key = NamespacedKey.fromString(name.contains(":") ? name : "minecraft:" + name);
-                    Enchantment enchantment = key == null ? null : Registry.ENCHANTMENT.get(key);
+                    Enchantment enchantment = key == null ? null : RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT).get(key);
                     if (enchantment == null) continue;
                     int level = levelRaw instanceof Number ? ((Number) levelRaw).intValue() : 1;
                     meta.addEnchant(enchantment, level, true);

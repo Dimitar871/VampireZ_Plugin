@@ -49,7 +49,7 @@ public class ComboShieldPerk extends Perk {
 
             // Grant 3 hearts (6 HP) absorption for 5s. Amp 1 = Absorption II = 4 hearts max;
             // we set the amount explicitly to 6 HP so the player only gets 3 hearts of shield.
-            attacker.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 100, 1, false, false), true);
+            attacker.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 100, 1, false, false));
             attacker.setAbsorptionAmount(attacker.getAbsorptionAmount() + 6.0);
 
             attacker.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, attacker.getLocation().add(0, 1, 0), 15, 0.5, 0.5, 0.5, 0.2);

@@ -32,7 +32,7 @@ public class SpiderClimbPerk extends Perk {
     public void onTick(Player player) {
         if (player.isSneaking() && isNearWall(player)) {
             // Apply levitation to climb
-            player.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 30, 0, false, false, true), true);
+            player.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 30, 0, false, false, true));
             player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 0.5, 0),
                     3, 0.2, 0.2, 0.2, 0, new Particle.DustOptions(org.bukkit.Color.GRAY, 0.8f));
         } else {

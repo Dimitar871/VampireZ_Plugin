@@ -86,7 +86,7 @@ public class SpawnMobAction implements Action {
             if (team != null) {
                 MobTags.setTeam(entity, team);
             }
-            if (noBaby && entity instanceof Zombie z) z.setBaby(false);
+            if (noBaby && entity instanceof Zombie z) z.setAdult();
             if (entity instanceof Wolf w) {
                 if (tamed) {
                     w.setTamed(true);

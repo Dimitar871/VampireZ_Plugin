@@ -1,5 +1,6 @@
 package com.vampirez;
 
+import org.bukkit.inventory.meta.Damageable;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import net.kyori.adventure.text.Component;
@@ -143,7 +144,10 @@ public class PerkShopGUI {
                 return;
             }
             for (ItemStack armor : player.getInventory().getArmorContents()) {
-                if (armor != null && armor.getType() != Material.AIR) armor.setDurability((short) 0);
+                if (armor != null && armor.getItemMeta() instanceof Damageable damageable) {
+                    damageable.setDamage(0);
+                    armor.setItemMeta(damageable);
+                }
             }
             player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 1.0f, 1.0f);
             player.sendMessage(MM.parse("<green>Armor repaired!"));

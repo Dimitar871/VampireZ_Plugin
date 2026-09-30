@@ -123,7 +123,7 @@ public class BloodBeaconPerk extends Perk {
                 // Use 100-tick duration so Regen I's 50-tick heal timer can fire.
                 PotionEffect existingRegen = nearby.getPotionEffect(PotionEffectType.REGENERATION);
                 if (existingRegen == null || existingRegen.getDuration() < 30) {
-                    nearby.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 0, false, true), true);
+                    nearby.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 0, false, true));
                 }
             }
         }
