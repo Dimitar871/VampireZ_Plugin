@@ -8,17 +8,12 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class GameCommands implements CommandExecutor, TabCompleter {
+public class GameCommands {
 
     private final GameManager gameManager;
     private final PerkShopGUI perkShopGUI;
@@ -35,56 +30,6 @@ public class GameCommands implements CommandExecutor, TabCompleter {
         this.api = api;
         this.leaderboardGUI = leaderboardGUI;
         this.perkStatsManager = perkStatsManager;
-    }
-
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can use this command.");
-            return true;
-        }
-
-        if (args.length == 0) {
-            sendHelp(player);
-            return true;
-        }
-
-        switch (args[0].toLowerCase()) {
-            case "help" -> sendHelp(player);
-            case "join" -> gameManager.joinGame(player);
-            case "leave" -> gameManager.leaveGame(player);
-            case "start" -> handleStart(player, false);
-            case "forcestart" -> handleStart(player, true);
-            case "stop" -> handleStop(player);
-            case "shop" -> handleShop(player);
-            case "perks" -> handlePerks(player, args);
-            case "gold" -> handleGold(player);
-            case "status" -> handleStatus(player);
-            case "setlobby" -> handleSetSpawn(player, "lobby");
-            case "sethumanspawn" -> handleSetSpawn(player, "human");
-            case "setvampspawn" -> handleSetSpawn(player, "vampire");
-            case "test" -> handleTest(player);
-            case "tools" -> handleTools(player);
-            case "debugdmg" -> handleDebugDmg(player);
-            case "announce" -> handleAnnounce(player);
-            case "arena" -> handleArena(player);
-            case "reload" -> handleReload(player);
-            case "perkstats" -> handlePerkStats(player);
-            case "spectate" -> gameManager.toggleSpectate(player);
-            case "giveperk" -> handleGivePerk(player, args);
-            case "removeperk" -> handleRemovePerk(player, args);
-            case "forceconvert" -> handleForceConvert(player, args);
-            case "settime" -> handleSetTime(player, args);
-            case "setphase" -> handleSetPhase(player, args);
-            case "setgold" -> handleSetGold(player, args);
-            case "addgold" -> handleAddGold(player, args);
-            case "apitest" -> handleApiTest(player);
-            case "leaderboard", "lb" -> handleLeaderboard(player);
-            case "disableperk" -> handleDisablePerk(player, args);
-            case "enableperk" -> handleEnablePerk(player, args);
-            default -> player.sendMessage(MM.parse("<red>Unknown subcommand. Use /vz help"));
-        }
-        return true;
     }
 
     void sendHelp(Player player) {
@@ -267,83 +212,6 @@ public class GameCommands implements CommandExecutor, TabCompleter {
 
     private java.util.logging.Logger getLogger() {
         return Bukkit.getLogger();
-    }
-
-    // ===== Tab completion =====
-
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission("vampirez.admin")) return List.of();
-
-        if (args.length == 1) {
-            return filter(args[0], List.of(
-                    "help", "join", "leave", "shop", "perks", "gold", "status",
-                    "start", "forcestart", "stop", "setlobby", "sethumanspawn", "setvampspawn",
-                    "test", "tools", "debugdmg", "announce", "arena", "reload", "perkstats", "spectate",
-                    "giveperk", "removeperk", "forceconvert", "settime", "setphase",
-                    "setgold", "addgold", "apitest", "leaderboard", "lb",
-                    "disableperk", "enableperk"
-            ));
-        }
-
-        String sub = args[0].toLowerCase();
-
-        if (args.length == 2) {
-            switch (sub) {
-                case "giveperk", "removeperk", "forceconvert", "setgold", "addgold" -> {
-                    return filter(args[1], onlinePlayerNames());
-                }
-                case "perks" -> {
-                    if (sender.hasPermission("vampirez.admin")) return filter(args[1], onlinePlayerNames());
-                    return List.of();
-                }
-                case "settime" -> { return filter(args[1], List.of("60", "300", "600", "900", "1500")); }
-                case "setphase" -> { return filter(args[1], List.of("day", "night")); }
-                case "disableperk" -> {
-                    // suggest only currently enabled perks
-                    List<String> enabled = api.getAvailablePerkIds().stream()
-                            .filter(id -> !gameManager.getPerkManager().isDisabled(id))
-                            .collect(java.util.stream.Collectors.toList());
-                    return filter(args[1], enabled);
-                }
-                case "enableperk" -> {
-                    // suggest only currently disabled perks
-                    List<String> disabled = api.getAvailablePerkIds().stream()
-                            .filter(id -> gameManager.getPerkManager().isDisabled(id))
-                            .collect(java.util.stream.Collectors.toList());
-                    return filter(args[1], disabled);
-                }
-            }
-        }
-
-        if (args.length == 3) {
-            switch (sub) {
-                case "giveperk" -> { return filter(args[2], new ArrayList<>(api.getAvailablePerkIds())); }
-                case "removeperk" -> {
-                    Player target = Bukkit.getPlayerExact(args[1]);
-                    if (target == null) return List.of();
-                    return filter(args[2], api.getPlayerPerkIds(target.getUniqueId()));
-                }
-                case "setgold", "addgold" -> { return filter(args[2], List.of("100", "500", "1000")); }
-            }
-        }
-
-        return List.of();
-    }
-
-    private List<String> onlinePlayerNames() {
-        List<String> names = new ArrayList<>();
-        for (Player p : Bukkit.getOnlinePlayers()) names.add(p.getName());
-        return names;
-    }
-
-    private List<String> filter(String prefix, List<String> options) {
-        String lower = prefix.toLowerCase();
-        List<String> out = new ArrayList<>();
-        for (String s : options) {
-            if (s.toLowerCase().startsWith(lower)) out.add(s);
-        }
-        return out;
     }
 
     void handleStart(Player player, boolean force) {

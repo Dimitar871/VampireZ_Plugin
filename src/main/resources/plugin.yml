@@ -5,12 +5,6 @@ api-version: '26.2'
 author: Dimitar871
 description: VampireZ Minigame Plugin
 
-commands:
-  vampirez:
-    description: Main command for VampireZ
-    usage: /vampirez <subcommand>
-    aliases: [vz]
-
 permissions:
   vampirez.admin:
     description: Allows access to admin commands

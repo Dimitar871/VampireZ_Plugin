@@ -2,10 +2,13 @@ package com.vampirez;
 
 import com.vampirez.api.VampireZAPI;
 import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.incendo.cloud.Command;
 import org.incendo.cloud.execution.ExecutionCoordinator;
-import org.incendo.cloud.paper.LegacyPaperCommandManager;
+import org.incendo.cloud.paper.PaperCommandManager;
+import org.incendo.cloud.paper.util.sender.PaperSimpleSenderMapper;
+import org.incendo.cloud.paper.util.sender.PlayerSource;
+import org.incendo.cloud.paper.util.sender.Source;
 import org.incendo.cloud.parser.standard.IntegerParser;
 import org.incendo.cloud.parser.standard.StringParser;
 import org.incendo.cloud.suggestion.Suggestion;
@@ -13,6 +16,7 @@ import org.incendo.cloud.suggestion.SuggestionProvider;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -20,8 +24,9 @@ import java.util.stream.Collectors;
  * gates, argument parsing, and tab-completion suggestions. All handler bodies remain in
  * {@link GameCommands} — this class only dispatches.
  *
- * <p>Adds Brigadier integration so 1.13+ clients see typed argument hints
- * ({@code <player>}, {@code <number>}) and per-subcommand suggestions natively.
+ * <p>Registered through Paper's Brigadier command API, so clients see typed argument hints
+ * ({@code <player>}, {@code <number>}) and per-subcommand suggestions natively. Every
+ * subcommand is player-only; cloud rejects other senders before a handler runs.
  */
 public class VampireZCloudCommands {
 
@@ -29,7 +34,7 @@ public class VampireZCloudCommands {
     private final GameCommands handlers;
     private final GameManager gameManager;
     private final VampireZAPI api;
-    private LegacyPaperCommandManager<CommandSender> manager;
+    private PaperCommandManager<Source> manager;
 
     public VampireZCloudCommands(VampireZPlugin plugin, GameCommands handlers, GameManager gameManager, VampireZAPI api) {
         this.plugin = plugin;
@@ -39,175 +44,132 @@ public class VampireZCloudCommands {
     }
 
     public void register() {
-        manager = LegacyPaperCommandManager.createNative(plugin, ExecutionCoordinator.simpleCoordinator());
-        // Best-effort Brigadier registration. Cloud 2.0-beta's capability check fails on
-        // recent Paper builds; commands still dispatch via the legacy Bukkit path (with Cloud
-        // tab-completion and permission gating), just without client-side argument type hints.
-        try { manager.registerLegacyPaperBrigadier(); } catch (Throwable ignored) {}
-        try { manager.registerAsynchronousCompletions(); } catch (Throwable ignored) {}
+        manager = PaperCommandManager.builder(PaperSimpleSenderMapper.simpleSenderMapper())
+                .executionCoordinator(ExecutionCoordinator.simpleCoordinator())
+                .buildOnEnable(plugin);
 
         // ===== Player commands (no permission required) =====
-        leaf("help",         ctx -> handlers.sendHelp(player(ctx)));
-        leaf("join",         ctx -> gameManager.joinGame(player(ctx)));
-        leaf("leave",        ctx -> gameManager.leaveGame(player(ctx)));
-        leaf("shop",         ctx -> handlers.handleShop(player(ctx)));
-        leaf("gold",         ctx -> handlers.handleGold(player(ctx)));
-        leaf("status",       ctx -> handlers.handleStatus(player(ctx)));
-        leaf("leaderboard",  ctx -> handlers.handleLeaderboard(player(ctx)));
-        leaf("lb",           ctx -> handlers.handleLeaderboard(player(ctx)));
-        leaf("perkstats",    ctx -> handlers.handlePerkStats(player(ctx)));
-        leaf("spectate",     ctx -> gameManager.toggleSpectate(player(ctx)));
+        leaf("help",         handlers::sendHelp);
+        leaf("join",         gameManager::joinGame);
+        leaf("leave",        gameManager::leaveGame);
+        leaf("shop",         handlers::handleShop);
+        leaf("gold",         handlers::handleGold);
+        leaf("status",       handlers::handleStatus);
+        leaf("leaderboard",  handlers::handleLeaderboard);
+        leaf("lb",           handlers::handleLeaderboard);
+        leaf("perkstats",    handlers::handlePerkStats);
+        leaf("spectate",     gameManager::toggleSpectate);
 
         // /vz perks [player]
-        manager.command(manager.commandBuilder("vz")
-                .literal("perks")
+        manager.command(playerRoot("perks")
                 .optional("player", StringParser.stringParser(), playerSuggestions())
                 .handler(ctx -> {
-                    Player p = player(ctx);
                     String tgt = ctx.<String>optional("player").orElse(null);
-                    handlers.handlePerks(p, tgt == null ? new String[]{"perks"} : new String[]{"perks", tgt});
+                    handlers.handlePerks(ctx.sender().source(), tgt == null ? new String[]{"perks"} : new String[]{"perks", tgt});
                 }));
 
         // ===== Admin commands (vampirez.admin) =====
-        admin("start",        ctx -> handlers.handleStart(player(ctx), false));
-        admin("forcestart",   ctx -> handlers.handleStart(player(ctx), true));
-        admin("stop",         ctx -> handlers.handleStop(player(ctx)));
-        admin("setlobby",     ctx -> handlers.handleSetSpawn(player(ctx), "lobby"));
-        admin("sethumanspawn",ctx -> handlers.handleSetSpawn(player(ctx), "human"));
-        admin("setvampspawn", ctx -> handlers.handleSetSpawn(player(ctx), "vampire"));
-        admin("test",         ctx -> handlers.handleTest(player(ctx)));
-        admin("tools",        ctx -> handlers.handleTools(player(ctx)));
-        admin("debugdmg",     ctx -> handlers.handleDebugDmg(player(ctx)));
-        admin("announce",     ctx -> handlers.handleAnnounce(player(ctx)));
-        admin("arena",        ctx -> handlers.handleArena(player(ctx)));
-        admin("reload",       ctx -> handlers.handleReload(player(ctx)));
-        admin("apitest",      ctx -> handlers.handleApiTest(player(ctx)));
+        admin("start",         p -> handlers.handleStart(p, false));
+        admin("forcestart",    p -> handlers.handleStart(p, true));
+        admin("stop",          handlers::handleStop);
+        admin("setlobby",      p -> handlers.handleSetSpawn(p, "lobby"));
+        admin("sethumanspawn", p -> handlers.handleSetSpawn(p, "human"));
+        admin("setvampspawn",  p -> handlers.handleSetSpawn(p, "vampire"));
+        admin("test",          handlers::handleTest);
+        admin("tools",         handlers::handleTools);
+        admin("debugdmg",      handlers::handleDebugDmg);
+        admin("announce",      handlers::handleAnnounce);
+        admin("arena",         handlers::handleArena);
+        admin("reload",        handlers::handleReload);
+        admin("apitest",       handlers::handleApiTest);
 
         // /vz giveperk <player> <perkId>
-        manager.command(manager.commandBuilder("vz")
-                .literal("giveperk")
-                .permission("vampirez.admin")
+        manager.command(adminRoot("giveperk")
                 .required("player", StringParser.stringParser(), playerSuggestions())
                 .required("perkId", StringParser.stringParser(), perkIdSuggestions())
-                .handler(ctx -> {
-                    handlers.handleGivePerk(player(ctx),
-                            new String[]{"giveperk", ctx.get("player"), ctx.get("perkId")});
-                }));
+                .handler(ctx -> handlers.handleGivePerk(ctx.sender().source(),
+                        new String[]{"giveperk", ctx.get("player"), ctx.get("perkId")})));
 
         // /vz removeperk <player> <perkId>
-        manager.command(manager.commandBuilder("vz")
-                .literal("removeperk")
-                .permission("vampirez.admin")
+        manager.command(adminRoot("removeperk")
                 .required("player", StringParser.stringParser(), playerSuggestions())
                 .required("perkId", StringParser.stringParser(), perkIdSuggestions())
-                .handler(ctx -> {
-                    handlers.handleRemovePerk(player(ctx),
-                            new String[]{"removeperk", ctx.get("player"), ctx.get("perkId")});
-                }));
+                .handler(ctx -> handlers.handleRemovePerk(ctx.sender().source(),
+                        new String[]{"removeperk", ctx.get("player"), ctx.get("perkId")})));
 
         // /vz forceconvert <player>
-        manager.command(manager.commandBuilder("vz")
-                .literal("forceconvert")
-                .permission("vampirez.admin")
+        manager.command(adminRoot("forceconvert")
                 .required("player", StringParser.stringParser(), playerSuggestions())
-                .handler(ctx -> {
-                    handlers.handleForceConvert(player(ctx),
-                            new String[]{"forceconvert", ctx.get("player")});
-                }));
+                .handler(ctx -> handlers.handleForceConvert(ctx.sender().source(),
+                        new String[]{"forceconvert", ctx.get("player")})));
 
         // /vz settime <seconds>
-        manager.command(manager.commandBuilder("vz")
-                .literal("settime")
-                .permission("vampirez.admin")
+        manager.command(adminRoot("settime")
                 .required("seconds", IntegerParser.integerParser(0))
-                .handler(ctx -> {
-                    handlers.handleSetTime(player(ctx),
-                            new String[]{"settime", String.valueOf(ctx.<Integer>get("seconds"))});
-                }));
+                .handler(ctx -> handlers.handleSetTime(ctx.sender().source(),
+                        new String[]{"settime", String.valueOf(ctx.<Integer>get("seconds"))})));
 
         // /vz setphase day|night
-        manager.command(manager.commandBuilder("vz")
-                .literal("setphase")
-                .permission("vampirez.admin")
+        manager.command(adminRoot("setphase")
                 .required("phase", StringParser.stringParser(),
                         SuggestionProvider.suggestingStrings("day", "night"))
-                .handler(ctx -> {
-                    handlers.handleSetPhase(player(ctx),
-                            new String[]{"setphase", ctx.get("phase")});
-                }));
+                .handler(ctx -> handlers.handleSetPhase(ctx.sender().source(),
+                        new String[]{"setphase", ctx.get("phase")})));
 
         // /vz setgold <player> <amount>
-        manager.command(manager.commandBuilder("vz")
-                .literal("setgold")
-                .permission("vampirez.admin")
+        manager.command(adminRoot("setgold")
                 .required("player", StringParser.stringParser(), playerSuggestions())
                 .required("amount", IntegerParser.integerParser(0))
-                .handler(ctx -> {
-                    handlers.handleSetGold(player(ctx),
-                            new String[]{"setgold", ctx.get("player"), String.valueOf(ctx.<Integer>get("amount"))});
-                }));
+                .handler(ctx -> handlers.handleSetGold(ctx.sender().source(),
+                        new String[]{"setgold", ctx.get("player"), String.valueOf(ctx.<Integer>get("amount"))})));
 
         // /vz addgold <player> <amount>
-        manager.command(manager.commandBuilder("vz")
-                .literal("addgold")
-                .permission("vampirez.admin")
+        manager.command(adminRoot("addgold")
                 .required("player", StringParser.stringParser(), playerSuggestions())
                 .required("amount", IntegerParser.integerParser())
-                .handler(ctx -> {
-                    handlers.handleAddGold(player(ctx),
-                            new String[]{"addgold", ctx.get("player"), String.valueOf(ctx.<Integer>get("amount"))});
-                }));
+                .handler(ctx -> handlers.handleAddGold(ctx.sender().source(),
+                        new String[]{"addgold", ctx.get("player"), String.valueOf(ctx.<Integer>get("amount"))})));
 
         // /vz disableperk <perkId> — suggest only currently enabled perks
-        manager.command(manager.commandBuilder("vz")
-                .literal("disableperk")
-                .permission("vampirez.admin")
+        manager.command(adminRoot("disableperk")
                 .required("perkId", StringParser.stringParser(), enabledPerkSuggestions())
-                .handler(ctx -> {
-                    handlers.handleDisablePerk(player(ctx),
-                            new String[]{"disableperk", ctx.get("perkId")});
-                }));
+                .handler(ctx -> handlers.handleDisablePerk(ctx.sender().source(),
+                        new String[]{"disableperk", ctx.get("perkId")})));
 
         // /vz enableperk <perkId> — suggest only currently disabled perks
-        manager.command(manager.commandBuilder("vz")
-                .literal("enableperk")
-                .permission("vampirez.admin")
+        manager.command(adminRoot("enableperk")
                 .required("perkId", StringParser.stringParser(), disabledPerkSuggestions())
-                .handler(ctx -> {
-                    handlers.handleEnablePerk(player(ctx),
-                            new String[]{"enableperk", ctx.get("perkId")});
-                }));
+                .handler(ctx -> handlers.handleEnablePerk(ctx.sender().source(),
+                        new String[]{"enableperk", ctx.get("perkId")})));
 
         // Bare /vz → help
-        manager.command(manager.commandBuilder("vz")
-                .handler(ctx -> handlers.sendHelp(player(ctx))));
+        manager.command(root().senderType(PlayerSource.class)
+                .handler(ctx -> handlers.sendHelp(ctx.sender().source())));
+    }
+
+    private Command.Builder<Source> root() {
+        return manager.commandBuilder("vz", "vampirez");
+    }
+
+    private Command.Builder<PlayerSource> playerRoot(String literal) {
+        return root().literal(literal).senderType(PlayerSource.class);
+    }
+
+    private Command.Builder<PlayerSource> adminRoot(String literal) {
+        return playerRoot(literal).permission("vampirez.admin");
     }
 
     /** Player-only zero-arg subcommand. */
-    private void leaf(String name, java.util.function.Consumer<org.incendo.cloud.context.CommandContext<CommandSender>> handler) {
-        manager.command(manager.commandBuilder("vz")
-                .literal(name)
-                .handler(ctx -> handler.accept(ctx)));
+    private void leaf(String name, Consumer<Player> handler) {
+        manager.command(playerRoot(name).handler(ctx -> handler.accept(ctx.sender().source())));
     }
 
     /** Admin-gated zero-arg subcommand. */
-    private void admin(String name, java.util.function.Consumer<org.incendo.cloud.context.CommandContext<CommandSender>> handler) {
-        manager.command(manager.commandBuilder("vz")
-                .literal(name)
-                .permission("vampirez.admin")
-                .handler(ctx -> handler.accept(ctx)));
+    private void admin(String name, Consumer<Player> handler) {
+        manager.command(adminRoot(name).handler(ctx -> handler.accept(ctx.sender().source())));
     }
 
-    private static Player player(org.incendo.cloud.context.CommandContext<CommandSender> ctx) {
-        CommandSender s = ctx.sender();
-        if (!(s instanceof Player p)) {
-            s.sendMessage("Only players can use this command.");
-            return null;
-        }
-        return p;
-    }
-
-    private SuggestionProvider<CommandSender> playerSuggestions() {
+    private SuggestionProvider<Source> playerSuggestions() {
         return (ctx, input) -> {
             List<Suggestion> sugs = Bukkit.getOnlinePlayers().stream()
                     .map(p -> Suggestion.suggestion(p.getName()))
@@ -216,7 +178,7 @@ public class VampireZCloudCommands {
         };
     }
 
-    private SuggestionProvider<CommandSender> perkIdSuggestions() {
+    private SuggestionProvider<Source> perkIdSuggestions() {
         return (ctx, input) -> {
             List<Suggestion> sugs = api.getAvailablePerkIds().stream()
                     .map(Suggestion::suggestion)
@@ -225,7 +187,7 @@ public class VampireZCloudCommands {
         };
     }
 
-    private SuggestionProvider<CommandSender> enabledPerkSuggestions() {
+    private SuggestionProvider<Source> enabledPerkSuggestions() {
         return (ctx, input) -> {
             List<Suggestion> sugs = api.getAvailablePerkIds().stream()
                     .filter(id -> !gameManager.getPerkManager().isDisabled(id))
@@ -235,7 +197,7 @@ public class VampireZCloudCommands {
         };
     }
 
-    private SuggestionProvider<CommandSender> disabledPerkSuggestions() {
+    private SuggestionProvider<Source> disabledPerkSuggestions() {
         return (ctx, input) -> {
             List<Suggestion> sugs = api.getAvailablePerkIds().stream()
                     .filter(id -> gameManager.getPerkManager().isDisabled(id))
