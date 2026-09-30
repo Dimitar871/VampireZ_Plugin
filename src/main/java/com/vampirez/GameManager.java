@@ -547,11 +547,11 @@ public class GameManager {
 
         // Disable random ticks (prevents leaf decay, crop growth, etc.)
         if (spawnManager.getHumanSpawn() != null && spawnManager.getHumanSpawn().getWorld() != null) {
-            spawnManager.getHumanSpawn().getWorld().setGameRule(org.bukkit.GameRule.RANDOM_TICK_SPEED, 0);
+            spawnManager.getHumanSpawn().getWorld().setGameRule(org.bukkit.GameRules.RANDOM_TICK_SPEED, 0);
             spawnManager.getHumanSpawn().getWorld().setDifficulty(org.bukkit.Difficulty.HARD);
         }
         if (spawnManager.getVampireSpawn() != null && spawnManager.getVampireSpawn().getWorld() != null) {
-            spawnManager.getVampireSpawn().getWorld().setGameRule(org.bukkit.GameRule.RANDOM_TICK_SPEED, 0);
+            spawnManager.getVampireSpawn().getWorld().setGameRule(org.bukkit.GameRules.RANDOM_TICK_SPEED, 0);
             spawnManager.getVampireSpawn().getWorld().setDifficulty(org.bukkit.Difficulty.HARD);
         }
 

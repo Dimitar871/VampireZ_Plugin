@@ -37,12 +37,8 @@ public class SpawnManager {
         if (sp == null || sp.world == null || sp.world.isEmpty()) return null;
         World world = Bukkit.getWorld(sp.world);
         ArenaManager arena = arenaSupplier.get();
-        if (world == null && arena != null) {
-            String arenaBase = plugin.getPluginConfig().arena.worldName;
-            if (sp.world.startsWith(arenaBase)) {
-                world = arena.getArenaWorld();
-            }
-        }
+        if (world == null && arena != null && ArenaPaths.isArenaWorldName(sp.world))
+            world = arena.getArenaWorld();
         if (world == null) return null;
         return new Location(world, sp.x, sp.y, sp.z, sp.yaw, sp.pitch);
     }

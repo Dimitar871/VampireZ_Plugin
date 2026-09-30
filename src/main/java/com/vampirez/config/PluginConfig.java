@@ -69,9 +69,7 @@ public class PluginConfig {
 
     @Configuration
     public static class ArenaSection {
-        @Comment("Base name of the arena world; instance worlds are <name>_<n>")
-        public String worldName = "vampirez_arena";
-        @Comment("Folder under plugins/VampireZ holding the arena template files")
+        @Comment("Folder next to the server's world folder holding the arena template")
         public String templateFolder = "arena-template";
     }
 

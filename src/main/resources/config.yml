@@ -24,7 +24,6 @@ perks:
   disabled-perks: []
 
 arena:
-  world-name: "vampirez_arena"
   template-folder: "arena-template"
 
 day-night:

@@ -2,301 +2,230 @@ package com.vampirez;
 
 import com.vampirez.config.PluginConfig;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
+import org.bukkit.Difficulty;
+import org.bukkit.GameRules;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 /**
- * Manages the arena world lifecycle using unique world names per game.
- * Each game gets a fresh copy from the template (e.g., vampirez_arena_1, vampirez_arena_2).
- * Old worlds are cleaned up on next reset or server start.
+ * Arena world lifecycle on Paper 26.1+. Each game copies the template into
+ * {@code <level>/dimensions/vampirez/arena_N} and loads it by key; the previous
+ * arena is unloaded and deleted. A pre-26.1 template is upgraded once (with a backup).
  */
 public class ArenaManager {
 
     private static final Logger log = LoggerFactory.getLogger(ArenaManager.class);
+    private static final String UPGRADE_WORLD = "vampirez_template_upgrade";
+    private static final int BAKE_RADIUS_CHUNKS = 16;
 
     private final VampireZPlugin plugin;
-    private final String baseWorldName;
-    private final File templateDir;
-    private final File serverDir;
+    private final Path templateDir;
+    private final Path arenaRoot;
     private int worldCounter = 0;
-    private String currentWorldName;
+    private NamespacedKey currentKey;
 
     public ArenaManager(VampireZPlugin plugin) {
         this.plugin = plugin;
         PluginConfig.ArenaSection cfg = plugin.getPluginConfig().arena;
-        this.baseWorldName = cfg.worldName;
-        this.serverDir = plugin.getServer().getWorldContainer();
-        this.templateDir = new File(serverDir, cfg.templateFolder);
+        this.templateDir = plugin.getServer().getWorldContainer().toPath().resolve(cfg.templateFolder);
+        this.arenaRoot = ArenaPaths.arenaRoot(plugin.getServer().getLevelDirectory());
     }
 
-    /**
-     * Checks if the template directory exists and has region data.
-     */
     public boolean hasTemplate() {
-        return templateDir.exists() && new File(templateDir, "region").exists();
+        return ArenaPaths.hasRegionData(templateDir);
     }
 
-    /**
-     * Gets the current arena world name.
-     */
-    public String getArenaWorldName() {
-        return currentWorldName != null ? currentWorldName : baseWorldName;
-    }
-
-    /**
-     * Gets the currently loaded arena world, or null if not loaded.
-     */
     public World getArenaWorld() {
-        if (currentWorldName == null) return null;
-        return Bukkit.getWorld(currentWorldName);
+        if (currentKey == null)
+            return null;
+        return Bukkit.getWorld(currentKey);
     }
 
-    /**
-     * Loads a fresh arena world from template with a unique name.
-     * Returns the loaded World, or null on failure.
-     */
     public World loadArenaWorld() {
         if (!hasTemplate()) {
-            log.warn("Arena template not found at: " + templateDir.getAbsolutePath());
+            log.warn("Arena template not found at: {}", templateDir.toAbsolutePath());
             return null;
         }
 
-        // Clean up any old arena folders from previous runs
+        if (ArenaPaths.isLegacyTemplate(templateDir))
+            upgradeLegacyTemplate();
+
         cleanupOldArenas();
 
-        // Generate unique world name
         worldCounter++;
-        currentWorldName = baseWorldName + "_" + worldCounter;
-        File arenaDir = new File(serverDir, currentWorldName);
+        NamespacedKey key = new NamespacedKey(plugin, ArenaPaths.keyValue(worldCounter));
+        Path arenaDir = arenaRoot.resolve(key.getKey());
+        log.info("Copying arena template to '{}'...", key);
+        copyDirectory(templateDir, arenaDir);
 
-        // Copy from template
-        log.info("Copying arena from template to '" + currentWorldName + "'...");
-        if (!copyDirectory(templateDir, arenaDir)) {
-            log.error("Failed to copy arena template!");
-            return null;
-        }
-        new File(arenaDir, "session.lock").delete();
-        new File(arenaDir, "uid.dat").delete();
-        log.info("Arena copied successfully.");
+        World world = Bukkit.createWorld(WorldCreator.ofKey(key));
+        if (world == null)
+            throw new IllegalStateException("Paper returned null creating arena world " + key);
 
-        // Load the world
-        WorldCreator creator = new WorldCreator(currentWorldName);
-        World world = Bukkit.createWorld(creator);
-        if (world != null) {
-            world.setKeepSpawnInMemory(false);
-            world.setGameRule(org.bukkit.GameRule.RANDOM_TICK_SPEED, 0);
-            world.setGameRule(org.bukkit.GameRule.DO_MOB_SPAWNING, false);
-            world.setGameRule(org.bukkit.GameRule.MOB_GRIEFING, false);
-            world.setGameRule(org.bukkit.GameRule.DO_FIRE_TICK, false);
-            world.setGameRule(org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, false);
-            world.setGameRule(org.bukkit.GameRule.DO_WEATHER_CYCLE, false);
-            world.setGameRule(org.bukkit.GameRule.ANNOUNCE_ADVANCEMENTS, false);
-            world.setGameRule(org.bukkit.GameRule.KEEP_INVENTORY, true);
-            world.setDifficulty(org.bukkit.Difficulty.HARD);
+        world.setGameRule(GameRules.RANDOM_TICK_SPEED, 0);
+        world.setGameRule(GameRules.SPAWN_MOBS, false);
+        world.setGameRule(GameRules.MOB_GRIEFING, false);
+        world.setGameRule(GameRules.FIRE_SPREAD_RADIUS_AROUND_PLAYER, 0);
+        world.setGameRule(GameRules.ADVANCE_TIME, false);
+        world.setGameRule(GameRules.ADVANCE_WEATHER, false);
+        world.setGameRule(GameRules.SHOW_ADVANCEMENT_MESSAGES, false);
+        world.setGameRule(GameRules.KEEP_INVENTORY, true);
+        world.setDifficulty(Difficulty.HARD);
+        world.setAutoSave(false);
 
-            // Check if the template needs to be "baked" in Paper's format.
-            // On first ever load, force-save so Paper writes its converted chunk data,
-            // then copy the saved world back as the template for future resets.
-            File bakeMarker = new File(templateDir, ".paper-baked");
-            if (!bakeMarker.exists()) {
-                log.info("First load: baking template in Paper format...");
-                // Force load chunks around spawn so Paper converts them
-                int spawnX = world.getSpawnLocation().getBlockX() >> 4;
-                int spawnZ = world.getSpawnLocation().getBlockZ() >> 4;
-                int radius = 16; // ~256 block radius
-                for (int cx = spawnX - radius; cx <= spawnX + radius; cx++) {
-                    for (int cz = spawnZ - radius; cz <= spawnZ + radius; cz++) {
-                        world.getChunkAt(cx, cz); // forces load + conversion
-                    }
-                }
-                // Save the converted data to disk
-                world.save();
-                log.info("World saved with Paper-converted data.");
-
-                // Copy the saved world back as the new template
-                final File bakedDir = new File(serverDir, currentWorldName);
-                Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                    // Delete old template region/entities/poi and replace
-                    deleteDirectory(new File(templateDir, "region"));
-                    deleteDirectory(new File(templateDir, "entities"));
-                    deleteDirectory(new File(templateDir, "poi"));
-                    copyDirectory(new File(bakedDir, "region"), new File(templateDir, "region"));
-                    File arenaEntities = new File(bakedDir, "entities");
-                    if (arenaEntities.exists()) {
-                        copyDirectory(arenaEntities, new File(templateDir, "entities"));
-                    }
-                    File arenaPoi = new File(bakedDir, "poi");
-                    if (arenaPoi.exists()) {
-                        copyDirectory(arenaPoi, new File(templateDir, "poi"));
-                    }
-                    // Also copy level.dat
-                    try {
-                        Files.copy(new File(bakedDir, "level.dat").toPath(),
-                                new File(templateDir, "level.dat").toPath(),
-                                StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        log.warn("Could not copy level.dat to template");
-                    }
-                    // Create marker so we don't bake again
-                    try {
-                        bakeMarker.createNewFile();
-                    } catch (IOException e) {
-                        log.warn("Could not create bake marker");
-                    }
-                    log.info("Template baked in Paper format. Future resets will use this.");
-                });
-            }
-
-            world.setAutoSave(false);
-            log.info("Arena world '" + currentWorldName + "' loaded.");
-        }
+        currentKey = key;
+        log.info("Arena world '{}' loaded.", key);
         return world;
     }
 
     /**
-     * Resets the arena: unloads current world, waits for Paper's chunk system to fully
-     * release, then loads a fresh copy with a new name.
-     * Old world folder is cleaned up in the background.
+     * Unloads the current arena, waits for Paper's chunk system to release it,
+     * loads a fresh copy, then deletes the old folder in the background.
      */
     public void resetArena(Runnable callback) {
-        String oldWorldName = currentWorldName;
         World arenaWorld = getArenaWorld();
+        Path oldDir = arenaWorld == null ? null : arenaWorld.getWorldPath();
 
-        // Unload the old world
         if (arenaWorld != null) {
             World fallback = Bukkit.getWorlds().get(0);
-            for (org.bukkit.entity.Player player : arenaWorld.getPlayers()) {
+            for (Player player : arenaWorld.getPlayers())
                 player.teleport(fallback.getSpawnLocation());
-            }
 
-            // Remove all non-player entities
-            for (org.bukkit.entity.Entity entity : arenaWorld.getEntities()) {
-                if (!(entity instanceof org.bukkit.entity.Player)) {
+            for (Entity entity : arenaWorld.getEntities()) {
+                if (!(entity instanceof Player))
                     entity.remove();
-                }
             }
 
-            // Force-unload every loaded chunk so Paper releases them from cache
-            for (org.bukkit.Chunk chunk : arenaWorld.getLoadedChunks()) {
-                chunk.unload(false); // false = don't save
-            }
+            for (Chunk chunk : arenaWorld.getLoadedChunks())
+                chunk.unload(false);
 
             Bukkit.unloadWorld(arenaWorld, false);
-            log.info("Old arena world '" + oldWorldName + "' unloaded.");
+            log.info("Old arena world '{}' unloaded.", currentKey);
         }
 
-        // Wait 3 seconds for Paper's chunk system to fully release all cached data,
-        // then copy template and load the new world
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             World newWorld = loadArenaWorld();
 
-            if (newWorld != null && callback != null) {
+            if (newWorld != null && callback != null)
                 callback.run();
-            }
 
-            // Clean up old world folder in background
-            if (oldWorldName != null) {
-                Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
-                    File oldDir = new File(serverDir, oldWorldName);
-                    if (oldDir.exists()) {
-                        deleteDirectory(oldDir);
-                        if (oldDir.exists()) {
-                            log.warn("Could not fully delete old arena '" + oldWorldName + "', will retry on next reset.");
-                        } else {
-                            log.info("Cleaned up old arena folder: " + oldWorldName);
-                        }
-                    }
-                }, 100L);
-            }
-        }, 60L); // 3 second delay
+            if (oldDir != null)
+                Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> deleteQuietly(oldDir), 100L);
+        }, 60L);
     }
 
     /**
-     * Deletes any leftover arena folders from previous runs (e.g., after a crash).
+     * Converts a pre-26.1 template (standalone world with level.dat) into a 26.x
+     * dimension folder. Paper only runs its legacy import for worlds loaded by name
+     * from the world container, so the template is copied there, loaded, its chunks
+     * are forced through conversion, and the migrated dimension folder becomes the
+     * new template. The original is kept as {@code <template>-pre-26-backup}.
+     * {@code new WorldCreator(String)} is {@code @ApiStatus.Obsolete}, not deprecated.
      */
+    private void upgradeLegacyTemplate() {
+        Path backup = templateDir.resolveSibling(templateDir.getFileName() + "-pre-26-backup");
+        if (Files.exists(backup))
+            throw new IllegalStateException("Legacy arena template found but backup already exists at "
+                    + backup.toAbsolutePath() + " — move one of them away and restart.");
+
+        log.info("Upgrading legacy arena template to the Paper 26.x format (one time)...");
+        Path legacyCopy = plugin.getServer().getWorldContainer().toPath().resolve(UPGRADE_WORLD);
+        deleteQuietly(legacyCopy);
+        copyDirectory(templateDir, legacyCopy);
+
+        World world = Bukkit.createWorld(new WorldCreator(UPGRADE_WORLD));
+        if (world == null)
+            throw new IllegalStateException("Paper failed to import the legacy arena template");
+
+        int spawnX = world.getSpawnLocation().getBlockX() >> 4;
+        int spawnZ = world.getSpawnLocation().getBlockZ() >> 4;
+        for (int cx = spawnX - BAKE_RADIUS_CHUNKS; cx <= spawnX + BAKE_RADIUS_CHUNKS; cx++) {
+            for (int cz = spawnZ - BAKE_RADIUS_CHUNKS; cz <= spawnZ + BAKE_RADIUS_CHUNKS; cz++)
+                world.getChunkAt(cx, cz);
+        }
+
+        world.save();
+        Path migrated = world.getWorldPath();
+        if (!Bukkit.unloadWorld(world, true))
+            throw new IllegalStateException("Could not unload template upgrade world " + UPGRADE_WORLD);
+
+        Path staged = templateDir.resolveSibling(templateDir.getFileName() + ".upgrading");
+        deleteQuietly(staged);
+        copyDirectory(migrated, staged);
+
+        try {
+            Files.move(templateDir, backup);
+            Files.move(staged, templateDir);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Swapping upgraded arena template failed", e);
+        }
+
+        deleteQuietly(migrated);
+        deleteQuietly(legacyCopy);
+        log.info("Arena template upgraded. Original kept at {}", backup.toAbsolutePath());
+    }
+
     private void cleanupOldArenas() {
-        File[] files = serverDir.listFiles();
-        if (files == null) return;
-        for (File f : files) {
-            if (f.isDirectory() && f.getName().startsWith(baseWorldName + "_")) {
-                // Don't delete the currently loaded one
-                if (f.getName().equals(currentWorldName)) continue;
-                // Make sure it's not a loaded world
-                if (Bukkit.getWorld(f.getName()) != null) continue;
-                deleteDirectory(f);
-                if (!f.exists()) {
-                    log.info("Cleaned up old arena folder: " + f.getName());
-                }
+        if (!Files.isDirectory(arenaRoot))
+            return;
+
+        try (Stream<Path> dirs = Files.list(arenaRoot)) {
+            for (Path dir : (Iterable<Path>) dirs::iterator) {
+                NamespacedKey key = new NamespacedKey(plugin, dir.getFileName().toString());
+                if (Bukkit.getWorld(key) != null)
+                    continue;
+
+                deleteQuietly(dir);
             }
+        } catch (IOException e) {
+            throw new UncheckedIOException("Listing " + arenaRoot + " failed", e);
         }
     }
 
-    // ===== File utilities =====
-
-    private boolean copyDirectory(File source, File target) {
-        try {
-            Path sourcePath = source.toPath();
-            Path targetPath = target.toPath();
-            Files.walkFileTree(sourcePath, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    Path targetDir = targetPath.resolve(sourcePath.relativize(dir));
-                    Files.createDirectories(targetDir);
-                    return FileVisitResult.CONTINUE;
+    private static void copyDirectory(Path source, Path target) {
+        try (Stream<Path> paths = Files.walk(source)) {
+            for (Path path : (Iterable<Path>) paths::iterator) {
+                Path dest = target.resolve(source.relativize(path).toString());
+                if (Files.isDirectory(path)) {
+                    Files.createDirectories(dest);
+                    continue;
                 }
 
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    String name = file.getFileName().toString();
-                    if (name.equals("session.lock") || name.equals("uid.dat")) {
-                        return FileVisitResult.CONTINUE;
-                    }
-                    Files.copy(file, targetPath.resolve(sourcePath.relativize(file)),
-                            StandardCopyOption.REPLACE_EXISTING);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-            return true;
+                String name = path.getFileName().toString();
+                if (name.equals("session.lock") || name.equals("uid.dat"))
+                    continue;
+
+                Files.copy(path, dest, StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (IOException e) {
-            log.error("Failed to copy directory", e);
-            return false;
+            throw new UncheckedIOException("Copying " + source + " to " + target + " failed", e);
         }
     }
 
-    private void deleteDirectory(File dir) {
-        try {
-            Files.walkFileTree(dir.toPath(), new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    try {
-                        Files.delete(file);
-                    } catch (IOException e) {
-                        // File may be locked on Windows, skip it
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
+    /** Best effort: Windows may still hold region files for a few ticks after unload. */
+    private static void deleteQuietly(Path dir) {
+        if (!Files.exists(dir))
+            return;
 
-                @Override
-                public FileVisitResult postVisitDirectory(Path d, IOException exc) throws IOException {
-                    try {
-                        Files.delete(d);
-                    } catch (IOException e) {
-                        // Directory may not be empty if files were locked
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+        try (Stream<Path> paths = Files.walk(dir)) {
+            for (Path path : (Iterable<Path>) paths.sorted(Comparator.reverseOrder())::iterator)
+                Files.deleteIfExists(path);
         } catch (IOException e) {
-            log.error("Failed to delete directory: {}", dir.getAbsolutePath(), e);
+            log.warn("Could not fully delete {} ({}); it will be retried on the next reset.", dir, e.getMessage());
         }
     }
 }
