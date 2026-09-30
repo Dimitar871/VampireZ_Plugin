@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -60,20 +61,14 @@ public class WraithWalkPerk extends Perk {
         if (storedArmor.containsKey(uuid)) {
             player.getInventory().setArmorContents(storedArmor.remove(uuid));
         }
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.ECHO_SHARD && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Wraith Walk")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.ECHO_SHARD, "Wraith Walk");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.ECHO_SHARD || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Wraith Walk")) return;
+        if (!ItemNames.matches(item, Material.ECHO_SHARD, "Wraith Walk")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

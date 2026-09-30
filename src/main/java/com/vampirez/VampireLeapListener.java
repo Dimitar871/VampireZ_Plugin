@@ -1,6 +1,5 @@
 package com.vampirez;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -37,11 +36,7 @@ public class VampireLeapListener implements Listener {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
         Player player = event.getPlayer();
-        if (player.getInventory().getItemInMainHand().getType() != Material.GHAST_TEAR) return;
-
-        String itemName = player.getInventory().getItemInMainHand().getItemMeta() != null
-                ? player.getInventory().getItemInMainHand().getItemMeta().getDisplayName() : "";
-        if (!itemName.contains("Vampire Leap")) return;
+        if (!ItemNames.matches(player.getInventory().getItemInMainHand(), Material.GHAST_TEAR, "Vampire Leap")) return;
 
         if (gameManager.getState() != GameState.ACTIVE) return;
         if (!gameManager.getVampireTeam().contains(player.getUniqueId())) return;

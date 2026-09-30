@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -11,7 +12,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -50,20 +50,14 @@ public class EarthquakePerk extends Perk {
     @Override
     public void remove(Player player) {
         cooldowns.remove(player.getUniqueId());
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.BROWN_DYE && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Earthquake")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.BROWN_DYE, "Earthquake");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.BROWN_DYE || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Earthquake")) return;
+        if (!ItemNames.matches(item, Material.BROWN_DYE, "Earthquake")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

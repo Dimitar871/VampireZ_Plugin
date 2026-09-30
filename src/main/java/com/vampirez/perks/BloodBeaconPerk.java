@@ -1,10 +1,10 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
 import com.vampirez.VampireZPlugin;
-import org.bukkit.Bukkit;
 import com.vampirez.MM;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -69,20 +69,14 @@ public class BloodBeaconPerk extends Perk {
         if (data != null) {
             data.location.getBlock().setType(Material.AIR);
         }
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.BONE && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Blood Beacon")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.BONE, "Blood Beacon");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.BONE || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Blood Beacon")) return;
+        if (!ItemNames.matches(item, Material.BONE, "Blood Beacon")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

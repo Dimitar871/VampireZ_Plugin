@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -10,7 +11,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
@@ -54,20 +54,14 @@ public class ShadowStrikePerk extends Perk {
     @Override
     public void remove(Player player) {
         cooldowns.remove(player.getUniqueId());
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.CHORUS_FRUIT && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Shadow Strike")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.CHORUS_FRUIT, "Shadow Strike");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.CHORUS_FRUIT || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Shadow Strike")) return;
+        if (!ItemNames.matches(item, Material.CHORUS_FRUIT, "Shadow Strike")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -55,20 +56,14 @@ public class ConsecratedGroundPerk extends Perk {
         cooldowns.remove(uuid);
         zoneLocations.remove(uuid);
         zoneActivations.remove(uuid);
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.GOLDEN_SHOVEL && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Consecrated Ground")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.GOLDEN_SHOVEL, "Consecrated Ground");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.GOLDEN_SHOVEL || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Consecrated Ground")) return;
+        if (!ItemNames.matches(item, Material.GOLDEN_SHOVEL, "Consecrated Ground")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

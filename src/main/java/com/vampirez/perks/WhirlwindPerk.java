@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -47,20 +48,14 @@ public class WhirlwindPerk extends Perk {
     @Override
     public void remove(Player player) {
         cooldowns.remove(player.getUniqueId());
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.BLAZE_ROD && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Whirlwind")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.BLAZE_ROD, "Whirlwind");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.BLAZE_ROD || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Whirlwind")) return;
+        if (!ItemNames.matches(item, Material.BLAZE_ROD, "Whirlwind")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

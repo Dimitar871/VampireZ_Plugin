@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -42,9 +43,7 @@ public class TrapperPerk extends Perk {
     }
 
     public static boolean isTrapWeb(ItemStack item) {
-        return item != null && item.getType() == Material.COBWEB
-                && item.hasItemMeta() && item.getItemMeta().hasDisplayName()
-                && item.getItemMeta().getDisplayName().contains("Trap Web");
+        return ItemNames.matches(item, Material.COBWEB, "Trap Web");
     }
 
     public static void trackPlacedWeb(Block block, org.bukkit.plugin.Plugin plugin) {

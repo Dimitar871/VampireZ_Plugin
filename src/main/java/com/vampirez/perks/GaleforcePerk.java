@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -12,7 +13,6 @@ import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -71,9 +71,7 @@ public class GaleforcePerk extends Perk {
     }
 
     private boolean isGaleforceBow(ItemStack item) {
-        return item != null && item.getType() == Material.BOW
-                && item.hasItemMeta() && item.getItemMeta().hasDisplayName()
-                && item.getItemMeta().getDisplayName().contains("Galeforce");
+        return ItemNames.matches(item, Material.BOW, "Galeforce");
     }
 
     private void giveBow(Player player) {

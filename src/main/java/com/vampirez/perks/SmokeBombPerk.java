@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -11,7 +12,6 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -49,20 +49,14 @@ public class SmokeBombPerk extends Perk {
     @Override
     public void remove(Player player) {
         cooldowns.remove(player.getUniqueId());
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.GUNPOWDER && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Smoke Bomb")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.GUNPOWDER, "Smoke Bomb");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.GUNPOWDER || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Smoke Bomb")) return;
+        if (!ItemNames.matches(item, Material.GUNPOWDER, "Smoke Bomb")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

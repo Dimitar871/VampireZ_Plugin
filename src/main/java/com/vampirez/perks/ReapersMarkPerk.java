@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -61,20 +62,14 @@ public class ReapersMarkPerk extends Perk {
             Player victim = Bukkit.getPlayer(markedVictim);
             if (victim != null) victim.removePotionEffect(PotionEffectType.GLOWING);
         }
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.SPECTRAL_ARROW && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Reaper's Mark")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.SPECTRAL_ARROW, "Reaper's Mark");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.SPECTRAL_ARROW || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Reaper's Mark")) return;
+        if (!ItemNames.matches(item, Material.SPECTRAL_ARROW, "Reaper's Mark")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

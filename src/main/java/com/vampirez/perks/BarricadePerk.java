@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -48,20 +49,14 @@ public class BarricadePerk extends Perk {
     @Override
     public void remove(Player player) {
         cooldowns.remove(player.getUniqueId());
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.SUGAR_CANE && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Barricade")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.SUGAR_CANE, "Barricade");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.SUGAR_CANE || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().hasDisplayName() || !net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(item.getItemMeta().displayName()).contains("Barricade")) return;
+        if (!ItemNames.matches(item, Material.SUGAR_CANE, "Barricade")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

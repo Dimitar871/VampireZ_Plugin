@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -59,20 +60,14 @@ public class DimensionalPocketPerk extends Perk {
         storedHP.remove(uuid);
         storeTime.remove(uuid);
         cooldowns.remove(uuid);
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.ENDER_EYE && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Dimensional Pocket")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.ENDER_EYE, "Dimensional Pocket");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.ENDER_EYE || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Dimensional Pocket")) return;
+        if (!ItemNames.matches(item, Material.ENDER_EYE, "Dimensional Pocket")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

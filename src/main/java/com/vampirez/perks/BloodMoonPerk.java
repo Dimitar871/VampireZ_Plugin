@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -57,20 +58,14 @@ public class BloodMoonPerk extends Perk {
         cooldowns.remove(uuid);
         activePlayers.remove(uuid);
         activeExpiry.remove(uuid);
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.NETHER_STAR && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Blood Moon")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.NETHER_STAR, "Blood Moon");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.NETHER_STAR || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Blood Moon")) return;
+        if (!ItemNames.matches(item, Material.NETHER_STAR, "Blood Moon")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

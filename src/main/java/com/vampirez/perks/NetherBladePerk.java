@@ -1,9 +1,9 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
-import org.bukkit.Bukkit;
 import com.vampirez.MM;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -90,9 +90,7 @@ public class NetherBladePerk extends Perk {
     }
 
     private boolean isNetherBlade(ItemStack item) {
-        return item != null && item.getType() == Material.WOODEN_SWORD
-                && item.hasItemMeta() && item.getItemMeta().hasDisplayName()
-                && item.getItemMeta().getDisplayName().contains("Nether Blade");
+        return ItemNames.matches(item, Material.WOODEN_SWORD, "Nether Blade");
     }
 
     private void giveSword(Player player) {

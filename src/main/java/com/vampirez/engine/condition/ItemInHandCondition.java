@@ -1,10 +1,10 @@
 package com.vampirez.engine.condition;
 
+import com.vampirez.ItemNames;
 import com.vampirez.engine.HookContext;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 /**
  * True if the owner is holding an item matching the given material (and optionally a name
@@ -28,9 +28,8 @@ public class ItemInHandCondition implements Condition {
         if (item == null || item.getType() == Material.AIR) return false;
         if (material != null && item.getType() != material) return false;
         if (nameContains != null) {
-            ItemMeta meta = item.getItemMeta();
-            if (meta == null || !meta.hasDisplayName()) return false;
-            if (!meta.getDisplayName().contains(nameContains)) return false;
+            String name = ItemNames.plain(item);
+            if (name.isEmpty() || !name.contains(nameContains)) return false;
         }
         return true;
     }

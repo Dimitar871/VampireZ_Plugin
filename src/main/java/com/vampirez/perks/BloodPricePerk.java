@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -51,20 +52,14 @@ public class BloodPricePerk extends Perk {
         UUID uuid = player.getUniqueId();
         cooldowns.remove(uuid);
         empowered.remove(uuid);
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.WITHER_ROSE && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Blood Price")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.WITHER_ROSE, "Blood Price");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.WITHER_ROSE || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Blood Price")) return;
+        if (!ItemNames.matches(item, Material.WITHER_ROSE, "Blood Price")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

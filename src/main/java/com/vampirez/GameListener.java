@@ -265,11 +265,7 @@ public class GameListener implements Listener {
                 && event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) return;
 
         Player player = event.getPlayer();
-        if (player.getInventory().getItemInMainHand().getType() != Material.EMERALD) return;
-
-        String itemName = player.getInventory().getItemInMainHand().getItemMeta() != null
-                ? player.getInventory().getItemInMainHand().getItemMeta().getDisplayName() : "";
-        if (!itemName.contains("Perk Shop")) return;
+        if (!ItemNames.matches(player.getInventory().getItemInMainHand(), Material.EMERALD, "Perk Shop")) return;
 
         event.setCancelled(true);
 

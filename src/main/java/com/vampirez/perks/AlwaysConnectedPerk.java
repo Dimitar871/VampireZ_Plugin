@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -57,20 +58,14 @@ public class AlwaysConnectedPerk extends Perk {
     @Override
     public void remove(Player player) {
         cooldowns.remove(player.getUniqueId());
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.RECOVERY_COMPASS && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Always Connected")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.RECOVERY_COMPASS, "Always Connected");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.RECOVERY_COMPASS || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Always Connected")) return;
+        if (!ItemNames.matches(item, Material.RECOVERY_COMPASS, "Always Connected")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

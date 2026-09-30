@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -10,7 +11,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -110,12 +110,9 @@ public class BardPerk extends Perk {
 
         // Remove bard items
         for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
-                String name = item.getItemMeta().getDisplayName();
-                if (name.contains("Healing Aura") || name.contains("Damage Aura") || name.contains("Wind Runner")) {
-                    player.getInventory().remove(item);
-                }
-            }
+            String name = ItemNames.plain(item);
+            if (name.contains("Healing Aura") || name.contains("Damage Aura") || name.contains("Wind Runner"))
+                player.getInventory().remove(item);
         }
 
         // Remove buffs from all allies
@@ -132,11 +129,7 @@ public class BardPerk extends Perk {
         if (plugin.getGameManager() == null) return;
 
         UUID bardUUID = player.getUniqueId();
-        ItemStack mainHand = player.getInventory().getItemInMainHand();
-        String heldName = "";
-        if (mainHand != null && mainHand.hasItemMeta() && mainHand.getItemMeta().hasDisplayName()) {
-            heldName = mainHand.getItemMeta().getDisplayName();
-        }
+        String heldName = ItemNames.plain(player.getInventory().getItemInMainHand());
 
         String previousAura = lastHeldAura.getOrDefault(bardUUID, "");
         List<Player> nearbyHumans = getNearbyHumans(player, plugin);

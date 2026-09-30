@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -114,10 +115,8 @@ public class PlantMasterPerk extends Perk {
 
         // Remove flower items from inventory
         for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && isFlowerMaterial(item.getType()) && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Flower")
-                    || (item != null && item.getType() == Material.WITHER_ROSE && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Black Rose"))) {
+            if (item != null && isFlowerMaterial(item.getType()) && ItemNames.plain(item).contains("Flower")
+                    || ItemNames.matches(item, Material.WITHER_ROSE, "Black Rose")) {
                 player.getInventory().remove(item);
             }
         }
@@ -143,7 +142,7 @@ public class PlantMasterPerk extends Perk {
         FlowerType flowerType = getFlowerType(item.getType());
         if (flowerType == null || !item.hasItemMeta()) return;
 
-        String displayName = item.getItemMeta().getDisplayName();
+        String displayName = ItemNames.plain(item);
         if (!displayName.contains("Flower") && !displayName.contains("Black Rose")) return;
 
         event.setCancelled(true);

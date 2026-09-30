@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -12,7 +13,6 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
@@ -101,8 +101,7 @@ public class WarHorsePerk extends Perk {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.GOAT_HORN) return;
-        if (!item.hasItemMeta() || !item.getItemMeta().getDisplayName().contains("Horse Whistle")) return;
+        if (!ItemNames.matches(item, Material.GOAT_HORN, "Horse Whistle")) return;
 
         event.setCancelled(true);
 
@@ -162,12 +161,7 @@ public class WarHorsePerk extends Perk {
         }
 
         // Remove whistle from inventory
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.GOAT_HORN && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Horse Whistle")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.GOAT_HORN, "Horse Whistle");
     }
 
     @Override

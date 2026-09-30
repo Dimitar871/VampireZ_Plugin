@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -58,12 +59,7 @@ public class BatFormPerk extends Perk {
         if (storedArmor.containsKey(uuid)) {
             player.getInventory().setArmorContents(storedArmor.remove(uuid));
         }
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.PHANTOM_MEMBRANE && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Bat Form")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.PHANTOM_MEMBRANE, "Bat Form");
     }
 
     /** Returns true if the player is in bat form (armor hidden but protected). */
@@ -103,8 +99,7 @@ public class BatFormPerk extends Perk {
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.PHANTOM_MEMBRANE || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Bat Form")) return;
+        if (!ItemNames.matches(item, Material.PHANTOM_MEMBRANE, "Bat Form")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();

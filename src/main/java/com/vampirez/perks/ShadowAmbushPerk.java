@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -53,20 +54,14 @@ public class ShadowAmbushPerk extends Perk {
         UUID uuid = player.getUniqueId();
         cooldowns.remove(uuid);
         stealthActive.remove(uuid);
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.FLINT && item.hasItemMeta()
-                    && item.getItemMeta().getDisplayName().contains("Shadow Ambush")) {
-                player.getInventory().remove(item);
-            }
-        }
+        ItemNames.removeAll(player, Material.FLINT, "Shadow Ambush");
     }
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.FLINT || !item.hasItemMeta()) return;
-        if (!item.getItemMeta().getDisplayName().contains("Shadow Ambush")) return;
+        if (!ItemNames.matches(item, Material.FLINT, "Shadow Ambush")) return;
 
         event.setCancelled(true);
         UUID uuid = player.getUniqueId();
