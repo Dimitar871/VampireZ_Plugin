@@ -1,6 +1,6 @@
 @echo off
 echo Building plugin...
-call mvn clean package
+call mvnw.cmd clean package
 
 if %errorlevel% neq 0 (
     echo Build failed!
@@ -8,7 +8,8 @@ if %errorlevel% neq 0 (
 )
 
 echo Copying plugin to server...
-copy /Y target\VampireZ-2.4.0.jar ..\test-server\plugins\
+del /Q ..\test-server\plugins\VampireZ-*.jar 2>nul
+for %%f in (target\VampireZ-*.jar) do copy /Y "%%f" ..\test-server\plugins\ >nul
 
 if %errorlevel% neq 0 (
     echo Copy failed!
@@ -18,4 +19,6 @@ if %errorlevel% neq 0 (
 echo Plugin deployed successfully!
 echo Starting server...
 cd ..\test-server
-java -jar paper-1.21.11-69.jar
+rem Newest paper-*.jar wins (alphabetical: paper-1.21.x before paper-26.x)
+for %%j in (paper-*.jar) do set SERVER_JAR=%%j
+java -jar %SERVER_JAR% --nogui
