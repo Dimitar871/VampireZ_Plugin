@@ -55,9 +55,9 @@ public class GameListener implements Listener {
     public void onEntityTarget(EntityTargetLivingEntityEvent event) {
         if (!(event.getTarget() instanceof Player target)) return;
         Entity entity = event.getEntity();
-        if (!entity.hasMetadata("vampirez_team")) return;
+        String mobTeam = MobTags.team(entity);
+        if (mobTeam == null) return;
 
-        String mobTeam = entity.getMetadata("vampirez_team").get(0).asString();
         boolean targetIsVampire = gameManager.isVampire(target.getUniqueId());
         String targetTeam = targetIsVampire ? "VAMPIRE" : "HUMAN";
 
@@ -72,7 +72,8 @@ public class GameListener implements Listener {
     public void onMobDamage(EntityDamageByEntityEvent event) {
         Entity victim = event.getEntity();
         if (victim instanceof Player) return; // handled by PvP control
-        if (!victim.hasMetadata("vampirez_team")) return;
+        String mobTeam = MobTags.team(victim);
+        if (mobTeam == null) return;
 
         // Find the player who attacked
         Player attacker = null;
@@ -83,7 +84,6 @@ public class GameListener implements Listener {
         }
         if (attacker == null) return;
 
-        String mobTeam = victim.getMetadata("vampirez_team").get(0).asString();
         boolean attackerIsVampire = gameManager.isVampire(attacker.getUniqueId());
         String attackerTeam = attackerIsVampire ? "VAMPIRE" : "HUMAN";
 

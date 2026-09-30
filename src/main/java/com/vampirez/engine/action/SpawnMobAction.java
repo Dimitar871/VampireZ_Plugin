@@ -1,5 +1,6 @@
 package com.vampirez.engine.action;
 
+import com.vampirez.MobTags;
 import com.vampirez.GameManager;
 import com.vampirez.VampireZPlugin;
 import com.vampirez.engine.HookContext;
@@ -16,7 +17,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Wolf;
 import org.bukkit.entity.Zombie;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -84,7 +84,7 @@ public class SpawnMobAction implements Action {
                 entity.setCustomNameVisible(true);
             }
             if (team != null) {
-                entity.setMetadata("vampirez_team", new FixedMetadataValue(plugin, team));
+                MobTags.setTeam(entity, team);
             }
             if (noBaby && entity instanceof Zombie z) z.setBaby(false);
             if (entity instanceof Wolf w) {

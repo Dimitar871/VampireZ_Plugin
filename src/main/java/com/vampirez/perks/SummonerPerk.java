@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.MobTags;
 import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
@@ -17,7 +18,6 @@ import org.bukkit.entity.Wolf;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Arrays;
@@ -80,7 +80,7 @@ public class SummonerPerk extends Perk {
             wolf.setAngry(true);
             wolf.customName(Component.text(player.getName() + "'s Wolf").color(NamedTextColor.RED));
             wolf.setCustomNameVisible(true);
-            wolf.setMetadata("vampirez_team", new FixedMetadataValue(getPlugin(), "VAMPIRE"));
+            MobTags.setTeam(wolf, "VAMPIRE");
             // Force immediate aggression on nearest enemy (same helper as YAML spawn_mob action).
             com.vampirez.engine.action.SpawnMobAction.aggroNearestEnemy(wolf, player, getPlugin());
         }

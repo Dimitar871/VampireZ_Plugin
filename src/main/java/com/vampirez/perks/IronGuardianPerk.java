@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.MobTags;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
 import com.vampirez.PerkTier;
@@ -14,7 +15,6 @@ import org.bukkit.Sound;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.Player;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.LinkedHashMap;
@@ -44,7 +44,7 @@ public class IronGuardianPerk extends Perk {
                 killer.getLocation().add(2, 0, 0), IronGolem.class, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, g -> {
             g.customName(Component.text(killer.getName() + "'s Golem").color(NamedTextColor.GREEN));
             g.setCustomNameVisible(true);
-            g.setMetadata("vampirez_team", new FixedMetadataValue(getPlugin(), "HUMAN"));
+            MobTags.setTeam(g, "HUMAN");
         });
 
         // Periodically retarget nearest vampire (iron golems don't naturally attack players)

@@ -1,5 +1,6 @@
 package com.vampirez.perks;
 
+import com.vampirez.MobTags;
 import com.vampirez.ItemNames;
 import com.vampirez.Perk;
 import com.vampirez.PerkTeam;
@@ -19,7 +20,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -66,7 +66,7 @@ public class WarHorsePerk extends Perk {
             horse.getInventory().setArmor(new ItemStack(Material.DIAMOND_HORSE_ARMOR));
 
             // Tag for cleanup — store owner UUID for buff purposes
-            horse.setMetadata("vampirez_war_horse", new FixedMetadataValue(getPlugin(), uuid.toString()));
+            MobTags.setWarHorseOwner(horse, uuid.toString());
             horse.customName(Component.text(player.getName() + "'s War Horse").color(NamedTextColor.GOLD));
             horse.setCustomNameVisible(true);
 
@@ -168,7 +168,7 @@ public class WarHorsePerk extends Perk {
     public void onTick(Player player) {
         UUID uuid = player.getUniqueId();
         boolean mounted = player.getVehicle() instanceof Horse horse
-                && horse.hasMetadata("vampirez_war_horse");
+                && MobTags.isWarHorse(horse);
 
         boolean previouslyMounted = wasMounted.getOrDefault(uuid, false);
 
