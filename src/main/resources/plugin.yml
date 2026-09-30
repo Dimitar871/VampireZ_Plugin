@@ -1,7 +1,7 @@
 name: VampireZ
 version: ${project.version}
 main: com.vampirez.VampireZPlugin
-api-version: 1.21
+api-version: '26.2'
 author: Dimitar871
 description: VampireZ Minigame Plugin
 

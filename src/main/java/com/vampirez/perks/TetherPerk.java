@@ -27,14 +27,14 @@ public class TetherPerk extends Perk {
 
     public TetherPerk() {
         super("tether", "Tether", PerkTier.GOLD, PerkTeam.VAMPIRE,
-                Material.CHAIN,
+                Material.IRON_CHAIN,
                 "Right-click: pull nearest enemy",
                 "within 30 blocks toward you (15s cd)");
     }
 
     @Override
     public void apply(Player player) {
-        ItemStack item = new ItemStack(Material.CHAIN);
+        ItemStack item = new ItemStack(Material.IRON_CHAIN);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.displayName(Component.text("Tether (Right-Click)").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
@@ -48,7 +48,7 @@ public class TetherPerk extends Perk {
     public void remove(Player player) {
         cooldowns.remove(player.getUniqueId());
         for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.CHAIN && item.hasItemMeta()
+            if (item != null && item.getType() == Material.IRON_CHAIN && item.hasItemMeta()
                     && item.getItemMeta().getDisplayName().contains("Tether")) {
                 player.getInventory().remove(item);
             }
@@ -59,7 +59,7 @@ public class TetherPerk extends Perk {
     public void onInteract(Player player, PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() != Material.CHAIN || !item.hasItemMeta()) return;
+        if (item.getType() != Material.IRON_CHAIN || !item.hasItemMeta()) return;
         if (!item.getItemMeta().getDisplayName().contains("Tether")) return;
 
         event.setCancelled(true);
