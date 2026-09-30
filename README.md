@@ -6,7 +6,7 @@
 
 A Minecraft minigame plugin where **Humans survive against Vampires** for 25 minutes. Dead humans convert into vampires — the last surviving human wins the round, or the vampires do if they wipe everyone out.
 
-Built for **Spigot / Paper 1.21.3+** with Java 21.
+Built for **Paper 26.2+** with Java 25.
 
 > 📖 Full game mechanics, damage math, and the complete perk catalogue live in the **[Wiki](WIKI.md)**.
 
@@ -28,10 +28,11 @@ Built for **Spigot / Paper 1.21.3+** with Java 21.
 
 ## Installation
 
-Requirements: **Paper or Spigot 1.21.3+** and **Java 21+**.
+Requirements: **Paper 26.2+** and **Java 25+**. (Servers still on 1.21.x: use the v2.5.1 release.)
 
-1. Download the latest `VampireZ-*.jar` from the [Releases](../../releases) page (or build with `mvn clean package`) and drop it into your server's `plugins/` folder.
-2. Download `VampireZ-Map.zip` and extract it into your server root (next to `plugins/`, `server.properties`). It already contains an **`arena-template/`** folder. Leave your existing `world/` alone — the plugin clones a fresh copy of `arena-template/` every round.
+1. Download the latest `VampireZ-*.jar` from the [Releases](../../releases) page (or build with `./mvnw clean package`) and drop it into your server's `plugins/` folder.
+2. Download `VampireZ-Map.zip` and extract it into your server root (next to `plugins/`, `server.properties`). It already contains an **`arena-template/`** folder. Leave your existing `world/` alone — the plugin copies `arena-template/` into `world/dimensions/vampirez/arena_N/` every round.
+   Upgrading from 1.21.x? On the first 26.x start the plugin converts a pre-26 template once and keeps the original as `arena-template-pre-26-backup/`. Never start a 26.x server with VampireZ 2.5.1 or older: those versions delete the template's terrain on 26.x.
 3. Start the server.
 
 ---
@@ -108,8 +109,8 @@ The full schema and tuning tips are in the [Wiki → Configuration](WIKI.md#conf
 
 ## Requirements
 
-- Spigot or Paper 1.21.3+
-- Java 21+
+- Paper 26.2+
+- Java 25+
 
 ---
 
